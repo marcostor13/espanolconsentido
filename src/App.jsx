@@ -18,82 +18,14 @@ import {
   CheckCircle,
 } from "lucide-react"
 
-// --- DATA & CONFIGURATION ---
-
-const TESTIMONIALS = [
-  {
-    name: "Sarah Jenkins",
-    role: "CEO Tech Startup",
-    result: "Negociar con confianza",
-    text: "Con este método, no solo aprendí gramática, aprendí a pensar como una latina. La calma y estructura de las clases me dieron la seguridad que necesitaba.",
-    stars: 5,
-  },
-  {
-    name: "Marcus Thorne",
-    role: "Escritor Freelance",
-    result: "Superé mi miedo a hablar",
-    text: "La 'Auditoría de Fluidez' fue reveladora. No sentí presión, sino un acompañamiento genuino para desbloquear mi español.",
-    stars: 5,
-  },
-  {
-    name: "Elena Rossi",
-    role: "Arquitecta",
-    result: "Feedback preciso",
-    text: "Lo que más valoro es la corrección detallada pero amable. Siento que crezco en cada sesión sin el estrés de las academias tradicionales.",
-    stars: 5,
-  },
-]
-
-// Updated to match the new "Planes" section while keeping the ID structure for modal
-const SERVICES = [
-  {
-    id: "trial",
-    title: "Auditoría de Fluidez",
-    price: 0, // "Demo Gratis" usually implies free, or we can keep it low price. Design says "Demo Gratis". Let's make it 0 or keep original 19? Design says "Demo Gratis". I'll set to 0.
-    value: 50,
-    description: "Un diagnóstico tranquilo y profundo de tu nivel actual.",
-    features: ["Diagnóstico de Nivel", "Roadmap Personalizado"],
-    hidden: true, // Helper to not show in the main pricing grid
-  },
-  {
-    id: "basic",
-    title: "Básico",
-    subtitle: "Para curiosos",
-    price: 29,
-    period: "/mes",
-    features: ["Acceso a lecciones", "Ejercicios PDF", "Comunidad Discord"],
-    cardBg: "bg-white",
-    btnStyle: "border-2 border-black hover:bg-gray-100",
-  },
-  {
-    id: "pro",
-    title: "Pro",
-    subtitle: "Inmersión Total",
-    price: 59,
-    period: "/mes",
-    features: ["Todo lo del plan Básico", "2 Sesiones en vivo/semana", "Certificado final", "Corrección de tareas"],
-    popular: true,
-    cardBg: "bg-secondary text-white",
-    btnStyle: "bg-primary text-black border-2 border-black hover:bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-[2px] active:shadow-none",
-    iconColor: "text-primary",
-  },
-  {
-    id: "mentorship",
-    title: "Mentoría",
-    subtitle: "Personalizado 1 a 1",
-    price: 99,
-    period: "/mes",
-    features: ["Todo lo del plan PRO", "1 Sesión individual/semana", "Plan de estudio a medida", "Whatsapp directo"],
-    cardBg: "bg-white",
-    btnStyle: "border-2 border-black hover:bg-gray-100",
-  },
-]
+import { useLanguage } from "./context/LanguageContext"
 
 // --- COMPONENTS ---
 
 const Header = ({ onBook }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const { t, language, toggleLanguage } = useLanguage()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -121,22 +53,40 @@ const Header = ({ onBook }) => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8 font-grotesk text-sm font-medium tracking-wide">
-          <a href="#sobre-mi" className="hover:text-primary transition-colors">Sobre mi</a>
-          <a href="#clases" className="hover:text-primary transition-colors">Clases</a>
-          <a href="#planes" className="hover:text-primary transition-colors">Precios</a>
-          <a href="#politicas" className="hover:text-primary transition-colors">Políticas</a>
+          <a href="#sobre-mi" className="hover:text-primary transition-colors">{t('nav.about')}</a>
+          <a href="#clases" className="hover:text-primary transition-colors">{t('nav.classes')}</a>
+          <a href="#planes" className="hover:text-primary transition-colors">{t('nav.pricing')}</a>
+          <a href="#politicas" className="hover:text-primary transition-colors">{t('nav.policies')}</a>
           <button 
             onClick={() => onBook("trial")} 
             className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-orange-500 transition-all font-bold shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5"
           >
-            Reserva tu clase
+            {t('nav.book')}
           </button>
+          
+          {/* Language Switcher */}
+          <div className="flex bg-white/10 rounded-lg p-1">
+            <button
+              onClick={() => toggleLanguage('es')}
+              className={`p-1.5 rounded-md transition-all ${language === 'es' ? 'bg-white shadow-sm' : 'hover:bg-white/20'}`}
+              title="Español"
+            >
+              <img src="https://flagcdn.com/w20/es.png" alt="ES" className="w-5 h-auto rounded-sm" />
+            </button>
+            <button
+              onClick={() => toggleLanguage('en')}
+              className={`p-1.5 rounded-md transition-all ${language === 'en' ? 'bg-white shadow-sm' : 'hover:bg-white/20'}`}
+              title="English"
+            >
+              <img src="https://flagcdn.com/w20/us.png" alt="EN" className="w-5 h-auto rounded-sm" />
+            </button>
+          </div>
         </div>
 
         {/* Mobile Toggle */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden p-2 text-white hover:text-primary transition-colors"
+          className="md:hidden p-2 text-white hover:text-primary transition-colors relative z-50"
         >
           {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -145,10 +95,24 @@ const Header = ({ onBook }) => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="absolute top-full left-0 w-full bg-secondary border-t border-white/10 p-6 flex flex-col gap-6 z-40 shadow-xl md:hidden animate-fadeIn text-center">
-          <a href="#sobre-mi" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">Sobre mi</a>
-          <a href="#clases" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">Clases</a>
-          <a href="#planes" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">Precios</a>
-          <a href="#politicas" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">Políticas</a>
+          <div className="flex justify-center gap-4 mb-4">
+             <button
+              onClick={() => toggleLanguage('es')}
+              className={`p-2 rounded-lg transition-all flex items-center gap-2 ${language === 'es' ? 'bg-white text-secondary font-bold' : 'text-white hover:bg-white/10'}`}
+            >
+              <img src="https://flagcdn.com/w20/es.png" alt="ES" className="w-5 h-auto" /> Español
+            </button>
+            <button
+              onClick={() => toggleLanguage('en')}
+              className={`p-2 rounded-lg transition-all flex items-center gap-2 ${language === 'en' ? 'bg-white text-secondary font-bold' : 'text-white hover:bg-white/10'}`}
+            >
+              <img src="https://flagcdn.com/w20/us.png" alt="EN" className="w-5 h-auto" /> English
+            </button>
+          </div>
+          <a href="#sobre-mi" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.about')}</a>
+          <a href="#clases" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.classes')}</a>
+          <a href="#planes" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.pricing')}</a>
+          <a href="#politicas" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.policies')}</a>
           <button
              onClick={() => {
                 onBook("trial")
@@ -156,7 +120,7 @@ const Header = ({ onBook }) => {
              }}
              className="bg-primary text-white w-full py-4 rounded-lg font-bold text-lg shadow-soft"
           >
-            Reserva tu clase
+            {t('nav.book')}
           </button>
         </div>
       )}
@@ -164,7 +128,10 @@ const Header = ({ onBook }) => {
   )
 }
 
-const Hero = ({ onBook }) => (
+const Hero = ({ onBook }) => {
+  const { t } = useLanguage()
+  
+  return (
   <header className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden bg-light">
     {/* Background Curve (Top part Navy, Bottom part Light) */}
     <div className="absolute top-0 left-0 w-full h-[65%] md:h-[75%] bg-secondary z-0 rounded-b-[40px] md:rounded-b-[80px]"></div>
@@ -179,7 +146,7 @@ const Hero = ({ onBook }) => (
         </h1>
 
         <p className="text-lg md:text-xl text-gray-200 max-w-lg mx-auto lg:mx-0 font-grotesk font-light">
-          Gana confianza para hablar español en conversaciones reales. Acompañamiento personalizado para que te expreses con seguridad.
+          {t('hero.subtitle')}
         </p>
 
         <div className="pt-4 flex justify-center lg:justify-start">
@@ -187,7 +154,7 @@ const Hero = ({ onBook }) => (
             onClick={() => onBook("trial")}
             className="bg-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-soft-lg hover:bg-orange-500 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
           >
-            Reserva tu clase de prueba
+            {t('hero.cta')}
           </button>
         </div>
       </div>
@@ -214,7 +181,8 @@ const Hero = ({ onBook }) => (
       </div>
     </div>
   </header>
-)
+  )
+}
 
 const PhotosGallery = () => (
   <section className="py-12 bg-light overflow-hidden">
@@ -229,7 +197,10 @@ const PhotosGallery = () => (
   </section>
 )
 
-const AcercaDeMi = () => (
+const AcercaDeMi = () => {
+  const { t } = useLanguage()
+  
+  return (
   <section id="sobre-mi" className="py-24 px-6 bg-white font-grotesk">
     <div className="container mx-auto max-w-6xl">
       <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -243,44 +214,41 @@ const AcercaDeMi = () => (
         </div>
         <div className="order-1 md:order-2 space-y-6">
           <h2 className="font-syne font-bold text-4xl md:text-5xl text-secondary mb-8">
-            Acerca de mí
+            {t('about.title')}
           </h2>
           <div className="space-y-4 text-gray-700 text-lg leading-relaxed">
-            <p><strong>Hola, soy Juanita Sánchez, creadora de Español conSentido.</strong></p>
-            <p>
-              Soy licenciada en Educación y bachiller en Administración de Empresas, con amplia experiencia en el mundo corporativo y educativo, especialmente en áreas como operaciones, logística y gestión de personas. Esta combinación me permite unir lo mejor de ambos campos: la pedagogía y la comunicación efectiva con una visión práctica del entorno profesional.
-            </p>
-            <p>
-              Trabajo con estudiantes que ya comprenden español y quieren organizar mejor sus ideas y ganar claridad al expresarse. Integro los aspectos del idioma de manera natural dentro de conversaciones reales para que puedas comunicarte con seguridad en situaciones cotidianas, profesionales o de viaje.
-            </p>
-            <p>
-              Acompaño a mis estudiantes tanto en español para el trabajo como en conversación cotidiana. Si te interesa viajar o conocer Perú y Latinoamérica, también podemos conversar sobre cultura, costumbres y expresiones locales para que te sientas preparado al comunicarte de forma natural cuando decidas visitarnos.
-            </p>
-            <p>
-              Mis clases son conversacionales y personalizadas. Adapto cada sesión a tus intereses y objetivos para ayudarte a desarrollar un español auténtico y ganar confianza al hablar. Creo un ambiente ameno donde avanzarás a tu propio ritmo y, sin darte cuenta, te sentirás cada vez más seguro al expresarte.
-            </p>
+            <p><strong>{t('about.p1')}</strong></p>
+            <p>{t('about.p2')}</p>
+            <p>{t('about.p3')}</p>
+            <p>{t('about.p4')}</p>
+            <p>{t('about.p5')}</p>
             <p className="bg-light p-6 rounded-2xl italic text-gray-600 border border-gray-100 shadow-sm mt-6">
-              "Y para que me conozcas un poco más: disfruto bailar salsa, hacer ejercicio, viajar y conocer nuevas personas. Me encantan los perros y también me interesan los temas relacionados con la filosofía, la psicología y la antropología, porque creo que los idiomas se aprenden mejor a través de conversaciones que exploran ideas, cultura y experiencias humanas."
+              {t('about.quote')}
             </p>
             <p className="font-medium text-secondary mt-6">
-              Te invito a reservar una clase de prueba para conocernos y planear juntos tu camino en el español. Estaré encantada de acompañarte en este proceso.
+              {t('about.p6')}
             </p>
           </div>
         </div>
       </div>
     </div>
   </section>
-)
+  )
+}
 
-const ComoSonLasClases = () => (
+const ComoSonLasClases = () => {
+  const { t } = useLanguage()
+  const features = t('classes.features') || []
+
+  return (
   <section id="clases" className="py-24 px-6 bg-light font-grotesk">
     <div className="container mx-auto max-w-6xl">
       <div className="text-center mb-16">
         <h2 className="font-syne font-bold text-4xl md:text-5xl text-secondary mb-6">
-          Cómo son las clases
+          {t('classes.title')}
         </h2>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Mis clases son espacios vivos de conversación, donde el español se convierte en una herramienta para explorar ideas, experiencias y situaciones reales.
+          {t('classes.subtitle')}
         </p>
       </div>
 
@@ -289,9 +257,9 @@ const ComoSonLasClases = () => (
           <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-primary mb-6">
             <Mic size={28} />
           </div>
-          <h3 className="font-bold text-xl text-secondary mb-3">Participación Activa</h3>
+          <h3 className="font-bold text-xl text-secondary mb-3">{features[0]?.title}</h3>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Desde el inicio te invito a participar activamente. Comenzamos con una frase disparadora que despierta tu opinión y, a través de preguntas estratégicas, la conversación va creciendo de forma natural. Te encuentras argumentando y reflexionando.
+            {features[0]?.desc}
           </p>
         </div>
         
@@ -299,9 +267,9 @@ const ComoSonLasClases = () => (
           <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-primary mb-6">
             <Video size={28} />
           </div>
-          <h3 className="font-bold text-xl text-secondary mb-3">Role Plays Reales</h3>
+          <h3 className="font-bold text-xl text-secondary mb-3">{features[1]?.title}</h3>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Recreamos situaciones reales: pedir algo en un restaurante, resolver un imprevisto o iniciar una conversación. Practicamos en un entorno seguro, donde equivocarse es parte del aprendizaje para desenvolverte en viajes o la vida cotidiana.
+            {features[1]?.desc}
           </p>
         </div>
         
@@ -309,9 +277,9 @@ const ComoSonLasClases = () => (
           <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-primary mb-6">
             <Brain size={28} />
           </div>
-          <h3 className="font-bold text-xl text-secondary mb-3">Conexión y Reflexión</h3>
+          <h3 className="font-bold text-xl text-secondary mb-3">{features[2]?.title}</h3>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Partimos de un cortometraje, una historia o un tema de interés para generar reflexiones profundas y conectar el idioma con tus vivencias. Un espacio vibrante de confianza donde compartir ideas sin juicios.
+            {features[2]?.desc}
           </p>
         </div>
         
@@ -319,54 +287,62 @@ const ComoSonLasClases = () => (
           <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-primary mb-6">
             <Heart size={28} />
           </div>
-          <h3 className="font-bold text-xl text-secondary mb-3">Guía Natural</h3>
+          <h3 className="font-bold text-xl text-secondary mb-3">{features[3]?.title}</h3>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Mientras conversamos, te acompaño con sugerencias naturales y reformulaciones sutiles para que tu español suene cada vez más fluido, sin romper el ritmo de la charla. Sentirás el español como un medio auténtico para comunicarte.
+            {features[3]?.desc}
           </p>
         </div>
       </div>
     </div>
   </section>
-)
+  )
+}
 
-const Marquee = () => (
+const Marquee = () => {
+  const { t } = useLanguage()
+  const items = t('marquee') || []
+  return (
   <div className="bg-secondary border-y-2 border-black py-4 overflow-hidden transform -rotate-1 origin-left scale-[1.02]">
     <div className="whitespace-nowrap animate-marquee flex items-center">
       <div className="flex gap-8 px-4">
         {[...Array(2)].map((_, i) => (
           <React.Fragment key={i}>
             <span className="text-4xl font-syne font-bold text-white uppercase">
-              Comunicación •
+              {items[0]}
             </span>
             <span className="text-4xl font-syne font-bold text-outline-white uppercase">
-              Cultura •
+              {items[1]}
             </span>
             <span className="text-4xl font-syne font-bold text-primary uppercase">
-              Conexión •
+              {items[2]}
             </span>
             <span className="text-4xl font-syne font-bold text-outline-white uppercase">
-              Pensamiento •
+              {items[3]}
             </span>
             <span className="text-4xl font-syne font-bold text-white uppercase">
-              Sentimiento •
+              {items[4]}
             </span>
           </React.Fragment>
         ))}
       </div>
     </div>
   </div>
-)
+  )
+}
 
-const Philosophy = () => (
+const Philosophy = () => {
+  const { t } = useLanguage()
+  const items = t('philosophy.items') || []
+  return (
   <section id="filosofia" className="py-24 px-6 bg-white font-grotesk">
     <div className="container mx-auto max-w-6xl">
       <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
         <div>
           <h2 className="font-syne font-bold text-4xl md:text-5xl text-secondary mb-4">
-            Nuestra <span className="text-primary italic">Filosofía</span>
+            {t('philosophy.title')} <span className="text-primary italic">{t('philosophy.titleItalic')}</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-md">
-            No memorices. Entiende la estructura profunda y siente el ritmo del idioma.
+            {t('philosophy.subtitle')}
           </p>
         </div>
         <ArrowRight className="hidden md:block w-12 h-12 text-secondary/30 rotate-90" />
@@ -377,9 +353,9 @@ const Philosophy = () => (
           <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 text-secondary">
             <Brain className="w-8 h-8" />
           </div>
-          <h3 className="font-syne font-bold text-2xl text-secondary mb-4">Pensamiento Crítico</h3>
+          <h3 className="font-syne font-bold text-2xl text-secondary mb-4">{items[0]?.title}</h3>
           <p className="text-gray-600">
-            Cuestiona y comprende. No repitas como loro, analiza por qué se dice así.
+            {items[0]?.desc}
           </p>
         </div>
         
@@ -387,9 +363,9 @@ const Philosophy = () => (
           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 text-white">
             <Heart className="w-8 h-8" />
           </div>
-          <h3 className="font-syne font-bold text-2xl mb-4">Conexión Emocional</h3>
+          <h3 className="font-syne font-bold text-2xl mb-4">{items[1]?.title}</h3>
           <p className="text-white/90">
-            El idioma es un vehículo para emociones. Si no sientes lo que dices, no comunicas.
+            {items[1]?.desc}
           </p>
         </div>
         
@@ -397,49 +373,53 @@ const Philosophy = () => (
           <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 text-secondary">
             <Mic className="w-8 h-8" />
           </div>
-          <h3 className="font-syne font-bold text-2xl text-secondary mb-4">Comunicación Real</h3>
+          <h3 className="font-syne font-bold text-2xl text-secondary mb-4">{items[2]?.title}</h3>
           <p className="text-gray-600">
-            Slang, muletillas, interrupciones. Prepárate para la calle, no para el examen.
+            {items[2]?.desc}
           </p>
         </div>
       </div>
     </div>
   </section>
-)
+  )
+}
 
-const Pricing = ({ onBook }) => (
+const Pricing = ({ onBook }) => {
+  const { t } = useLanguage()
+  const services = t('services') || []
+  return (
   <section id="planes" className="py-24 px-6 bg-light relative font-grotesk">
     <div className="container mx-auto max-w-6xl relative z-10">
       <div className="text-center mb-16">
         <span className="inline-block bg-orange-100 text-primary px-4 py-1 rounded-full font-bold text-sm tracking-widest uppercase mb-4">
-          Inversión
+          {t('pricing.badge')}
         </span>
         <h2 className="font-syne font-bold text-4xl md:text-5xl text-secondary">
-          Elige tu <span className="text-primary italic">Camino</span>
+          {t('pricing.title')} <span className="text-primary italic">{t('pricing.titleItalic')}</span>
         </h2>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 items-start">
-        {SERVICES.filter((s) => !s.hidden).map((plan) => (
+        {services.filter((s) => !s.hidden).map((plan) => (
           <div
             key={plan.id}
             className={`rounded-3xl flex flex-col transition-all duration-300 ${
-              plan.popular 
+              plan.id === 'pro' 
                 ? "bg-secondary text-white shadow-xl transform md:-translate-y-4 md:scale-105 z-10 border border-secondary/20" 
                 : "bg-white text-secondary shadow-soft border border-gray-100 hover:shadow-soft-lg"
             } relative`}
           >
-            {plan.popular && (
+            {plan.id === 'pro' && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full font-bold text-xs uppercase tracking-wide shadow-md">
-                Más Popular
+                {t('pricing.popular')}
               </div>
             )}
 
-            <div className={`p-8 pb-6 border-b ${plan.popular ? "border-white/10" : "border-gray-100"}`}>
-              <h3 className={`font-syne font-bold text-2xl ${plan.popular ? "text-primary" : "text-secondary"}`}>
+            <div className={`p-8 pb-6 border-b ${plan.id === 'pro' ? "border-white/10" : "border-gray-100"}`}>
+              <h3 className={`font-syne font-bold text-2xl ${plan.id === 'pro' ? "text-primary" : "text-secondary"}`}>
                 {plan.title}
               </h3>
-              <p className={`font-medium text-sm mt-1 ${plan.popular ? "text-gray-300" : "text-gray-500"}`}>
+              <p className={`font-medium text-sm mt-1 ${plan.id === 'pro' ? "text-gray-300" : "text-gray-500"}`}>
                 {plan.subtitle}
               </p>
             </div>
@@ -447,21 +427,21 @@ const Pricing = ({ onBook }) => (
             <div className={`p-8 flex-grow`}>
               <div className="flex items-baseline mb-8">
                 <span className="font-grotesk font-bold text-5xl md:text-6xl">
-                    €{plan.price}
+                    €{plan.id === 'mentorship' ? '99' : plan.id === 'pro' ? '59' : '29'}
                 </span>
-                <span className={`${plan.popular ? "text-gray-400" : "text-gray-500"} ml-2 font-medium`}>
+                <span className={`${plan.id === 'pro' ? "text-gray-400" : "text-gray-500"} ml-2 font-medium`}>
                   {plan.period}
                 </span>
               </div>
               <ul className="space-y-4 text-sm font-medium">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex gap-3 items-start">
-                    {plan.popular ? (
+                    {plan.id === 'pro' ? (
                         <Star className="w-5 h-5 text-primary shrink-0" fill="currentColor" />
                     ) : (
                         <Check className="w-5 h-5 text-primary shrink-0" />
                     )}
-                    <span className={plan.popular ? "text-gray-200" : "text-gray-600"}>{feature}</span>
+                    <span className={plan.id === 'pro' ? "text-gray-200" : "text-gray-600"}>{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -471,12 +451,12 @@ const Pricing = ({ onBook }) => (
               <button
                 onClick={() => onBook(plan.id)}
                 className={`w-full py-4 rounded-xl font-bold transition-all ${
-                  plan.popular
+                  plan.id === 'pro'
                     ? "bg-primary text-white hover:bg-orange-500 shadow-soft hover:shadow-md hover:-translate-y-0.5"
                     : "bg-gray-50 text-secondary hover:bg-secondary hover:text-white"
                 }`}
               >
-                {plan.popular ? "Empezar Ahora" : "Seleccionar"}
+                {plan.id === 'pro' ? t('pricing.start') : t('pricing.select')}
               </button>
             </div>
           </div>
@@ -484,39 +464,43 @@ const Pricing = ({ onBook }) => (
       </div>
     </div>
   </section>
-)
+  )
+}
 
-const Testimonials = () => (
+const Testimonials = () => {
+  const { t } = useLanguage()
+  const items = t('testimonials.items') || []
+  return (
   <section id="testimonios" className="py-24 px-6 bg-white">
     <div className="container mx-auto max-w-6xl">
       <div className="text-center mb-16">
         <h2 className="font-syne font-bold text-4xl md:text-5xl text-secondary mb-4">
-          Voces <span className="text-primary italic">Reales</span>
+          {t('testimonials.title')} <span className="text-primary italic">{t('testimonials.titleItalic')}</span>
         </h2>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8">
-        {TESTIMONIALS.map((t, idx) => (
+        {items.map((item, idx) => (
           <div
             key={idx}
             className="bg-gray-50 p-8 rounded-3xl hover:-translate-y-1 transition-transform border border-gray-100 shadow-sm"
           >
             <div className="flex items-center gap-1 mb-6">
-              {[...Array(t.stars)].map((_, i) => (
+              {[...Array(5)].map((_, i) => (
                 <Star key={i} size={18} fill="currentColor" className="text-primary" />
               ))}
             </div>
-            <h4 className="font-syne font-bold text-xl text-secondary mb-4">"{t.result}"</h4>
+            <h4 className="font-syne font-bold text-xl text-secondary mb-4">"{item.result}"</h4>
             <p className="text-gray-600 mb-8 font-grotesk leading-relaxed">
-              {t.text}
+              {item.text}
             </p>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-secondary text-white rounded-full flex items-center justify-center font-bold text-lg">
-                {t.name.charAt(0)}
+                {item.name.charAt(0)}
               </div>
               <div>
-                <p className="font-bold text-secondary text-sm">{t.name}</p>
-                <p className="text-xs text-gray-500 font-medium">{t.role}</p>
+                <p className="font-bold text-secondary text-sm">{item.name}</p>
+                <p className="text-xs text-gray-500 font-medium">{item.role}</p>
               </div>
             </div>
           </div>
@@ -524,9 +508,12 @@ const Testimonials = () => (
       </div>
     </div>
   </section>
-)
+  )
+}
 
-const Footer = () => (
+const Footer = () => {
+  const { t } = useLanguage()
+  return (
   <footer className="bg-secondary text-white relative overflow-hidden font-grotesk">
     <div className="container mx-auto max-w-6xl px-6 py-16 relative z-10">
       <div className="flex flex-col md:flex-row justify-between items-center md:items-start md:mb-12 gap-8 text-center md:text-left">
@@ -534,7 +521,7 @@ const Footer = () => (
           <h2 className="font-syne font-bold text-3xl md:text-4xl text-white">
             Español <span className="text-primary italic font-serif">con</span> Sentido
           </h2>
-          <p className="text-gray-400 mt-2 font-light">Comunicar, pensar y sentir.</p>
+          <p className="text-gray-400 mt-2 font-light">{t('footer.subtitle')}</p>
         </div>
 
         <div className="flex gap-4">
@@ -551,46 +538,51 @@ const Footer = () => (
       </div>
 
       <div className="border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-        <p>© 2026 Español Con Sentido. Todos los derechos reservados.</p>
+        <p>{t('footer.rights')}</p>
         <div className="flex gap-6 mt-4 md:mt-0 font-medium">
-          <a href="#" className="hover:text-white transition-colors">Privacidad</a>
-          <a href="#" className="hover:text-white transition-colors">Términos</a>
+          <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
+          <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>
         </div>
       </div>
     </div>
   </footer>
-)
+  )
+}
 
 // --- BOOKING SYSTEM ---
 // Kept largely intact logic-wise, just styled to match brutalism (borders, fonts)
 const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
+  const { t, language } = useLanguage()
+  const services = t('services') || []
+  const modal = t('modal') || {}
+
   const [step, setStep] = useState(1)
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedTime, setSelectedTime] = useState(null)
-  const [service, setService] = useState(
-    SERVICES.find((s) => s.id === initialServiceId) || SERVICES[0]
-  )
+  const [serviceId, setServiceId] = useState(initialServiceId)
 
   useEffect(() => {
     if (isOpen && initialServiceId) {
-      setService(SERVICES.find((s) => s.id === initialServiceId) || SERVICES[0])
+      setServiceId(initialServiceId)
       setStep(1)
       setSelectedDate(null)
       setSelectedTime(null)
     }
   }, [isOpen, initialServiceId])
 
+  const service = services.find((s) => s.id === serviceId) || services[0] || {}
+
   const timeSlots = ["09:00", "10:00", "11:00", "15:00", "16:00", "17:00"]
   const nextDays = React.useMemo(() => Array.from({ length: 5 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() + i + 1)
     return {
-      day: d.toLocaleDateString("es-ES", { weekday: "short" }),
+      day: d.toLocaleDateString(language === 'es' ? "es-ES" : "en-US", { weekday: "short" }),
       date: d.getDate(),
       fullDate: d,
       id: d.toISOString().split('T')[0]
     }
-  }), [])
+  }), [language])
 
   const handleDateSelect = (date, time) => {
     if (date) setSelectedDate(date)
@@ -635,7 +627,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
                   1
                 </span>{" "}
-                Horario
+                {modal.steps?.time}
               </div>
               <div className="w-12 h-0.5 bg-gray-200 mx-4"></div>
               <div
@@ -646,7 +638,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
                   2
                 </span>{" "}
-                Datos
+                {modal.steps?.details}
               </div>
               <div className="w-12 h-0.5 bg-gray-200 mx-4"></div>
               <div
@@ -657,7 +649,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
                   3
                 </span>{" "}
-                Pago
+                {modal.steps?.payment}
               </div>
             </div>
           )}
@@ -666,7 +658,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
           {step === 1 && (
             <div className="animate-fadeIn">
               <h4 className="text-2xl font-syne font-bold text-secondary mb-6">
-                Selecciona tu momento
+                {modal.time?.title}
               </h4>
 
               <div className="grid grid-cols-5 gap-3 mb-8">
@@ -710,7 +702,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                   onClick={() => setStep(2)}
                   className="bg-secondary text-white px-8 py-3.5 rounded-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary/90 transition-all shadow-soft"
                 >
-                  Continuar
+                  {modal.time?.continue}
                 </button>
               </div>
             </div>
@@ -720,58 +712,51 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
           {step === 2 && (
             <div className="animate-fadeIn">
               <h4 className="text-2xl font-syne font-bold text-secondary mb-2">
-                Antes de nuestra clase...
+                {modal.details?.title}
               </h4>
-              <p className="text-gray-500 mb-8">Me gustaría conocerte un poco mejor para adaptar la sesión a ti.</p>
+              <p className="text-gray-500 mb-8">{modal.details?.subtitle}</p>
               
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-secondary mb-2">Nombre Completo</label>
-                    <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder="Ej. María García" />
+                    <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.name}</label>
+                    <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.namePlaceholder} />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-secondary mb-2">Email</label>
-                    <input type="email" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder="tu@email.com" />
+                    <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.email}</label>
+                    <input type="email" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.emailPlaceholder} />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-secondary mb-2">¿Qué te gustaría lograr con el español en este momento?</label>
-                  <select className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
-                    <option value="">Selecciona una opción</option>
-                    <option>Viajes</option>
-                    <option>Trabajo</option>
-                    <option>Conversación cotidiana</option>
-                    <option>Conocer la cultura</option>
-                    <option>Crecimiento personal</option>
-                    <option>Otro</option>
-                  </select>
+                   <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q1}</label>
+                   <select className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
+                     <option value="">{modal.details?.q1Placeholder}</option>
+                     {modal.details?.q1Options?.map((opt, idx) => <option key={idx}>{opt}</option>)}
+                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-secondary mb-2">¿Cómo describirías tu experiencia con el español?</label>
-                  <select className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
-                    <option value="">Selecciona una opción</option>
-                    <option>Puedo mantener conversaciones básicas</option>
-                    <option>Puedo conversar con fluidez</option>
-                    <option>Lo entiendo bien pero quiero expresarme mejor</option>
-                  </select>
+                   <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q2}</label>
+                   <select className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
+                     <option value="">{modal.details?.q2Placeholder}</option>
+                     {modal.details?.q2Options?.map((opt, idx) => <option key={idx}>{opt}</option>)}
+                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-secondary mb-2">¿En qué situaciones te gustaría sentirte más cómodo/a hablando español?</label>
-                  <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder="Ej. reuniones de trabajo, viajes, etc." />
+                  <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q3}</label>
+                  <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q3Placeholder} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-secondary mb-2">¿Qué temas disfrutas conversar?</label>
-                  <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder="Ej. hobbies, cultura, actualidad, etc." />
+                  <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q4}</label>
+                  <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q4Placeholder} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-secondary mb-2">¿Hay algo que te gustaría que supiera antes de nuestra clase? <span className="text-gray-400 font-normal">(Opcional)</span></label>
-                  <textarea rows="2" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder="Escribe aquí..."></textarea>
+                  <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q5} <span className="text-gray-400 font-normal">{modal.details?.optional}</span></label>
+                  <textarea rows="2" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q5Placeholder}></textarea>
                 </div>
               </div>
 
@@ -780,13 +765,13 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                   onClick={() => setStep(1)}
                   className="text-gray-500 font-bold hover:text-secondary transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
                 >
-                  Atrás
+                  {modal.details?.back}
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   className="bg-primary text-white px-8 py-3.5 rounded-xl font-bold shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 transition-all"
                 >
-                  Continuar al pago
+                  {modal.details?.continueText}
                 </button>
               </div>
             </div>
@@ -802,11 +787,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 />
                 <div className="text-sm">
                   <p className="font-bold text-black mb-1 uppercase">
-                    Confirmación requerida
+                    {modal.payment?.alertTitle}
                   </p>
                   <p className="text-gray-600">
-                    Para asegurar tu espacio en la agenda, completaremos el
-                    proceso con el pago seguro.
+                    {modal.payment?.alertDesc}
                   </p>
                 </div>
               </div>
@@ -827,7 +811,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 </div>
                 <div className="h-0.5 bg-black my-4"></div>
                 <div className="flex justify-between items-center text-lg">
-                  <span className="font-bold text-black uppercase">Total</span>
+                  <span className="font-bold text-black uppercase">{modal.payment?.total}</span>
                   <span className="font-bold text-primary">
                     €{service.price}.00
                   </span>
@@ -839,12 +823,12 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                   onClick={handlePaymentSubmit}
                   className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3"
                 >
-                  <span className="italic">Pagar con</span>
+                  <span className="italic">{modal.payment?.payWith}</span>
                   <span className="italic font-extrabold text-2xl">PayPal</span>
                 </button>
 
                 <p className="text-center text-xs text-gray-500 uppercase font-mono">
-                  Plataforma de pago encriptada y segura.
+                  {modal.payment?.secure}
                 </p>
               </div>
 
@@ -852,7 +836,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 onClick={() => setStep(2)}
                 className="w-full text-center mt-6 text-gray-500 text-sm font-bold uppercase hover:text-black hover:underline"
               >
-                Cancelar
+                {modal.payment?.cancel}
               </button>
             </div>
           )}
@@ -864,11 +848,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <CheckCircle size={40} />
               </div>
               <h4 className="text-3xl font-syne font-bold text-black mb-4 uppercase">
-                ¡Todo Listo!
+                {modal.success?.title}
               </h4>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Tu sesión ha sido confirmada. Te hemos enviado un correo con
-                todos los detalles y el enlace de acceso.
+                {modal.success?.desc}
               </p>
 
               <div className="bg-white p-6 rounded-none border-2 border-black shadow-hard-sm text-left space-y-4">
@@ -897,10 +880,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                   </div>
                   <div>
                     <h5 className="font-bold text-black text-sm uppercase">
-                      Política
+                      {modal.success?.policy}
                     </h5>
                     <p className="text-sm text-gray-500">
-                      Reprogramación gratuita hasta 24h antes.
+                      {modal.success?.policyDesc}
                     </p>
                   </div>
                 </div>
@@ -910,7 +893,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 onClick={onClose}
                 className="mt-8 bg-black text-white px-8 py-3 font-bold uppercase border-2 border-black hover:bg-white hover:text-black hover:shadow-hard transition"
               >
-                Volver al Inicio
+                {modal.success?.return}
               </button>
             </div>
           )}
