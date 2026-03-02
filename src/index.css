@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #faf8f5;
+    color: #1a1a1a;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #f38b2a;
+    color: white;
+  }
+}
+
+@layer components {
+  /* Sticky Nav Transition */
+  nav.scrolled {
+    @apply bg-white/95 py-3 shadow-soft backdrop-blur-md;
+  }
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
