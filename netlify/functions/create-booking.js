@@ -4,6 +4,14 @@ function generateBookingId() {
   return 'b_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 11)
 }
 
+async function getPromoDiscount(db, code) {
+  if (!code?.trim()) return null
+  const promo = await db.collection('promocodes').findOne({
+    code: code.trim().toUpperCase(),
+  })
+  return promo
+}
+
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
@@ -11,7 +19,7 @@ export const handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}')
-    const { name, email, date, time, serviceId, serviceTitle, price, questions } = body
+    const { name, email, date, time, serviceId, serviceTitle, price, questions, promoCode } = body
 
     if (!name?.trim() || !email?.trim() || !date || !time || !serviceId || !serviceTitle) {
       return {
@@ -21,10 +29,27 @@ export const handler = async (event) => {
       }
     }
 
-    const amount = Number(price) || 0
+    const originalPrice = Number(price) || 0
+    const db = await getDb()
+
+    let finalPrice = originalPrice
+    let appliedPromo = null
+
+    if (promoCode?.trim()) {
+      const promo = await getPromoDiscount(db, promoCode)
+      if (!promo) {
+        return {
+          statusCode: 400,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Código promocional no válido' }),
+        }
+      }
+      const discount = Number(promo.discountPercent) || 0
+      finalPrice = Math.round(originalPrice * (1 - discount / 100) * 100) / 100
+      appliedPromo = { code: promo.code, discountPercent: discount }
+    }
 
     const bookingId = generateBookingId()
-    const db = await getDb()
     const collection = db.collection('bookings')
 
     const booking = {
@@ -35,7 +60,9 @@ export const handler = async (event) => {
       time,
       serviceId,
       serviceTitle,
-      price: amount,
+      price: originalPrice,
+      finalPrice,
+      appliedPromo,
       questions: questions || {},
       status: 'pending',
       createdAt: new Date(),
@@ -48,6 +75,9 @@ export const handler = async (event) => {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({
         bookingId,
+        finalPrice,
+        originalPrice,
+        appliedPromo,
         message: 'Reserva registrada. Completa el pago en PayPal para confirmar.',
       }),
     }

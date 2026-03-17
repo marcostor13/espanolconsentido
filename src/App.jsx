@@ -577,9 +577,11 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedTime, setSelectedTime] = useState(null)
   const [serviceId, setServiceId] = useState(initialServiceId)
-  const [formData, setFormData] = useState({ name: '', email: '', q1: '', q2: '', q3: '', q4: '', q5: '' })
+  const [formData, setFormData] = useState({ name: '', email: '', promoCode: '', q1: '', q2: '', q3: '', q4: '', q5: '' })
   const [paypalLink, setPaypalLink] = useState(null)
   const [bookingId, setBookingId] = useState(null)
+  const [finalPrice, setFinalPrice] = useState(null)
+  const [appliedPromo, setAppliedPromo] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bookingError, setBookingError] = useState(null)
 
@@ -591,6 +593,8 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setSelectedTime(null)
       setPaypalLink(null)
       setBookingId(null)
+      setFinalPrice(null)
+      setAppliedPromo(null)
       setBookingError(null)
     }
   }, [isOpen, initialServiceId])
@@ -638,15 +642,19 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
           serviceId,
           serviceTitle: service.title,
           price: servicePrice,
+          promoCode: formData.promoCode?.trim() || undefined,
           questions: { q1: formData.q1, q2: formData.q2, q3: formData.q3, q4: formData.q4, q5: formData.q5 },
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al crear la reserva')
       setBookingId(data.bookingId)
+      setFinalPrice(data.finalPrice)
+      setAppliedPromo(data.appliedPromo || null)
       const username = import.meta.env.VITE_PAYPAL_ME_USERNAME || ''
+      const priceToPay = data.finalPrice ?? servicePrice
       const link = username
-        ? (servicePrice > 0 ? `https://www.paypal.me/${username}/${servicePrice}` : `https://www.paypal.me/${username}`)
+        ? (priceToPay > 0 ? `https://www.paypal.me/${username}/${priceToPay}` : `https://www.paypal.me/${username}`)
         : null
       setPaypalLink(link)
       setStep(3)
@@ -823,6 +831,11 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.promoCode} <span className="text-gray-400 font-normal">{modal.details?.optional}</span></label>
+                  <input type="text" value={formData.promoCode} onChange={(e) => updateForm('promoCode', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400 uppercase" placeholder={modal.details?.promoCodePlaceholder} />
+                </div>
+
+                <div>
                   <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q5} <span className="text-gray-400 font-normal">{modal.details?.optional}</span></label>
                   <textarea rows="2" value={formData.q5} onChange={(e) => updateForm('q5', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q5Placeholder}></textarea>
                 </div>
@@ -870,9 +883,15 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                     {service.title}
                   </span>
                   <span className="font-bold text-black text-xl">
-                    €{service.price}
+                    €{servicePrice}
                   </span>
                 </div>
+                {appliedPromo && (
+                  <div className="flex justify-between items-center text-sm text-green-600 mb-1">
+                    <span>{language === 'es' ? 'Descuento' : 'Discount'} ({appliedPromo.code} -{appliedPromo.discountPercent}%)</span>
+                    <span>-€{(servicePrice - (finalPrice ?? servicePrice)).toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-sm text-gray-600">
                   <span>
                     {selectedDate?.fullDate?.toLocaleDateString()} — {selectedTime}
@@ -882,7 +901,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <div className="flex justify-between items-center text-lg">
                   <span className="font-bold text-black uppercase">{modal.payment?.total}</span>
                   <span className="font-bold text-primary">
-                    €{service.price}.00
+                    €{(finalPrice ?? servicePrice).toFixed(2)}
                   </span>
                 </div>
               </div>

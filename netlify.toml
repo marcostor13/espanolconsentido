@@ -15,6 +15,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/seed-promocodes"
+  to = "/.netlify/functions/seed-promocodes"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

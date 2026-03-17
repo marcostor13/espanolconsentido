@@ -31,6 +31,26 @@ https://tu-dominio.netlify.app/api/confirm-payment?bookingId=XXX&token=TU_ADMIN_
 
 O con header: `x-admin-token: TU_ADMIN_TOKEN`
 
+## Códigos promocionales
+
+La colección `promocodes` en MongoDB almacena códigos con su porcentaje de descuento (`code`, `discountPercent`).
+
+Para inicializar el código `WELCOME` (20% de descuento):
+
+**Opción 1 – Script local** (recomendado):
+```bash
+npm run seed:promocodes
+```
+Requiere `.env` con `MONGODB_URI`.
+
+**Opción 2 – Endpoint** (con servidor corriendo):
+```
+https://tu-dominio.netlify.app/api/seed-promocodes
+```
+O en local: `http://localhost:8888/api/seed-promocodes` (GET o POST).
+
+Ambos son idempotentes: pueden ejecutarse varias veces sin duplicar datos.
+
 ## Google Calendar
 
 1. Crear Service Account en Google Cloud

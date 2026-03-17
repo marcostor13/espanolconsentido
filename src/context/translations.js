@@ -175,6 +175,8 @@ export const translations = {
         q5: "¿Hay algo que te gustaría que supiera antes de nuestra clase?",
         optional: "(Opcional)",
         q5Placeholder: "Escribe aquí...",
+        promoCode: "Código promocional",
+        promoCodePlaceholder: "Ej. WELCOME",
         back: "Atrás",
         continueText: "Continuar al pago"
       },
@@ -373,6 +375,8 @@ export const translations = {
         q5: "Is there anything you'd like me to know before our class?",
         optional: "(Optional)",
         q5Placeholder: "Type here...",
+        promoCode: "Promo code",
+        promoCodePlaceholder: "E.g. WELCOME",
         back: "Back",
         continueText: "Continue to payment"
       },
