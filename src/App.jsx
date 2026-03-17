@@ -38,16 +38,17 @@ const Header = ({ onBook }) => {
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-secondary/95 backdrop-blur-md shadow-soft py-3" : "bg-secondary py-5"
+        isScrolled ? "backdrop-blur-md shadow-soft py-3" : "py-5"
       }`}
+      style={{ backgroundColor: isScrolled ? 'rgba(2, 4, 16, 0.95)' : '#020410' }}
     >
       <div className="container mx-auto px-6 flex justify-between items-center text-white">
         {/* Logo */}
         <a href="#" className="flex items-center gap-3 group relative z-50">
           <img 
-             src="/español.png" 
-             alt="Español Con Sentido Logo" 
-             className="h-10 md:h-12 w-auto object-contain transition-transform hover:scale-105 filter brightness-0 invert"
+             src="/logo2_nobg.png" 
+             alt="Español con Sentido - Juanita Sánchez" 
+             className="h-20 md:h-24 w-auto object-contain transition-transform hover:scale-105"
           />
         </a>
 
@@ -94,7 +95,7 @@ const Header = ({ onBook }) => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-secondary border-t border-white/10 p-6 flex flex-col gap-6 z-40 shadow-xl md:hidden animate-fadeIn text-center">
+        <div className="absolute top-full left-0 w-full border-t border-white/10 p-6 flex flex-col gap-6 z-40 shadow-xl md:hidden animate-fadeIn text-center" style={{ backgroundColor: '#020410' }}>
           <div className="flex justify-center gap-4 mb-4">
              <button
               onClick={() => toggleLanguage('es')}
@@ -133,28 +134,35 @@ const Hero = ({ onBook }) => {
   
   return (
   <header className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden bg-light">
-    {/* Background Curve (Top part Navy, Bottom part Light) */}
-    <div className="absolute top-0 left-0 w-full h-[65%] md:h-[75%] bg-secondary z-0 rounded-b-[40px] md:rounded-b-[80px]"></div>
+    {/* Background Curve (sección del video) */}
+    <div className="absolute top-0 left-0 w-full h-[65%] md:h-[75%] z-0 rounded-b-[40px] md:rounded-b-[80px]" style={{ backgroundColor: '#0F0A11' }}></div>
 
     <div className="container mx-auto relative z-10 grid lg:grid-cols-2 gap-12 items-center">
       {/* Left text content */}
       <div className="space-y-8 lg:pr-10 text-center lg:text-left">
         <h1 className="text-5xl md:text-7xl leading-[1.1] text-white">
           <span className="block font-serif font-medium tracking-tight mb-2 text-6xl md:text-8xl">Español</span>
-          <span className="block text-primary font-serif italic text-4xl md:text-5xl my-2 opacity-90">con</span>
-          <span className="block text-primary font-serif font-bold tracking-tight text-6xl md:text-8xl">Sentido</span>
+          <span className="block text-primary font-serif my-2 text-6xl md:text-8xl">
+            <span className="italic opacity-90">con </span><span className="font-bold tracking-tight">Sentido</span>
+          </span>
         </h1>
 
         <p className="text-lg md:text-xl text-gray-200 max-w-lg mx-auto lg:mx-0 font-grotesk font-light">
           {t('hero.subtitle')}
         </p>
 
-        <div className="pt-4 flex justify-center lg:justify-start">
+        <div className="flex flex-wrap justify-center lg:justify-start gap-4" style={{ marginTop: '4rem', paddingTop: '1.5rem' }}>
           <button
             onClick={() => onBook("trial")}
             className="bg-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-soft-lg hover:bg-orange-500 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
           >
             {t('hero.cta')}
+          </button>
+          <button
+            onClick={() => onBook("trial")}
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-lg border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-all"
+          >
+            {t('hero.groupClasses')}
           </button>
         </div>
       </div>
@@ -204,13 +212,23 @@ const AcercaDeMi = () => {
   <section id="sobre-mi" className="py-24 px-6 bg-white font-grotesk">
     <div className="container mx-auto max-w-6xl">
       <div className="grid md:grid-cols-2 gap-16 items-center">
-        <div className="order-2 md:order-1 relative">
-          <div className="absolute inset-0 bg-primary/10 rounded-3xl translate-x-4 translate-y-4"></div>
-          <img 
-            src="https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&w=800&q=80" 
-            alt="Juanita Sánchez" 
-            className="relative z-10 w-full h-auto rounded-3xl shadow-soft-lg object-cover aspect-[4/5]"
-          />
+        <div className="order-2 md:order-1 flex flex-col gap-6">
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/10 rounded-3xl translate-x-4 translate-y-4"></div>
+            <img 
+              src="https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&w=800&q=80" 
+              alt="Juanita Sánchez" 
+              className="relative z-10 w-full h-auto rounded-3xl shadow-soft-lg object-cover aspect-[4/5]"
+            />
+          </div>
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/10 rounded-3xl translate-x-4 translate-y-4"></div>
+            <img 
+              src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80" 
+              alt="Conversación y aprendizaje" 
+              className="relative z-10 w-full h-auto rounded-3xl shadow-soft-lg object-cover aspect-[4/5]"
+            />
+          </div>
         </div>
         <div className="order-1 md:order-2 space-y-6">
           <h2 className="font-syne font-bold text-4xl md:text-5xl text-secondary mb-8">
@@ -302,7 +320,7 @@ const Marquee = () => {
   const { t } = useLanguage()
   const items = t('marquee') || []
   return (
-  <div className="bg-secondary border-y-2 border-black py-4 overflow-hidden transform -rotate-1 origin-left scale-[1.02]">
+  <div className="border-y-2 border-black py-4 overflow-hidden transform -rotate-1 origin-left scale-[1.02]" style={{ backgroundColor: '#020410' }}>
     <div className="whitespace-nowrap animate-marquee flex items-center">
       <div className="flex gap-8 px-4">
         {[...Array(2)].map((_, i) => (
@@ -310,13 +328,13 @@ const Marquee = () => {
             <span className="text-4xl font-syne font-bold text-white uppercase">
               {items[0]}
             </span>
-            <span className="text-4xl font-syne font-bold text-outline-white uppercase">
+            <span className="text-4xl font-syne font-bold text-primary uppercase">
               {items[1]}
             </span>
             <span className="text-4xl font-syne font-bold text-primary uppercase">
               {items[2]}
             </span>
-            <span className="text-4xl font-syne font-bold text-outline-white uppercase">
+            <span className="text-4xl font-syne font-bold text-primary uppercase">
               {items[3]}
             </span>
             <span className="text-4xl font-syne font-bold text-white uppercase">
@@ -405,7 +423,7 @@ const Pricing = ({ onBook }) => {
             key={plan.id}
             className={`rounded-3xl flex flex-col transition-all duration-300 ${
               plan.id === 'pro' 
-                ? "bg-secondary text-white shadow-xl transform md:-translate-y-4 md:scale-105 z-10 border border-secondary/20" 
+                ? "bg-[#020410] text-white shadow-xl transform md:-translate-y-4 md:scale-105 z-10 border border-secondary/20" 
                 : "bg-white text-secondary shadow-soft border border-gray-100 hover:shadow-soft-lg"
             } relative`}
           >
@@ -427,7 +445,7 @@ const Pricing = ({ onBook }) => {
             <div className={`p-8 flex-grow`}>
               <div className="flex items-baseline mb-8">
                 <span className="font-grotesk font-bold text-5xl md:text-6xl">
-                    €{plan.id === 'mentorship' ? '99' : plan.id === 'pro' ? '59' : '29'}
+                    €{plan.price ?? (plan.id === 'mentorship' ? '99' : plan.id === 'pro' ? '59' : '29')}
                 </span>
                 <span className={`${plan.id === 'pro' ? "text-gray-400" : "text-gray-500"} ml-2 font-medium`}>
                   {plan.period}
@@ -453,7 +471,7 @@ const Pricing = ({ onBook }) => {
                 className={`w-full py-4 rounded-xl font-bold transition-all ${
                   plan.id === 'pro'
                     ? "bg-primary text-white hover:bg-orange-500 shadow-soft hover:shadow-md hover:-translate-y-0.5"
-                    : "bg-gray-50 text-secondary hover:bg-secondary hover:text-white"
+                    : "bg-gray-50 text-secondary hover:bg-[#020410] hover:text-white"
                 }`}
               >
                 {plan.id === 'pro' ? t('pricing.start') : t('pricing.select')}
@@ -495,7 +513,7 @@ const Testimonials = () => {
               {item.text}
             </p>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-secondary text-white rounded-full flex items-center justify-center font-bold text-lg">
+              <div className="w-12 h-12 bg-[#020410] text-white rounded-full flex items-center justify-center font-bold text-lg">
                 {item.name.charAt(0)}
               </div>
               <div>
@@ -514,14 +532,13 @@ const Testimonials = () => {
 const Footer = () => {
   const { t } = useLanguage()
   return (
-  <footer className="bg-secondary text-white relative overflow-hidden font-grotesk">
+  <footer className="text-white relative overflow-hidden font-grotesk" style={{ backgroundColor: '#020410' }}>
     <div className="container mx-auto max-w-6xl px-6 py-16 relative z-10">
       <div className="flex flex-col md:flex-row justify-between items-center md:items-start md:mb-12 gap-8 text-center md:text-left">
         <div>
-          <h2 className="font-syne font-bold text-3xl md:text-4xl text-white">
-            Español <span className="text-primary italic font-serif">con</span> Sentido
-          </h2>
-          <p className="text-gray-400 mt-2 font-light">{t('footer.subtitle')}</p>
+          <a href="#" className="inline-block">
+            <img src="/logo2_nobg.png" alt="Español con Sentido - Juanita Sánchez" className="h-20 md:h-24 w-auto object-contain" />
+          </a>
         </div>
 
         <div className="flex gap-4">
@@ -560,6 +577,11 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedTime, setSelectedTime] = useState(null)
   const [serviceId, setServiceId] = useState(initialServiceId)
+  const [formData, setFormData] = useState({ name: '', email: '', q1: '', q2: '', q3: '', q4: '', q5: '' })
+  const [paypalLink, setPaypalLink] = useState(null)
+  const [bookingId, setBookingId] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [bookingError, setBookingError] = useState(null)
 
   useEffect(() => {
     if (isOpen && initialServiceId) {
@@ -567,10 +589,14 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setStep(1)
       setSelectedDate(null)
       setSelectedTime(null)
+      setPaypalLink(null)
+      setBookingId(null)
+      setBookingError(null)
     }
   }, [isOpen, initialServiceId])
 
   const service = services.find((s) => s.id === serviceId) || services[0] || {}
+  const servicePrice = service.price ?? (serviceId === 'mentorship' ? 99 : serviceId === 'pro' ? 59 : 29)
 
   const timeSlots = ["09:00", "10:00", "11:00", "15:00", "16:00", "17:00"]
   const nextDays = React.useMemo(() => Array.from({ length: 5 }, (_, i) => {
@@ -589,15 +615,52 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
     if (time) setSelectedTime(time)
   }
 
-  if (!isOpen) return null
-
-  const handlePaymentSubmit = (e) => {
-    e.preventDefault()
-    setTimeout(() => setStep(4), 1500)
+  const updateForm = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
+  const handleContinueToPayment = async () => {
+    if (!formData.name?.trim() || !formData.email?.trim()) {
+      setBookingError(language === 'es' ? 'Nombre y email son obligatorios' : 'Name and email are required')
+      return
+    }
+    setBookingError(null)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/create-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          date: selectedDate?.id,
+          time: selectedTime,
+          serviceId,
+          serviceTitle: service.title,
+          price: servicePrice,
+          questions: { q1: formData.q1, q2: formData.q2, q3: formData.q3, q4: formData.q4, q5: formData.q5 },
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al crear la reserva')
+      setBookingId(data.bookingId)
+      const username = import.meta.env.VITE_PAYPAL_ME_USERNAME || ''
+      const link = username
+        ? (servicePrice > 0 ? `https://www.paypal.me/${username}/${servicePrice}` : `https://www.paypal.me/${username}`)
+        : null
+      setPaypalLink(link)
+      setStep(3)
+    } catch (err) {
+      setBookingError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/80 backdrop-blur-sm p-4 overflow-y-auto font-grotesk">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020410]/80 backdrop-blur-sm p-4 overflow-y-auto font-grotesk">
       <div className="bg-white w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] rounded-3xl shadow-2xl relative">
         {/* Header */}
         <div className="bg-white text-secondary p-6 flex justify-between items-center shrink-0 border-b border-gray-100">
@@ -700,7 +763,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <button
                   disabled={!selectedDate || !selectedTime}
                   onClick={() => setStep(2)}
-                  className="bg-secondary text-white px-8 py-3.5 rounded-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-secondary/90 transition-all shadow-soft"
+                  className="bg-[#020410] text-white px-8 py-3.5 rounded-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#020410]/90 transition-all shadow-soft"
                 >
                   {modal.time?.continue}
                 </button>
@@ -717,46 +780,51 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
               <p className="text-gray-500 mb-8">{modal.details?.subtitle}</p>
               
               <div className="space-y-6">
+                {bookingError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                    {bookingError}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.name}</label>
-                    <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.namePlaceholder} />
+                    <input type="text" value={formData.name} onChange={(e) => updateForm('name', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.namePlaceholder} />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.email}</label>
-                    <input type="email" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.emailPlaceholder} />
+                    <input type="email" value={formData.email} onChange={(e) => updateForm('email', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.emailPlaceholder} />
                   </div>
                 </div>
 
                 <div>
                    <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q1}</label>
-                   <select className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
+                   <select value={formData.q1} onChange={(e) => updateForm('q1', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
                      <option value="">{modal.details?.q1Placeholder}</option>
-                     {modal.details?.q1Options?.map((opt, idx) => <option key={idx}>{opt}</option>)}
+                     {modal.details?.q1Options?.map((opt, idx) => <option key={idx} value={opt}>{opt}</option>)}
                    </select>
                 </div>
 
                 <div>
                    <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q2}</label>
-                   <select className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
+                   <select value={formData.q2} onChange={(e) => updateForm('q2', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary">
                      <option value="">{modal.details?.q2Placeholder}</option>
-                     {modal.details?.q2Options?.map((opt, idx) => <option key={idx}>{opt}</option>)}
+                     {modal.details?.q2Options?.map((opt, idx) => <option key={idx} value={opt}>{opt}</option>)}
                    </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q3}</label>
-                  <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q3Placeholder} />
+                  <input type="text" value={formData.q3} onChange={(e) => updateForm('q3', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q3Placeholder} />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q4}</label>
-                  <input type="text" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q4Placeholder} />
+                  <input type="text" value={formData.q4} onChange={(e) => updateForm('q4', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q4Placeholder} />
                 </div>
 
                 <div>
                   <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q5} <span className="text-gray-400 font-normal">{modal.details?.optional}</span></label>
-                  <textarea rows="2" className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q5Placeholder}></textarea>
+                  <textarea rows="2" value={formData.q5} onChange={(e) => updateForm('q5', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q5Placeholder}></textarea>
                 </div>
               </div>
 
@@ -768,10 +836,11 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                   {modal.details?.back}
                 </button>
                 <button
-                  onClick={() => setStep(3)}
-                  className="bg-primary text-white px-8 py-3.5 rounded-xl font-bold shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 transition-all"
+                  onClick={handleContinueToPayment}
+                  disabled={loading}
+                  className="bg-primary text-white px-8 py-3.5 rounded-xl font-bold shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {modal.details?.continueText}
+                  {loading ? (language === 'es' ? 'Guardando...' : 'Saving...') : modal.details?.continueText}
                 </button>
               </div>
             </div>
@@ -819,13 +888,31 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
               </div>
 
               <div className="space-y-4">
-                <button
-                  onClick={handlePaymentSubmit}
-                  className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3"
-                >
-                  <span className="italic">{modal.payment?.payWith}</span>
-                  <span className="italic font-extrabold text-2xl">PayPal</span>
-                </button>
+                {paypalLink ? (
+                  <>
+                    <p className="text-gray-600 text-sm mb-2">{modal.payment?.bookingSaved}</p>
+                    <p className="text-gray-500 text-xs mb-4">{modal.payment?.paypalInstruction}</p>
+                    <a
+                      href={paypalLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setStep(4)}
+                      className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
+                    >
+                      <span className="italic">{modal.payment?.payWith}</span>
+                      <span className="italic font-extrabold text-2xl">PayPal</span>
+                    </a>
+                  </>
+                ) : (
+                  <p className="text-gray-600 text-sm">
+                    {modal.payment?.bookingSaved}
+                    {!import.meta.env.VITE_PAYPAL_ME_USERNAME && (
+                      <span className="block mt-2 text-amber-600 text-xs">
+                        {language === 'es' ? 'Configura VITE_PAYPAL_ME_USERNAME en .env' : 'Set VITE_PAYPAL_ME_USERNAME in .env'}
+                      </span>
+                    )}
+                  </p>
+                )}
 
                 <p className="text-center text-xs text-gray-500 uppercase font-mono">
                   {modal.payment?.secure}
@@ -856,7 +943,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
 
               <div className="bg-white p-6 rounded-none border-2 border-black shadow-hard-sm text-left space-y-4">
                 <div className="flex gap-4 items-center">
-                  <div className="w-10 h-10 border-2 border-black bg-secondary flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 border-2 border-black bg-[#020410] flex items-center justify-center shrink-0">
                     <Video className="text-white" size={20} />
                   </div>
                   <div>
@@ -875,7 +962,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <div className="h-0.5 bg-gray-100"></div>
 
                 <div className="flex gap-4 items-center">
-                  <div className="w-10 h-10 border-2 border-black bg-secondary flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 border-2 border-black bg-[#020410] flex items-center justify-center shrink-0">
                     <Clock className="text-white" size={20} />
                   </div>
                   <div>
@@ -916,9 +1003,9 @@ function App() {
     <div className="min-h-screen bg-[#FAFAFA] font-grotesk selection:bg-primary selection:text-white">
       <Header onBook={handleBook} />
       <Hero onBook={handleBook} />
+      <ComoSonLasClases />
       <PhotosGallery />
       <AcercaDeMi />
-      <ComoSonLasClases />
       <Marquee />
       <Philosophy />
       {/* Testimonials added to match request for functionality, styled brutalist */}

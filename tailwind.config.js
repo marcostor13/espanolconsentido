@@ -12,7 +12,7 @@ export default {
       },
       colors: {
         primary: '#f38b2a', // Orange
-        secondary: '#1f3450', // Dark Navy Blue
+        secondary: '#020410', // Fondo header y primera sección
         light: '#faf8f5', // Off-white background
       },
       boxShadow: {

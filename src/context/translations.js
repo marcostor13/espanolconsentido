@@ -10,6 +10,7 @@ export const translations = {
     hero: {
       subtitle: "Gana confianza para hablar español en conversaciones reales. Acompañamiento personalizado para que te expreses con seguridad.",
       cta: "Reserva tu clase de prueba",
+      groupClasses: "Clases Grupales",
     },
     about: {
       title: "Acerca de mí",
@@ -83,12 +84,14 @@ export const translations = {
         title: "Auditoría de Fluidez",
         description: "Un diagnóstico tranquilo y profundo de tu nivel actual.",
         features: ["Diagnóstico de Nivel", "Roadmap Personalizado"],
+        price: 0,
       },
       {
         id: "basic",
         title: "Básico",
         subtitle: "Para curiosos",
         period: "/mes",
+        price: 29,
         features: ["Acceso a lecciones", "Ejercicios PDF", "Comunidad Discord"],
       },
       {
@@ -96,6 +99,7 @@ export const translations = {
         title: "Pro",
         subtitle: "Inmersión Total",
         period: "/mes",
+        price: 59,
         features: ["Todo lo del plan Básico", "2 Sesiones en vivo/semana", "Certificado final", "Corrección de tareas"],
       },
       {
@@ -103,6 +107,7 @@ export const translations = {
         title: "Mentoría",
         subtitle: "Personalizado 1 a 1",
         period: "/mes",
+        price: 99,
         features: ["Todo lo del plan PRO", "1 Sesión individual/semana", "Plan de estudio a medida", "Whatsapp directo"],
       }
     ],
@@ -179,11 +184,13 @@ export const translations = {
         total: "Total",
         payWith: "Pagar con",
         secure: "Plataforma de pago encriptada y segura.",
-        cancel: "Cancelar"
+        cancel: "Cancelar",
+        bookingSaved: "Reserva registrada. Completa el pago en PayPal para confirmar.",
+        paypalInstruction: "Haz clic en el botón para abrir PayPal y completar el pago."
       },
       success: {
-        title: "¡Todo Listo!",
-        desc: "Tu sesión ha sido confirmada. Te hemos enviado un correo con todos los detalles y el enlace de acceso.",
+        title: "¡Reserva registrada!",
+        desc: "Tu reserva ha sido guardada. Completa el pago en la ventana de PayPal que se ha abierto. Te contactaremos cuando confirmemos el pago.",
         policy: "Política",
         policyDesc: "Reprogramación gratuita hasta 24h antes.",
         return: "Volver al Inicio"
@@ -201,6 +208,7 @@ export const translations = {
     hero: {
       subtitle: "Gain confidence to speak Spanish in real conversations. Personalized support so you can express yourself safely.",
       cta: "Book your trial class",
+      groupClasses: "Group Classes",
     },
     about: {
       title: "About me",
@@ -274,12 +282,14 @@ export const translations = {
         title: "Fluency Audit",
         description: "A calm and deep diagnosis of your current level.",
         features: ["Level Diagnosis", "Personalized Roadmap"],
+        price: 0,
       },
       {
         id: "basic",
         title: "Basic",
         subtitle: "For the curious",
         period: "/month",
+        price: 29,
         features: ["Access to lessons", "PDF Exercises", "Discord Community"],
       },
       {
@@ -287,6 +297,7 @@ export const translations = {
         title: "Pro",
         subtitle: "Total Immersion",
         period: "/month",
+        price: 59,
         features: ["Everything in Basic", "2 Live sessions/week", "Final Certificate", "Homework correction"],
       },
       {
@@ -294,6 +305,7 @@ export const translations = {
         title: "Mentorship",
         subtitle: "1-on-1 Personalized",
         period: "/month",
+        price: 99,
         features: ["Everything in PRO", "1 Individual session/week", "Custom study plan", "Direct Whatsapp"],
       }
     ],
@@ -370,11 +382,13 @@ export const translations = {
         total: "Total",
         payWith: "Pay with",
         secure: "Encrypted and secure payment platform.",
-        cancel: "Cancel"
+        cancel: "Cancel",
+        bookingSaved: "Booking saved. Complete the payment on PayPal to confirm.",
+        paypalInstruction: "Click the button to open PayPal and complete the payment."
       },
       success: {
-        title: "All Set!",
-        desc: "Your session has been confirmed. We have sent you an email with all the details and the access link.",
+        title: "Booking saved!",
+        desc: "Your booking has been saved. Complete the payment in the PayPal window that opened. We will contact you when we confirm the payment.",
         policy: "Policy",
         policyDesc: "Free rescheduling up to 24h in advance.",
         return: "Back to Home"

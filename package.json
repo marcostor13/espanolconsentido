@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:netlify": "netlify dev",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
+    "mongodb": "^6.12.0",
+    "googleapis": "^144.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
@@ -24,6 +27,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "netlify-cli": "^17.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "vite": "^7.2.4"
