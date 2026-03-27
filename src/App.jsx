@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import {
   Menu,
   X,
@@ -16,8 +16,11 @@ import {
   Video,
   AlertCircle,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 
+import { Link } from "react-router-dom"
 import { useLanguage } from "./context/LanguageContext"
 
 // --- COMPONENTS ---
@@ -44,20 +47,20 @@ const Header = ({ onBook }) => {
     >
       <div className="container mx-auto px-6 flex justify-between items-center text-white">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-3 group relative z-50">
+        <Link to="/" className="flex items-center gap-3 group relative z-50">
           <img 
              src="/logo2_nobg.png" 
              alt="Español con Sentido - Juanita Sánchez" 
              className="h-20 md:h-24 w-auto object-contain transition-transform hover:scale-105"
           />
-        </a>
+        </Link>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8 font-grotesk text-sm font-medium tracking-wide">
           <a href="#sobre-mi" className="hover:text-primary transition-colors">{t('nav.about')}</a>
           <a href="#clases" className="hover:text-primary transition-colors">{t('nav.classes')}</a>
           <a href="#planes" className="hover:text-primary transition-colors">{t('nav.pricing')}</a>
-          <a href="#politicas" className="hover:text-primary transition-colors">{t('nav.policies')}</a>
+          <Link to="/politicas" className="hover:text-primary transition-colors">{t('nav.policies')}</Link>
           <button 
             onClick={() => onBook("trial")} 
             className="bg-primary text-white px-6 py-2.5 rounded-lg hover:bg-orange-500 transition-all font-bold shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5"
@@ -113,7 +116,7 @@ const Header = ({ onBook }) => {
           <a href="#sobre-mi" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.about')}</a>
           <a href="#clases" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.classes')}</a>
           <a href="#planes" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.pricing')}</a>
-          <a href="#politicas" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.policies')}</a>
+          <Link to="/politicas" onClick={() => setIsMenuOpen(false)} className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors">{t('nav.policies')}</Link>
           <button
              onClick={() => {
                 onBook("trial")
@@ -487,47 +490,130 @@ const Pricing = ({ onBook }) => {
 
 const Testimonials = () => {
   const { t } = useLanguage()
-  const items = t('testimonials.items') || []
+  const groups = t('testimonials.groups') || []
+  const items = Array.isArray(groups) ? groups.flatMap((g) => g.reviews || []) : []
+  const scrollerRef = useRef(null)
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  const getScrollMetrics = useCallback(() => {
+    const el = scrollerRef.current
+    if (!el) return { step: 0, maxIdx: 0 }
+    const card = el.querySelector("[data-testimonial-card]")
+    const style = getComputedStyle(el)
+    const gap = parseFloat(style.columnGap || style.gap || "24") || 24
+    const w = card?.offsetWidth ?? 0
+    const step = w + gap
+    const maxIdx = Math.max(0, items.length - 1)
+    return { step, maxIdx }
+  }, [items.length])
+
+  const syncActiveFromScroll = useCallback(() => {
+    const el = scrollerRef.current
+    if (!el || items.length === 0) return
+    const { step, maxIdx } = getScrollMetrics()
+    if (step <= 0) return
+    const idx = Math.round(el.scrollLeft / step)
+    setActiveIndex(Math.min(maxIdx, Math.max(0, idx)))
+  }, [getScrollMetrics, items.length])
+
+  const scrollToIndex = useCallback(
+    (idx) => {
+      const el = scrollerRef.current
+      if (!el || items.length === 0) return
+      const { step, maxIdx } = getScrollMetrics()
+      if (step <= 0) return
+      const clamped = Math.min(maxIdx, Math.max(0, idx))
+      el.scrollTo({ left: clamped * step, behavior: "smooth" })
+      setActiveIndex(clamped)
+    },
+    [getScrollMetrics, items.length]
+  )
+
+  const scrollByDir = (dir) => scrollToIndex(activeIndex + dir)
+
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    const onScroll = () => syncActiveFromScroll()
+    el.addEventListener("scroll", onScroll, { passive: true })
+    const ro = new ResizeObserver(() => syncActiveFromScroll())
+    ro.observe(el)
+    syncActiveFromScroll()
+    return () => {
+      el.removeEventListener("scroll", onScroll)
+      ro.disconnect()
+    }
+  }, [syncActiveFromScroll, items.length])
+
   return (
   <section id="testimonios" className="py-24 px-6 bg-white">
     <div className="container mx-auto max-w-6xl">
-      <div className="text-center mb-16">
+      <div className="text-center mb-10">
         <h2 className="font-syne font-bold text-4xl md:text-5xl text-secondary mb-4">
           {t('testimonials.title')} <span className="text-primary italic">{t('testimonials.titleItalic')}</span>
         </h2>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {items.map((item, idx) => (
-          <div
-            key={idx}
-            className="bg-gray-50 p-8 rounded-3xl hover:-translate-y-1 transition-transform border border-gray-100 shadow-sm"
-          >
-            <div className="flex items-center gap-1 mb-6">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={18} fill="currentColor" className="text-primary" />
-              ))}
-            </div>
-            <h4 className="font-syne font-bold text-xl text-secondary mb-4">"{item.result}"</h4>
-            <p className="text-gray-600 mb-8 font-grotesk leading-relaxed">
-              {item.text}
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[#020410] text-white rounded-full flex items-center justify-center font-bold text-lg">
-                {item.name.charAt(0)}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => scrollByDir(-1)}
+          disabled={activeIndex <= 0}
+          className="absolute left-0 top-[min(12rem,35%)] z-10 hidden md:flex w-11 h-11 items-center justify-center rounded-full border border-gray-200/80 bg-white/95 text-secondary shadow-md backdrop-blur-sm transition -ml-2 enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-30 disabled:pointer-events-none"
+          aria-label={t('testimonials.prev')}
+        >
+          <ChevronLeft size={22} />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollByDir(1)}
+          disabled={activeIndex >= items.length - 1}
+          className="absolute right-0 top-[min(12rem,35%)] z-10 hidden md:flex w-11 h-11 items-center justify-center rounded-full border border-gray-200/80 bg-white/95 text-secondary shadow-md backdrop-blur-sm transition -mr-2 enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-30 disabled:pointer-events-none"
+          aria-label={t('testimonials.next')}
+        >
+          <ChevronRight size={22} />
+        </button>
+
+        <div
+          ref={scrollerRef}
+          className="flex items-start gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-none -mx-2 px-2 pb-2 md:mx-0 md:px-8 touch-pan-x"
+          role="region"
+          aria-roledescription={t('testimonials.carouselLabel')}
+          aria-label={`${t('testimonials.title')} ${t('testimonials.titleItalic')}`}
+        >
+          {items.map((rev, idx) => (
+            <article
+              key={`${rev.name}-${idx}`}
+              data-testimonial-card
+              className="bg-gradient-to-b from-gray-50 to-white p-6 sm:p-7 rounded-2xl border border-gray-100/90 shadow-sm shrink-0 w-[min(calc(100vw-2rem),22rem)] sm:w-[24rem] max-w-[90vw] snap-center snap-always self-start transition-shadow duration-300 hover:shadow-md hover:border-primary/15"
+            >
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={16} fill="currentColor" className="text-primary" aria-hidden />
+                ))}
               </div>
-              <div>
-                <p className="font-bold text-secondary text-sm">{item.name}</p>
-                <p className="text-xs text-gray-500 font-medium">{item.role}</p>
+              <p className="text-gray-600 font-grotesk leading-relaxed text-[15px] sm:text-base">
+                &ldquo;{rev.text}&rdquo;
+              </p>
+              <div className="flex items-center gap-3 mt-5 pt-5 border-t border-gray-100">
+                <div className="w-11 h-11 bg-[#020410] text-white rounded-full flex items-center justify-center font-bold text-base shrink-0 ring-2 ring-white shadow-sm">
+                  {rev.name.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-secondary text-sm leading-tight">{rev.name}</p>
+                  <p className="text-xs text-gray-500 font-medium mt-0.5">{rev.date}</p>
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            </article>
+          ))}
+        </div>
+
       </div>
     </div>
   </section>
   )
 }
+
 
 const Footer = () => {
   const { t } = useLanguage()
@@ -558,7 +644,7 @@ const Footer = () => {
         <p>{t('footer.rights')}</p>
         <div className="flex gap-6 mt-4 md:mt-0 font-medium">
           <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
-          <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>
+          <Link to="/politicas" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
         </div>
       </div>
     </div>
@@ -584,6 +670,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   const [appliedPromo, setAppliedPromo] = useState(null)
   const [loading, setLoading] = useState(false)
   const [bookingError, setBookingError] = useState(null)
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false)
 
   useEffect(() => {
     if (isOpen && initialServiceId) {
@@ -596,6 +683,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setFinalPrice(null)
       setAppliedPromo(null)
       setBookingError(null)
+      setAcceptedPolicies(false)
     }
   }, [isOpen, initialServiceId])
 
@@ -626,6 +714,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   const handleContinueToPayment = async () => {
     if (!formData.name?.trim() || !formData.email?.trim()) {
       setBookingError(language === 'es' ? 'Nombre y email son obligatorios' : 'Name and email are required')
+      return
+    }
+    if (!acceptedPolicies) {
+      setBookingError(modal.details?.acceptPoliciesError)
       return
     }
     setBookingError(null)
@@ -839,6 +931,30 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                   <label className="block text-sm font-bold text-secondary mb-2">{modal.details?.q5} <span className="text-gray-400 font-normal">{modal.details?.optional}</span></label>
                   <textarea rows="2" value={formData.q5} onChange={(e) => updateForm('q5', e.target.value)} className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-secondary placeholder:text-gray-400" placeholder={modal.details?.q5Placeholder}></textarea>
                 </div>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50/90 p-4 flex gap-3 items-start">
+                  <input
+                    type="checkbox"
+                    id="accept-policies-booking"
+                    checked={acceptedPolicies}
+                    onChange={(e) => setAcceptedPolicies(e.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary/30"
+                  />
+                  <label htmlFor="accept-policies-booking" className="text-sm text-gray-700 leading-snug cursor-pointer">
+                    {modal.details?.acceptPoliciesPrefix}{" "}
+                    <a
+                      href="/politicas"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-bold underline underline-offset-2 hover:text-orange-600"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {modal.details?.acceptPoliciesLink}
+                    </a>
+                    {" "}
+                    <span className="text-gray-500 text-xs">({modal.details?.acceptPoliciesOpenInNewTab})</span>
+                  </label>
+                </div>
               </div>
 
               <div className="mt-10 flex justify-between items-center pt-6 border-t border-gray-100">
@@ -850,7 +966,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 </button>
                 <button
                   onClick={handleContinueToPayment}
-                  disabled={loading}
+                  disabled={loading || !acceptedPolicies}
                   className="bg-primary text-white px-8 py-3.5 rounded-xl font-bold shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (language === 'es' ? 'Guardando...' : 'Saving...') : modal.details?.continueText}

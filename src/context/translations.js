@@ -114,24 +114,132 @@ export const translations = {
     testimonials: {
       title: "Voces",
       titleItalic: "Reales",
-      items: [
+      prev: "Anterior",
+      next: "Siguiente",
+      carouselLabel: "Carrusel",
+      groups: [
         {
-          name: "Sarah Jenkins",
-          role: "CEO Tech Startup",
-          result: "Negociar con confianza",
-          text: "Con este método, no solo aprendí gramática, aprendí a pensar como una latina. La calma y estructura de las clases me dieron la seguridad que necesitaba."
+          label: "Imagen 1",
+          reviews: [
+            { name: "Vadim", date: "18 de mayo de 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" },
+            { name: "Shahad", date: "15 de mayo de 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
+          ]
         },
         {
-          name: "Marcus Thorne",
-          role: "Escritor Freelance",
-          result: "Superé mi miedo a hablar",
-          text: "La 'Auditoría de Fluidez' fue reveladora. No sentí presión, sino un acompañamiento genuino para desbloquear mi español."
+          label: "Imagen 2",
+          reviews: [
+            { name: "Oliwia", date: "16 de junio de 2025", text: "I recommend! Juanita is very nice and speaks very clearly" },
+            { name: "Beata", date: "10 de junio de 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" }
+          ]
         },
         {
-          name: "Elena Rossi",
-          role: "Arquitecta",
-          result: "Feedback preciso",
-          text: "Lo que más valoro es la corrección detallada pero amable. Siento que crezco en cada sesión sin el estrés de las academias tradicionales."
+          label: "Imagen 3",
+          reviews: [
+            { name: "Soyeon", date: "19 de junio de 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" }
+          ]
+        },
+        {
+          label: "Imagen 4",
+          reviews: [
+            { name: "Rafael", date: "5 de agosto de 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
+          ]
+        },
+        {
+          label: "Imagen 5",
+          reviews: [
+            { name: "Mari", date: "29 de octubre de 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
+            { name: "Igor", date: "23 de septiembre de 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
+          ]
+        },
+        {
+          label: "Imagen 6",
+          reviews: [
+            { name: "Jonathan", date: "25 de noviembre de 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
+            { name: "Hatice", date: "16 de noviembre de 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
+          ]
+        },
+        {
+          label: "Imagen 7",
+          reviews: [
+            { name: "Elena", date: "12 de enero de 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
+            { name: "Mihai", date: "27 de noviembre de 2025", text: "Mas de lo que esperaba!" }
+          ]
+        },
+        {
+          label: "Imagen 8",
+          reviews: [
+            { name: "Simone", date: "18 de enero de 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
+          ]
+        }
+      ]
+    },
+    policiesPage: {
+      title: "Políticas de clases",
+      backToHome: "Volver al inicio",
+      intro: "Estas políticas buscan asegurar una experiencia organizada, respetuosa y efectiva para todos los estudiantes.",
+      sections: [
+        {
+          title: "1. Cancelaciones y reprogramaciones",
+          preamble: "Las clases pueden ser canceladas o reprogramadas con un mínimo de 24 horas de anticipación.",
+          bullets: [
+            "Si se cancela con menos de 24 horas, la clase se considerará como realizada.",
+            "Si el estudiante no asiste a la clase, también se considerará como realizada."
+          ]
+        },
+        {
+          title: "2. Puntualidad",
+          preamble: "Se recomienda conectarse a la hora acordada.",
+          bullets: [
+            "La profesora esperará un máximo de 10 a 15 minutos.",
+            "Pasado ese tiempo, la clase se dará por realizada."
+          ]
+        },
+        {
+          title: "3. Reprogramaciones excepcionales",
+          paragraphs: [
+            "En casos excepcionales, se podrá evaluar una reprogramación fuera del plazo establecido, dependiendo de la disponibilidad."
+          ]
+        },
+        {
+          title: "4. Paquetes de clases",
+          preamble: "Las clases se adquieren en paquetes y deben utilizarse dentro de un período determinado desde la fecha de compra:",
+          bullets: [
+            "5 clases: válidas por 2 meses",
+            "10 clases: válidas por 3 meses"
+          ],
+          paragraphs: [
+            "Este plazo busca asegurar la continuidad del aprendizaje.",
+            "No se realizan reembolsos por clases no utilizadas."
+          ]
+        },
+        {
+          title: "5. Compromiso del estudiante",
+          paragraphs: [
+            "El progreso depende de la constancia y participación activa.",
+            "Se recomienda asistir regularmente y aprovechar cada sesión al máximo."
+          ]
+        },
+        {
+          title: "6. Metodología",
+          paragraphs: [
+            "Las clases están enfocadas en la comunicación, la confianza al hablar y el uso real del idioma.",
+            "Cada sesión se adapta a los objetivos y nivel del estudiante."
+          ]
+        },
+        {
+          title: "7. Comunicación",
+          paragraphs: [
+            "Para cualquier consulta, se recomienda comunicarse con anticipación a través de los canales establecidos."
+          ]
+        },
+        {
+          title: "8. Primera clase",
+          preamble: "La primera clase tiene como objetivo:",
+          bullets: [
+            "conocer al estudiante",
+            "evaluar su nivel",
+            "definir objetivos y enfoque de trabajo"
+          ]
         }
       ]
     },
@@ -139,7 +247,7 @@ export const translations = {
       subtitle: "Comunicar, pensar y sentir.",
       rights: "© 2026 Español Con Sentido. Todos los derechos reservados.",
       privacy: "Privacidad",
-      terms: "Términos"
+      terms: "Políticas de clases"
     },
     modal: {
       steps: {
@@ -178,7 +286,11 @@ export const translations = {
         promoCode: "Código promocional",
         promoCodePlaceholder: "Ej. WELCOME",
         back: "Atrás",
-        continueText: "Continuar al pago"
+        continueText: "Continuar al pago",
+        acceptPoliciesPrefix: "He leído y acepto las",
+        acceptPoliciesLink: "Políticas de clases",
+        acceptPoliciesOpenInNewTab: "Abrir en nueva pestaña",
+        acceptPoliciesError: "Debes aceptar las políticas de clases para continuar con la reserva."
       },
       payment: {
         alertTitle: "Confirmación requerida",
@@ -314,24 +426,132 @@ export const translations = {
     testimonials: {
       title: "Real",
       titleItalic: "Voices",
-      items: [
+      prev: "Previous",
+      next: "Next",
+      carouselLabel: "Carousel",
+      groups: [
         {
-          name: "Sarah Jenkins",
-          role: "Startup CEO",
-          result: "Negotiate with confidence",
-          text: "With this method, I didn't just learn grammar, I learned to think like a Latina. The calm and structure of the classes gave me the confidence I needed."
+          label: "Image 1",
+          reviews: [
+            { name: "Vadim", date: "May 18, 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" },
+            { name: "Shahad", date: "May 15, 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
+          ]
         },
         {
-          name: "Marcus Thorne",
-          role: "Freelance Writer",
-          result: "Overcame my fear of speaking",
-          text: "The 'Fluency Audit' was an eye-opener. I felt no pressure, just genuine support to unlock my Spanish."
+          label: "Image 2",
+          reviews: [
+            { name: "Oliwia", date: "June 16, 2025", text: "I recommend! Juanita is very nice and speaks very clearly" },
+            { name: "Beata", date: "June 10, 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" }
+          ]
         },
         {
-          name: "Elena Rossi",
-          role: "Architect",
-          result: "Precise feedback",
-          text: "What I value most is the detailed yet kind correction. I feel I grow in every session without the stress of traditional academies."
+          label: "Image 3",
+          reviews: [
+            { name: "Soyeon", date: "June 19, 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" }
+          ]
+        },
+        {
+          label: "Image 4",
+          reviews: [
+            { name: "Rafael", date: "August 5, 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
+          ]
+        },
+        {
+          label: "Image 5",
+          reviews: [
+            { name: "Mari", date: "October 29, 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
+            { name: "Igor", date: "September 23, 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
+          ]
+        },
+        {
+          label: "Image 6",
+          reviews: [
+            { name: "Jonathan", date: "November 25, 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
+            { name: "Hatice", date: "November 16, 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
+          ]
+        },
+        {
+          label: "Image 7",
+          reviews: [
+            { name: "Elena", date: "January 12, 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
+            { name: "Mihai", date: "November 27, 2025", text: "Mas de lo que esperaba!" }
+          ]
+        },
+        {
+          label: "Image 8",
+          reviews: [
+            { name: "Simone", date: "January 18, 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
+          ]
+        }
+      ]
+    },
+    policiesPage: {
+      title: "Class policies",
+      backToHome: "Back to home",
+      intro: "These policies aim to ensure an organized, respectful, and effective experience for all students.",
+      sections: [
+        {
+          title: "1. Cancellations and rescheduling",
+          preamble: "Classes may be cancelled or rescheduled with at least 24 hours' notice.",
+          bullets: [
+            "If you cancel with less than 24 hours' notice, the class will be counted as completed.",
+            "If the student does not attend, the class will also be counted as completed."
+          ]
+        },
+        {
+          title: "2. Punctuality",
+          preamble: "Please connect at the agreed time.",
+          bullets: [
+            "The teacher will wait up to 10–15 minutes.",
+            "After that, the class will be considered completed."
+          ]
+        },
+        {
+          title: "3. Exceptional rescheduling",
+          paragraphs: [
+            "In exceptional cases, rescheduling outside the standard window may be considered depending on availability."
+          ]
+        },
+        {
+          title: "4. Class packages",
+          preamble: "Classes are purchased in packages and must be used within a set period from the purchase date:",
+          bullets: [
+            "5 classes: valid for 2 months",
+            "10 classes: valid for 3 months"
+          ],
+          paragraphs: [
+            "This timeframe supports steady progress in your learning.",
+            "No refunds are given for unused classes."
+          ]
+        },
+        {
+          title: "5. Student commitment",
+          paragraphs: [
+            "Progress depends on consistency and active participation.",
+            "We recommend attending regularly and making the most of each session."
+          ]
+        },
+        {
+          title: "6. Methodology",
+          paragraphs: [
+            "Sessions focus on communication, speaking confidence, and real-life use of the language.",
+            "Each session is adapted to your goals and level."
+          ]
+        },
+        {
+          title: "7. Communication",
+          paragraphs: [
+            "For any questions, please reach out in advance through the agreed channels."
+          ]
+        },
+        {
+          title: "8. First class",
+          preamble: "The first class is aimed at:",
+          bullets: [
+            "getting to know the student",
+            "assessing their level",
+            "defining goals and focus for our work together"
+          ]
         }
       ]
     },
@@ -339,7 +559,7 @@ export const translations = {
       subtitle: "Communicate, think, and feel.",
       rights: "© 2026 Español Con Sentido. All rights reserved.",
       privacy: "Privacy",
-      terms: "Terms"
+      terms: "Class policies"
     },
     modal: {
       steps: {
@@ -378,7 +598,11 @@ export const translations = {
         promoCode: "Promo code",
         promoCodePlaceholder: "E.g. WELCOME",
         back: "Back",
-        continueText: "Continue to payment"
+        continueText: "Continue to payment",
+        acceptPoliciesPrefix: "I have read and accept the",
+        acceptPoliciesLink: "Class policies",
+        acceptPoliciesOpenInNewTab: "Open in new tab",
+        acceptPoliciesError: "You must accept the class policies to continue with your booking."
       },
       payment: {
         alertTitle: "Confirmation required",
