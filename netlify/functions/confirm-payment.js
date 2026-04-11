@@ -1,5 +1,6 @@
 import { getDb } from './_shared/mongodb.js'
 import { createCalendarEvent } from './_shared/google-calendar.js'
+import { sendBookingConfirmation } from './_shared/email.js'
 
 export const handler = async (event) => {
   const token = event.queryStringParameters?.token || event.headers['x-admin-token']
@@ -44,8 +45,14 @@ export const handler = async (event) => {
 
     const [year, month, day] = booking.date.split('-').map(Number)
     const [hours, minutes] = booking.time.split(':').map(Number)
-    const startDate = new Date(year, month - 1, day, hours, minutes)
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+
+    // Format as local time strings for Google Calendar (with timeZone field)
+    const pad = (n) => String(n).padStart(2, '0')
+    const startLocal = `${booking.date}T${pad(hours)}:${pad(minutes)}:00`
+    const endMinutes = hours * 60 + minutes + 60
+    const endHour = Math.floor(endMinutes / 60)
+    const endMin = endMinutes % 60
+    const endLocal = `${booking.date}T${pad(endHour)}:${pad(endMin)}:00`
 
     const summary = `${booking.serviceTitle} - ${booking.name}`
     const descParts = [
@@ -59,9 +66,22 @@ export const handler = async (event) => {
     await createCalendarEvent({
       summary,
       description,
-      start: startDate.toISOString(),
-      end: endDate.toISOString(),
-      attendeeEmail: booking.email,
+      start: startLocal,
+      end: endLocal,
+    })
+
+    // Send email notifications
+    await sendBookingConfirmation({
+      toName: booking.name,
+      toEmail: booking.email,
+      bookingDetails: {
+        date: booking.date,
+        time: booking.time,
+        serviceTitle: booking.serviceTitle,
+        finalPrice: booking.finalPrice,
+        name: booking.name,
+        email: booking.email,
+      },
     })
 
     await collection.updateOne(

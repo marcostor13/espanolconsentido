@@ -14,28 +14,29 @@ export async function createCalendarEvent({ summary, description, start, end, at
     throw new Error('Configuración de Google Calendar incompleta')
   }
 
+  console.log('Creating calendar event:', { calendarId, summary, start, end })
+
   const event = {
     summary,
     description: description || '',
     start: {
       dateTime: start,
-      timeZone: 'Europe/Madrid',
+      timeZone: 'America/Lima',
     },
     end: {
       dateTime: end,
-      timeZone: 'Europe/Madrid',
+      timeZone: 'America/Lima',
     },
-  }
-
-  if (attendeeEmail) {
-    event.attendees = [{ email: attendeeEmail }]
+    eventType: 'default',
   }
 
   const res = await calendar.events.insert({
     calendarId,
     requestBody: event,
-    sendUpdates: attendeeEmail ? 'all' : 'none',
+    sendUpdates: 'none',
+    conferenceDataVersion: 'none',
   })
 
+  console.log('Event created successfully:', res.data?.id)
   return res.data
 }

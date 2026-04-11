@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import {
   Menu,
   X,
@@ -48,9 +48,9 @@ const Header = ({ onBook }) => {
       <div className="container mx-auto px-6 flex justify-between items-center text-white">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group relative z-50">
-          <img 
-             src="/logo2_nobg.png" 
-             alt="Español con Sentido - Juanita Sánchez" 
+          <img
+             src="/logo2_nobg.png"
+             alt="Español con Sentido - Juanita Sánchez"
              className="h-20 md:h-24 w-auto object-contain transition-transform hover:scale-105"
           />
         </Link>
@@ -149,6 +149,9 @@ const Hero = ({ onBook }) => {
             <span className="italic opacity-90">con </span><span className="font-bold tracking-tight">Sentido</span>
           </span>
         </h1>
+        <p className="text-2xl md:text-3xl text-white/90 max-w-lg mx-auto lg:mx-0 font-serif font-light italic tracking-wide mt-2 mb-6">
+          Español para comunicar, expresar y sentir
+        </p>
 
         <p className="text-lg md:text-xl text-gray-200 max-w-lg mx-auto lg:mx-0 font-grotesk font-light">
           {t('hero.subtitle')}
@@ -492,6 +495,7 @@ const Testimonials = () => {
   const { t } = useLanguage()
   const groups = t('testimonials.groups') || []
   const items = Array.isArray(groups) ? groups.flatMap((g) => g.reviews || []) : []
+  const itemsReversed = useMemo(() => [...items].reverse(), [items])
   const scrollerRef = useRef(null)
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -503,30 +507,30 @@ const Testimonials = () => {
     const gap = parseFloat(style.columnGap || style.gap || "24") || 24
     const w = card?.offsetWidth ?? 0
     const step = w + gap
-    const maxIdx = Math.max(0, items.length - 1)
+    const maxIdx = Math.max(0, itemsReversed.length - 1)
     return { step, maxIdx }
-  }, [items.length])
+  }, [itemsReversed.length])
 
   const syncActiveFromScroll = useCallback(() => {
     const el = scrollerRef.current
-    if (!el || items.length === 0) return
+    if (!el || itemsReversed.length === 0) return
     const { step, maxIdx } = getScrollMetrics()
     if (step <= 0) return
     const idx = Math.round(el.scrollLeft / step)
     setActiveIndex(Math.min(maxIdx, Math.max(0, idx)))
-  }, [getScrollMetrics, items.length])
+  }, [getScrollMetrics, itemsReversed.length])
 
   const scrollToIndex = useCallback(
     (idx) => {
       const el = scrollerRef.current
-      if (!el || items.length === 0) return
+      if (!el || itemsReversed.length === 0) return
       const { step, maxIdx } = getScrollMetrics()
       if (step <= 0) return
       const clamped = Math.min(maxIdx, Math.max(0, idx))
       el.scrollTo({ left: clamped * step, behavior: "smooth" })
       setActiveIndex(clamped)
     },
-    [getScrollMetrics, items.length]
+    [getScrollMetrics, itemsReversed.length]
   )
 
   const scrollByDir = (dir) => scrollToIndex(activeIndex + dir)
@@ -543,7 +547,7 @@ const Testimonials = () => {
       el.removeEventListener("scroll", onScroll)
       ro.disconnect()
     }
-  }, [syncActiveFromScroll, items.length])
+  }, [syncActiveFromScroll, itemsReversed.length])
 
   return (
   <section id="testimonios" className="py-24 px-6 bg-white">
@@ -567,7 +571,7 @@ const Testimonials = () => {
         <button
           type="button"
           onClick={() => scrollByDir(1)}
-          disabled={activeIndex >= items.length - 1}
+          disabled={activeIndex >= itemsReversed.length - 1}
           className="absolute right-0 top-[min(12rem,35%)] z-10 hidden md:flex w-11 h-11 items-center justify-center rounded-full border border-gray-200/80 bg-white/95 text-secondary shadow-md backdrop-blur-sm transition -mr-2 enabled:hover:border-primary enabled:hover:text-primary disabled:opacity-30 disabled:pointer-events-none"
           aria-label={t('testimonials.next')}
         >
@@ -581,7 +585,7 @@ const Testimonials = () => {
           aria-roledescription={t('testimonials.carouselLabel')}
           aria-label={`${t('testimonials.title')} ${t('testimonials.titleItalic')}`}
         >
-          {items.map((rev, idx) => (
+          {itemsReversed.map((rev, idx) => (
             <article
               key={`${rev.name}-${idx}`}
               data-testimonial-card
@@ -1031,7 +1035,22 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                       href={paypalLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => setStep(4)}
+                      onClick={async () => {
+                        try {
+                          const token = import.meta.env.VITE_ADMIN_TOKEN || ''
+                          const url = `/api/confirm-payment?bookingId=${bookingId}${token ? `&token=${token}` : ''}`
+                          const res = await fetch(url)
+                          const data = await res.json()
+                          if (!res.ok) {
+                            console.error('Error confirming payment:', data.error)
+                          } else {
+                            console.log('Payment confirmed:', data.message)
+                          }
+                        } catch (err) {
+                          console.error('Failed to confirm payment:', err.message)
+                        }
+                        setStep(4)
+                      }}
                       className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
                     >
                       <span className="italic">{modal.payment?.payWith}</span>
