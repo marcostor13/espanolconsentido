@@ -41,6 +41,16 @@ export const translations = {
         {
           title: "Guía Natural",
           desc: "Mientras conversamos, te acompaño con sugerencias naturales y reformulaciones sutiles para que tu español suene cada vez más fluido, sin romper el ritmo de la charla. Sentirás el español como un medio auténtico para comunicarte."
+        },
+        {
+          title: "Clases personalizadas de español",
+          bullets: [
+            "Conversación real",
+            "Material adaptado a tu nivel",
+            "Clases dinámicas y enfocadas en comunicación",
+            "Español para viajes, trabajo y vida cotidiana",
+            "Clases online de 50 minutos"
+          ]
         }
       ]
     },
@@ -81,36 +91,75 @@ export const translations = {
     services: [
       {
         id: "trial",
-        title: "Auditoría de Fluidez",
-        description: "Un diagnóstico tranquilo y profundo de tu nivel actual.",
-        features: ["Diagnóstico de Nivel", "Roadmap Personalizado"],
-        price: 0,
+        title: "Clase de prueba",
+        subtitle: "Una sola vez por estudiante",
+        price: 10,
+        hidden: true,
+        features: [
+          "Conversación guiada para evaluar tu nivel real de español",
+          "Corrección en vivo para identificar tus principales errores",
+          "Recomendaciones claras y personalizadas para mejorar",
+          "Mini plan de acción según tus objetivos",
+          "Si decides continuar, el valor de esta clase se descuenta en tu primer paquete"
+        ],
       },
       {
-        id: "basic",
-        title: "Básico",
-        subtitle: "Para curiosos",
-        period: "/mes",
-        price: 29,
-        features: ["Acceso a lecciones", "Ejercicios PDF", "Comunidad Discord"],
+        id: "inicio",
+        title: "Plan Inicio",
+        subtitle: "4 clases",
+        price: 76,
+        features: [
+          "Clases personalizadas enfocadas en conversación real desde el primer día",
+          "Corrección en tiempo real para mejorar tu forma de expresarte",
+          "Incorporas vocabulario y estructuras útiles de forma natural",
+          "Ganas seguridad para comunicarte en situaciones cotidianas"
+        ],
+      },
+      {
+        id: "progreso",
+        title: "Plan Progreso",
+        subtitle: "8 clases",
+        price: 144,
+        features: [
+          "Todo lo del Plan Inicio",
+          "Seguimiento continuo de tu avance en cada sesión",
+          "Práctica constante para desarrollar fluidez al hablar",
+          "Refuerzas tu forma de expresarte con mayor organización y naturalidad"
+        ],
       },
       {
         id: "pro",
-        title: "Pro",
-        subtitle: "Inmersión Total",
-        period: "/mes",
-        price: 59,
-        features: ["Todo lo del plan Básico", "2 Sesiones en vivo/semana", "Certificado final", "Corrección de tareas"],
+        title: "Plan Fluidez",
+        subtitle: "12 clases",
+        price: 204,
+        features: [
+          "Todo lo del Plan Progreso",
+          "Trabajo más profundo en naturalidad, precisión y fluidez",
+          "Mayor continuidad en el proceso para afianzar tu español",
+          "Te desenvuelves con más soltura en conversaciones reales",
+          "Incluye 1 clase adicional: experiencia de conversación real con dos hablantes nativos",
+          "Practicas en un entorno más dinámico y auténtico",
+          "Te adaptas a diferentes formas de hablar español",
+          "Mejoras tu comprensión y soltura en tiempo real"
+        ],
       },
       {
-        id: "mentorship",
-        title: "Mentoría",
-        subtitle: "Personalizado 1 a 1",
-        period: "/mes",
-        price: 99,
-        features: ["Todo lo del plan PRO", "1 Sesión individual/semana", "Plan de estudio a medida", "Whatsapp directo"],
+        id: "individual",
+        title: "Clase individual",
+        subtitle: "Sesión puntual",
+        price: 20,
+        features: [
+          "Sesión puntual para practicar o resolver una duda específica",
+          "Conversación guiada con corrección en tiempo real",
+          "Enfocada en una necesidad concreta del momento",
+          "Recomendada como clase ocasional — para un progreso continuo, se sugiere un paquete"
+        ],
       }
     ],
+    referral: {
+      title: "Programa de recomendación",
+      desc: "Si un estudiante recomienda a una nueva persona y esta adquiere un paquete de clases, el estudiante recibe 1 clase adicional sin costo en su próximo paquete."
+    },
     testimonials: {
       title: "Voces",
       titleItalic: "Reales",
@@ -119,56 +168,57 @@ export const translations = {
       carouselLabel: "Carrusel",
       groups: [
         {
-          label: "Imagen 1",
+          label: "Recientes 1",
           reviews: [
-            { name: "Vadim", date: "18 de mayo de 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" },
-            { name: "Shahad", date: "15 de mayo de 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
+            { name: "Carlos", date: "22 de abril de 2026", text: "The dynamics of the class are very good. It encourages you to make an effort in applying what is presented. Something I would like to share is Juanita's charisma and willingness during the classes. She provides a lot of support and guidance. She is a dynamic teacher who captivates. With her, you know that the class will not be boring. I made a good choice!" },
+            { name: "Simone", date: "18 de enero de 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
           ]
         },
         {
-          label: "Imagen 2",
-          reviews: [
-            { name: "Oliwia", date: "16 de junio de 2025", text: "I recommend! Juanita is very nice and speaks very clearly" },
-            { name: "Beata", date: "10 de junio de 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" }
-          ]
-        },
-        {
-          label: "Imagen 3",
-          reviews: [
-            { name: "Soyeon", date: "19 de junio de 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" }
-          ]
-        },
-        {
-          label: "Imagen 4",
-          reviews: [
-            { name: "Rafael", date: "5 de agosto de 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
-          ]
-        },
-        {
-          label: "Imagen 5",
-          reviews: [
-            { name: "Mari", date: "29 de octubre de 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
-            { name: "Igor", date: "23 de septiembre de 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
-          ]
-        },
-        {
-          label: "Imagen 6",
-          reviews: [
-            { name: "Jonathan", date: "25 de noviembre de 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
-            { name: "Hatice", date: "16 de noviembre de 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
-          ]
-        },
-        {
-          label: "Imagen 7",
+          label: "Recientes 2",
           reviews: [
             { name: "Elena", date: "12 de enero de 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
             { name: "Mihai", date: "27 de noviembre de 2025", text: "Mas de lo que esperaba!" }
           ]
         },
         {
-          label: "Imagen 8",
+          label: "Noviembre 2025",
           reviews: [
-            { name: "Simone", date: "18 de enero de 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
+            { name: "Jonathan", date: "25 de noviembre de 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
+            { name: "Hatice", date: "16 de noviembre de 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
+          ]
+        },
+        {
+          label: "Octubre-Septiembre 2025",
+          reviews: [
+            { name: "Mari", date: "29 de octubre de 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
+            { name: "Igor", date: "23 de septiembre de 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
+          ]
+        },
+        {
+          label: "Agosto 2025",
+          reviews: [
+            { name: "Rafael", date: "5 de agosto de 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
+          ]
+        },
+        {
+          label: "Junio 2025",
+          reviews: [
+            { name: "Soyeon", date: "19 de junio de 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" },
+            { name: "Oliwia", date: "16 de junio de 2025", text: "I recommend! Juanita is very nice and speaks very clearly" }
+          ]
+        },
+        {
+          label: "Mayo-Junio 2025",
+          reviews: [
+            { name: "Beata", date: "10 de junio de 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" },
+            { name: "Vadim", date: "18 de mayo de 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" }
+          ]
+        },
+        {
+          label: "Mayo 2025",
+          reviews: [
+            { name: "Shahad", date: "15 de mayo de 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
           ]
         }
       ]
@@ -195,21 +245,22 @@ export const translations = {
           ]
         },
         {
-          title: "3. Reprogramaciones excepcionales",
-          paragraphs: [
-            "En casos excepcionales, se podrá evaluar una reprogramación fuera del plazo establecido, dependiendo de la disponibilidad."
-          ]
-        },
-        {
-          title: "4. Paquetes de clases",
+          title: "3. Paquetes de clases",
           preamble: "Las clases se adquieren en paquetes y deben utilizarse dentro de un período determinado desde la fecha de compra:",
           bullets: [
-            "5 clases: válidas por 2 meses",
-            "10 clases: válidas por 3 meses"
+            "4 clases → válidas por 1 mes",
+            "8 clases → válidas por 2 meses",
+            "12 clases → válidas por 3 meses"
           ],
           paragraphs: [
             "Este plazo busca asegurar la continuidad del aprendizaje.",
             "No se realizan reembolsos por clases no utilizadas."
+          ]
+        },
+        {
+          title: "4. Clase de prueba",
+          paragraphs: [
+            "La clase de prueba es solo una por estudiante."
           ]
         },
         {
@@ -220,25 +271,9 @@ export const translations = {
           ]
         },
         {
-          title: "6. Metodología",
-          paragraphs: [
-            "Las clases están enfocadas en la comunicación, la confianza al hablar y el uso real del idioma.",
-            "Cada sesión se adapta a los objetivos y nivel del estudiante."
-          ]
-        },
-        {
-          title: "7. Comunicación",
+          title: "6. Comunicación",
           paragraphs: [
             "Para cualquier consulta, se recomienda comunicarse con anticipación a través de los canales establecidos."
-          ]
-        },
-        {
-          title: "8. Primera clase",
-          preamble: "La primera clase tiene como objetivo:",
-          bullets: [
-            "conocer al estudiante",
-            "evaluar su nivel",
-            "definir objetivos y enfoque de trabajo"
           ]
         }
       ]
@@ -353,6 +388,16 @@ export const translations = {
         {
           title: "Natural Guidance",
           desc: "While we converse, I accompany you with natural suggestions and subtle reformulations so your Spanish sounds increasingly fluent without breaking the rhythm of the chat. You'll feel Spanish as an authentic medium to communicate."
+        },
+        {
+          title: "Personalized Spanish classes",
+          bullets: [
+            "Real conversation",
+            "Material adapted to your level",
+            "Dynamic classes focused on communication",
+            "Spanish for travel, work, and everyday life",
+            "Online classes of 50 minutes"
+          ]
         }
       ]
     },
@@ -393,36 +438,75 @@ export const translations = {
     services: [
       {
         id: "trial",
-        title: "Fluency Audit",
-        description: "A calm and deep diagnosis of your current level.",
-        features: ["Level Diagnosis", "Personalized Roadmap"],
-        price: 0,
+        title: "Trial Class",
+        subtitle: "One time per student",
+        price: 10,
+        hidden: true,
+        features: [
+          "Guided conversation to assess your real Spanish level",
+          "Live correction to identify your main mistakes",
+          "Clear and personalized recommendations to improve",
+          "Mini action plan based on your goals",
+          "If you decide to continue, the value of this class is deducted from your first package"
+        ],
       },
       {
-        id: "basic",
-        title: "Basic",
-        subtitle: "For the curious",
-        period: "/month",
-        price: 29,
-        features: ["Access to lessons", "PDF Exercises", "Discord Community"],
+        id: "inicio",
+        title: "Starter Plan",
+        subtitle: "4 classes",
+        price: 76,
+        features: [
+          "Personalized classes focused on real conversation from day one",
+          "Real-time correction to improve how you express yourself",
+          "You incorporate useful vocabulary and structures naturally",
+          "You gain confidence to communicate in everyday situations"
+        ],
+      },
+      {
+        id: "progreso",
+        title: "Progress Plan",
+        subtitle: "8 classes",
+        price: 144,
+        features: [
+          "Everything in Starter Plan",
+          "Ongoing tracking of your progress in each session",
+          "Consistent practice to develop speaking fluency",
+          "You reinforce how you express yourself with greater organization and naturalness"
+        ],
       },
       {
         id: "pro",
-        title: "Pro",
-        subtitle: "Total Immersion",
-        period: "/month",
-        price: 59,
-        features: ["Everything in Basic", "2 Live sessions/week", "Final Certificate", "Homework correction"],
+        title: "Fluency Plan",
+        subtitle: "12 classes",
+        price: 204,
+        features: [
+          "Everything in Progress Plan",
+          "Deeper work on naturalness, precision, and fluency",
+          "Greater continuity in the process to consolidate your Spanish",
+          "You handle yourself with more ease in real conversations",
+          "Includes 1 additional class: real conversation experience with two native speakers",
+          "You practice in a more dynamic and authentic environment",
+          "You adapt to different ways of speaking Spanish",
+          "You improve your comprehension and fluency in real time"
+        ],
       },
       {
-        id: "mentorship",
-        title: "Mentorship",
-        subtitle: "1-on-1 Personalized",
-        period: "/month",
-        price: 99,
-        features: ["Everything in PRO", "1 Individual session/week", "Custom study plan", "Direct Whatsapp"],
+        id: "individual",
+        title: "Individual Class",
+        subtitle: "One-time session",
+        price: 20,
+        features: [
+          "One-time session to practice or resolve a specific question",
+          "Guided conversation with real-time correction",
+          "Focused on a specific need of the moment",
+          "Recommended as an occasional class — for continuous progress, a package is suggested"
+        ],
       }
     ],
+    referral: {
+      title: "Referral Program",
+      desc: "If a student recommends someone new who purchases a class package, the referring student receives 1 additional class at no cost in their next package."
+    },
     testimonials: {
       title: "Real",
       titleItalic: "Voices",
@@ -431,56 +515,57 @@ export const translations = {
       carouselLabel: "Carousel",
       groups: [
         {
-          label: "Image 1",
+          label: "Recent 1",
           reviews: [
-            { name: "Vadim", date: "May 18, 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" },
-            { name: "Shahad", date: "May 15, 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
+            { name: "Carlos", date: "April 22, 2026", text: "The dynamics of the class are very good. It encourages you to make an effort in applying what is presented. Something I would like to share is Juanita's charisma and willingness during the classes. She provides a lot of support and guidance. She is a dynamic teacher who captivates. With her, you know that the class will not be boring. I made a good choice!" },
+            { name: "Simone", date: "January 18, 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
           ]
         },
         {
-          label: "Image 2",
-          reviews: [
-            { name: "Oliwia", date: "June 16, 2025", text: "I recommend! Juanita is very nice and speaks very clearly" },
-            { name: "Beata", date: "June 10, 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" }
-          ]
-        },
-        {
-          label: "Image 3",
-          reviews: [
-            { name: "Soyeon", date: "June 19, 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" }
-          ]
-        },
-        {
-          label: "Image 4",
-          reviews: [
-            { name: "Rafael", date: "August 5, 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
-          ]
-        },
-        {
-          label: "Image 5",
-          reviews: [
-            { name: "Mari", date: "October 29, 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
-            { name: "Igor", date: "September 23, 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
-          ]
-        },
-        {
-          label: "Image 6",
-          reviews: [
-            { name: "Jonathan", date: "November 25, 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
-            { name: "Hatice", date: "November 16, 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
-          ]
-        },
-        {
-          label: "Image 7",
+          label: "Recent 2",
           reviews: [
             { name: "Elena", date: "January 12, 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
             { name: "Mihai", date: "November 27, 2025", text: "Mas de lo que esperaba!" }
           ]
         },
         {
-          label: "Image 8",
+          label: "November 2025",
           reviews: [
-            { name: "Simone", date: "January 18, 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
+            { name: "Jonathan", date: "November 25, 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
+            { name: "Hatice", date: "November 16, 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
+          ]
+        },
+        {
+          label: "Oct-Sep 2025",
+          reviews: [
+            { name: "Mari", date: "October 29, 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
+            { name: "Igor", date: "September 23, 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
+          ]
+        },
+        {
+          label: "August 2025",
+          reviews: [
+            { name: "Rafael", date: "August 5, 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
+          ]
+        },
+        {
+          label: "June 2025",
+          reviews: [
+            { name: "Soyeon", date: "June 19, 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" },
+            { name: "Oliwia", date: "June 16, 2025", text: "I recommend! Juanita is very nice and speaks very clearly" }
+          ]
+        },
+        {
+          label: "May-June 2025",
+          reviews: [
+            { name: "Beata", date: "June 10, 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" },
+            { name: "Vadim", date: "May 18, 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" }
+          ]
+        },
+        {
+          label: "May 2025",
+          reviews: [
+            { name: "Shahad", date: "May 15, 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
           ]
         }
       ]
@@ -507,21 +592,22 @@ export const translations = {
           ]
         },
         {
-          title: "3. Exceptional rescheduling",
-          paragraphs: [
-            "In exceptional cases, rescheduling outside the standard window may be considered depending on availability."
-          ]
-        },
-        {
-          title: "4. Class packages",
+          title: "3. Class packages",
           preamble: "Classes are purchased in packages and must be used within a set period from the purchase date:",
           bullets: [
-            "5 classes: valid for 2 months",
-            "10 classes: valid for 3 months"
+            "4 classes → valid for 1 month",
+            "8 classes → valid for 2 months",
+            "12 classes → valid for 3 months"
           ],
           paragraphs: [
             "This timeframe supports steady progress in your learning.",
             "No refunds are given for unused classes."
+          ]
+        },
+        {
+          title: "4. Trial class",
+          paragraphs: [
+            "The trial class is available only once per student."
           ]
         },
         {
@@ -532,25 +618,9 @@ export const translations = {
           ]
         },
         {
-          title: "6. Methodology",
-          paragraphs: [
-            "Sessions focus on communication, speaking confidence, and real-life use of the language.",
-            "Each session is adapted to your goals and level."
-          ]
-        },
-        {
-          title: "7. Communication",
+          title: "6. Communication",
           paragraphs: [
             "For any questions, please reach out in advance through the agreed channels."
-          ]
-        },
-        {
-          title: "8. First class",
-          preamble: "The first class is aimed at:",
-          bullets: [
-            "getting to know the student",
-            "assessing their level",
-            "defining goals and focus for our work together"
           ]
         }
       ]
