@@ -22,6 +22,7 @@ import {
   Gift,
   LogIn,
   User,
+  Loader2,
 } from "lucide-react"
 
 import { Link } from "react-router-dom"
@@ -881,9 +882,8 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
     q4: "",
     q5: "",
   })
-  const [paypalLink, setPaypalLink] = useState(null)
   const [wiseLinks, setWiseLinks] = useState({})
-  const [stripeLoading, setStripeLoading] = useState(false)
+  const [paypalLoading, setPaypalLoading] = useState(false)
   const [bookingId, setBookingId] = useState(null)
   const [finalPrice, setFinalPrice] = useState(null)
   const [appliedPromo, setAppliedPromo] = useState(null)
@@ -897,7 +897,6 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setStep(1)
       setSelectedDate(null)
       setSelectedTime(null)
-      setPaypalLink(null)
       setBookingId(null)
       setFinalPrice(null)
       setAppliedPromo(null)
@@ -986,14 +985,6 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setBookingId(data.bookingId)
       setFinalPrice(data.finalPrice)
       setAppliedPromo(data.appliedPromo || null)
-      const username = import.meta.env.VITE_PAYPAL_ME_USERNAME || ""
-      const priceToPay = data.finalPrice ?? servicePrice
-      const link = username
-        ? priceToPay > 0
-          ? `https://www.paypal.me/${username}/${priceToPay}`
-          : `https://www.paypal.me/${username}`
-        : null
-      setPaypalLink(link)
       setStep(3)
     } catch (err) {
       setBookingError(err.message)
@@ -1002,10 +993,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
     }
   }
 
-  const confirmManualPayment = async (method) => {
+  const confirmWisePayment = async () => {
     try {
       const token = import.meta.env.VITE_ADMIN_TOKEN || ""
-      const url = `/api/confirm-payment?bookingId=${bookingId}&paymentMethod=${method}${token ? `&token=${token}` : ""}`
+      const url = `/api/confirm-payment?bookingId=${bookingId}&paymentMethod=wise${token ? `&token=${token}` : ""}`
       const res = await fetch(url)
       const data = await res.json()
       if (!res.ok) {
@@ -1019,21 +1010,21 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
     setStep(4)
   }
 
-  const handlePayWithStripe = async () => {
-    setStripeLoading(true)
+  const handlePayWithPayPal = async () => {
+    setPaypalLoading(true)
     setBookingError(null)
     try {
-      const res = await fetch("/api/create-checkout-session", {
+      const res = await fetch("/api/create-paypal-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Error al iniciar el pago con Stripe")
-      window.location.href = data.url
+      if (!res.ok) throw new Error(data.error || "Error al iniciar el pago con PayPal")
+      window.location.href = data.approveUrl
     } catch (err) {
       setBookingError(err.message)
-      setStripeLoading(false)
+      setPaypalLoading(false)
     }
   }
 
@@ -1421,37 +1412,22 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
 
                 <button
                   type="button"
-                  onClick={handlePayWithStripe}
-                  disabled={stripeLoading}
-                  className="w-full bg-[#635BFF] text-white border-2 border-[#635BFF] py-4 font-bold text-lg hover:bg-white hover:text-[#635BFF] transition shadow-hard flex justify-center items-center gap-3 rounded-xl disabled:opacity-60"
+                  onClick={handlePayWithPayPal}
+                  disabled={paypalLoading}
+                  className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3 rounded-xl disabled:opacity-60"
                 >
                   <span className="italic">{modal.payment?.payWith}</span>
                   <span className="italic font-extrabold text-2xl">
-                    {stripeLoading ? modal.payment?.redirecting : "Stripe"}
+                    {paypalLoading ? modal.payment?.redirecting : "PayPal"}
                   </span>
                 </button>
-
-                {paypalLink && (
-                  <a
-                    href={paypalLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => confirmManualPayment("paypal")}
-                    className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
-                  >
-                    <span className="italic">{modal.payment?.payWith}</span>
-                    <span className="italic font-extrabold text-2xl">
-                      PayPal
-                    </span>
-                  </a>
-                )}
 
                 {wiseLink && (
                   <a
                     href={wiseLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => confirmManualPayment("wise")}
+                    onClick={confirmWisePayment}
                     className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-4 font-bold text-lg hover:bg-white transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
                   >
                     <span className="italic">{modal.payment?.payWith}</span>
@@ -1459,14 +1435,6 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                       Wise
                     </span>
                   </a>
-                )}
-
-                {!paypalLink && !import.meta.env.VITE_PAYPAL_ME_USERNAME && (
-                  <p className="text-amber-600 text-xs">
-                    {language === "es"
-                      ? "Configura VITE_PAYPAL_ME_USERNAME en .env para habilitar PayPal"
-                      : "Set VITE_PAYPAL_ME_USERNAME in .env to enable PayPal"}
-                  </p>
                 )}
 
                 <p className="text-center text-xs text-gray-500 uppercase font-mono">
@@ -1551,6 +1519,9 @@ const PaymentStatusBanner = () => {
     const payment = new URLSearchParams(window.location.search).get("payment")
     return payment === "success" || payment === "cancelled" ? payment : null
   })
+  const [checkingPayPal, setCheckingPayPal] = useState(
+    () => new URLSearchParams(window.location.search).get("paypal") === "return",
+  )
 
   useEffect(() => {
     if (!status) return
@@ -1564,6 +1535,39 @@ const PaymentStatusBanner = () => {
       window.location.pathname + (newSearch ? `?${newSearch}` : ""),
     )
   }, [status])
+
+  useEffect(() => {
+    if (!checkingPayPal) return
+    const params = new URLSearchParams(window.location.search)
+    const bookingId = params.get("bookingId")
+    const orderId = params.get("token")
+
+    const finish = (result) => {
+      setStatus(result)
+      setCheckingPayPal(false)
+      const cleanParams = new URLSearchParams(window.location.search)
+      ;["paypal", "bookingId", "token", "PayerID"].forEach((k) => cleanParams.delete(k))
+      const search = cleanParams.toString()
+      window.history.replaceState({}, "", window.location.pathname + (search ? `?${search}` : ""))
+    }
+
+    fetch("/api/capture-paypal-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId, orderId }),
+    })
+      .then((res) => finish(res.ok ? "success" : "cancelled"))
+      .catch(() => finish("cancelled"))
+  }, [checkingPayPal])
+
+  if (checkingPayPal) {
+    return (
+      <div className="fixed top-24 left-1/2 -translate-x-1/2 z-40 max-w-md w-[calc(100%-2rem)] rounded-2xl shadow-2xl p-4 flex items-center gap-3 bg-white border border-gray-200 text-secondary">
+        <Loader2 size={20} className="shrink-0 animate-spin" />
+        <p className="text-sm font-medium">{t("paymentReturn.checking")}</p>
+      </div>
+    )
+  }
 
   if (!status) return null
 

@@ -1,7 +1,6 @@
 export const PAYMENT_METHODS = [
   { id: 'paypal', label: 'PayPal' },
   { id: 'wise', label: 'Wise' },
-  { id: 'stripe', label: 'Stripe' },
   { id: 'cash', label: 'Efectivo' },
   { id: 'other', label: 'Otro' },
 ]

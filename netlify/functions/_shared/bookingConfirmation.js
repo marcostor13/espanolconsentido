@@ -13,8 +13,8 @@ export class BookingConfirmationError extends Error {
  * Marca una reserva pública (bookings, sin enrollmentId) como pagada:
  * crea/vincula la cuenta del estudiante, agenda el evento en Google Calendar,
  * y envía los correos de confirmación (y de bienvenida si la cuenta es nueva).
- * Usado tanto por la confirmación manual del admin (confirm-payment.js) como
- * por el webhook de Stripe.
+ * Usado por la confirmación manual del admin (confirm-payment.js), el
+ * retorno de PayPal (capture-paypal-order.js) y el webhook de PayPal.
  */
 export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {}) {
   const collection = db.collection('bookings')

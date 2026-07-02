@@ -99,14 +99,20 @@
   force = true
 
 [[redirects]]
-  from = "/api/create-checkout-session"
-  to = "/.netlify/functions/create-checkout-session"
+  from = "/api/create-paypal-order"
+  to = "/.netlify/functions/create-paypal-order"
   status = 200
   force = true
 
 [[redirects]]
-  from = "/api/stripe-webhook"
-  to = "/.netlify/functions/stripe-webhook"
+  from = "/api/capture-paypal-order"
+  to = "/.netlify/functions/capture-paypal-order"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/paypal-webhook"
+  to = "/.netlify/functions/paypal-webhook"
   status = 200
   force = true
 

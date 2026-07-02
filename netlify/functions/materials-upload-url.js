@@ -51,9 +51,12 @@ export const handler = async (event) => {
       return jsonResponse(400, { error: 'Tipo de archivo no permitido' })
     }
 
-    const bucket = process.env.S3_BUCKET_NAME
-    const region = process.env.AWS_REGION
-    if (!bucket || !region || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    // Nombres con sufijo "2": Netlify reserva AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
+    // AWS_REGION y S3_BUCKET_NAME para su propio runtime de Lambda, así que no se
+    // pueden usar esos nombres tal cual para las credenciales propias del bucket.
+    const bucket = process.env.S3_BUCKET_NAME2
+    const region = process.env.AWS_REGION2
+    if (!bucket || !region || !process.env.AWS_ACCESS_KEY_ID2 || !process.env.AWS_SECRET_ACCESS_KEY2) {
       return jsonResponse(500, { error: 'El almacenamiento S3 no está configurado en el servidor' })
     }
 
@@ -62,8 +65,8 @@ export const handler = async (event) => {
     const client = new S3Client({
       region,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID2,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY2,
       },
     })
 

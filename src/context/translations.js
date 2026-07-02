@@ -159,6 +159,7 @@ export const translations = {
       }
     ],
     paymentReturn: {
+      checking: "Confirmando tu pago con PayPal...",
       success: "¡Pago confirmado! Revisa tu correo para ver los detalles de tu clase.",
       cancelled: "El pago fue cancelado. Puedes intentarlo de nuevo cuando quieras."
     },
@@ -561,6 +562,7 @@ export const translations = {
       }
     ],
     paymentReturn: {
+      checking: "Confirming your PayPal payment...",
       success: "Payment confirmed! Check your email for your class details.",
       cancelled: "The payment was cancelled. You can try again whenever you'd like."
     },

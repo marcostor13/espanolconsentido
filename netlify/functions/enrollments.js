@@ -61,7 +61,7 @@ async function createEnrollment(event, db) {
   if (Number(totalClasses) <= 0) {
     return jsonResponse(400, { error: 'totalClasses debe ser mayor que 0' })
   }
-  const VALID_PAYMENT_METHODS = ['paypal', 'wise', 'stripe', 'cash', 'other']
+  const VALID_PAYMENT_METHODS = ['paypal', 'wise', 'cash', 'other']
   if (paymentMethod && !VALID_PAYMENT_METHODS.includes(paymentMethod)) {
     return jsonResponse(400, { error: `paymentMethod debe ser uno de: ${VALID_PAYMENT_METHODS.join(', ')}` })
   }
