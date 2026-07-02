@@ -15,6 +15,8 @@ export default function ChangePasswordPage() {
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
+  const isForced = Boolean(user?.mustChangePassword)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
@@ -24,7 +26,7 @@ export default function ChangePasswordPage() {
       return
     }
     if (newPassword === currentPassword) {
-      setError('La nueva contraseña debe ser distinta a la temporal')
+      setError('La nueva contraseña debe ser distinta a la actual')
       return
     }
 
@@ -53,7 +55,9 @@ export default function ChangePasswordPage() {
           </div>
           <h1 className="font-syne font-bold text-2xl text-secondary mb-1">Cambia tu contraseña</h1>
           <p className="text-gray-500 text-sm mb-6">
-            Por seguridad, debes establecer una contraseña nueva antes de continuar.
+            {isForced
+              ? 'Por seguridad, debes establecer una contraseña nueva antes de continuar.'
+              : 'Ingresa tu contraseña actual y elige una nueva.'}
           </p>
 
           {error && (
@@ -65,7 +69,9 @@ export default function ChangePasswordPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-secondary mb-2">Contraseña temporal (la que recibiste por correo)</label>
+              <label className="block text-sm font-bold text-secondary mb-2">
+                {isForced ? 'Contraseña temporal (la que recibiste por correo)' : 'Contraseña actual'}
+              </label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -120,7 +126,15 @@ export default function ChangePasswordPage() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-gray-500 mt-6 flex items-center justify-center gap-4">
+          {!isForced && (
+            <button
+              onClick={() => navigate(homePathFor(user), { replace: true })}
+              className="hover:text-primary transition-colors"
+            >
+              Cancelar
+            </button>
+          )}
           <button onClick={logout} className="hover:text-primary transition-colors">
             Cerrar sesión
           </button>

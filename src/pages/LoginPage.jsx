@@ -148,6 +148,14 @@ export default function LoginPage() {
               {mode === 'login' ? 'Entrar' : 'Crear cuenta'}
             </button>
           </form>
+
+          {mode === 'login' && (
+            <p className="text-center text-sm text-gray-500 mt-5">
+              <Link to="/olvide-clave" className="hover:text-primary transition-colors">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </p>
+          )}
         </div>
 
         <p className="text-center text-sm text-gray-500 mt-6">

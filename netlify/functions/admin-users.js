@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
-import { requireAuth, jsonResponse, hashPassword } from './_shared/auth.js'
+import { requireAuth, jsonResponse, hashPassword, generateTempPassword } from './_shared/auth.js'
+import { sendPasswordResetEmail } from './_shared/email.js'
 
 function serializeUser(u) {
   return {
@@ -63,7 +64,7 @@ async function updateUser(event, db) {
   if (error) return error
 
   const body = JSON.parse(event.body || '{}')
-  const { id, active, role, name } = body
+  const { id, active, role, name, resetPassword } = body
   if (!id || !ObjectId.isValid(id)) {
     return jsonResponse(400, { error: 'Falta id de usuario' })
   }
@@ -76,6 +77,13 @@ async function updateUser(event, db) {
   if (role === 'admin' || role === 'student') update.role = role
   if (name?.trim()) update.name = name.trim()
 
+  let tempPassword = null
+  if (resetPassword) {
+    tempPassword = generateTempPassword()
+    update.passwordHash = await hashPassword(tempPassword)
+    update.mustChangePassword = true
+  }
+
   if (Object.keys(update).length === 0) {
     return jsonResponse(400, { error: 'Nada para actualizar' })
   }
@@ -85,6 +93,15 @@ async function updateUser(event, db) {
     .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: update }, { returnDocument: 'after' })
 
   if (!result) return jsonResponse(404, { error: 'Usuario no encontrado' })
+
+  if (tempPassword) {
+    try {
+      await sendPasswordResetEmail({ toName: result.name, toEmail: result.email, tempPassword })
+    } catch (err) {
+      console.error('admin-users: failed to send password reset email', err)
+    }
+  }
+
   return jsonResponse(200, { user: serializeUser(result) })
 }
 

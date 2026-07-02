@@ -6,6 +6,7 @@ import App from './App.jsx'
 import PoliciesPage from './pages/PoliciesPage.jsx'
 import ReferralPage from './pages/ReferralPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ChangePasswordPage from './pages/ChangePasswordPage.jsx'
 import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider } from './context/AuthContext'
@@ -35,6 +36,7 @@ createRoot(document.getElementById('root')).render(
             <Route path="/politicas" element={<PoliciesPage />} />
             <Route path="/programa-recomendacion" element={<ReferralPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/olvide-clave" element={<ForgotPasswordPage />} />
             <Route
               path="/cambiar-clave"
               element={

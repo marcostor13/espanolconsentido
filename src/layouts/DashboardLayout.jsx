@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { Menu, X, LogOut } from 'lucide-react'
+import { Menu, X, LogOut, KeyRound } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const linkClass = ({ isActive }) =>
@@ -21,11 +21,19 @@ function Nav({ navItems, onNavigate }) {
   )
 }
 
-function AccountFooter({ user, logout }) {
+function AccountFooter({ user, logout, onNavigate }) {
   return (
     <div className="mt-auto pt-6 border-t border-gray-100">
       <p className="px-4 text-sm font-bold text-secondary truncate">{user?.name}</p>
       <p className="px-4 text-xs text-gray-400 truncate mb-3">{user?.email}</p>
+      <Link
+        to="/cambiar-clave"
+        onClick={onNavigate}
+        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-gray-500 hover:bg-gray-50 hover:text-secondary transition-all"
+      >
+        <KeyRound size={18} />
+        Cambiar contraseña
+      </Link>
       <button
         onClick={logout}
         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all"
@@ -51,7 +59,7 @@ export default function DashboardLayout({ title, navItems }) {
         </Link>
         <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 px-4">{title}</p>
         <Nav navItems={navItems} onNavigate={closeMenu} />
-        <AccountFooter user={user} logout={logout} />
+        <AccountFooter user={user} logout={logout} onNavigate={closeMenu} />
       </aside>
 
       {/* Mobile topbar */}
@@ -67,7 +75,7 @@ export default function DashboardLayout({ title, navItems }) {
       {isMenuOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-white pt-20 px-6 pb-6 flex flex-col">
           <Nav navItems={navItems} onNavigate={closeMenu} />
-          <AccountFooter user={user} logout={logout} />
+          <AccountFooter user={user} logout={logout} onNavigate={closeMenu} />
         </div>
       )}
 

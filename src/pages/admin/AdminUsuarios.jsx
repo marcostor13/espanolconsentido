@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, CheckCircle, Loader2, UserPlus, Search, GraduationCap } from 'lucide-react'
+import { AlertCircle, CheckCircle, Loader2, UserPlus, Search, GraduationCap, KeyRound } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import AssignCourseModal from '../../components/AssignCourseModal'
@@ -117,6 +117,7 @@ export default function AdminUsuarios() {
   const [error, setError] = useState(null)
   const [updatingId, setUpdatingId] = useState(null)
   const [assigningUser, setAssigningUser] = useState(null)
+  const [success, setSuccess] = useState(null)
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
@@ -162,6 +163,24 @@ export default function AdminUsuarios() {
     }
   }
 
+  const handleResetPassword = async (u) => {
+    if (!window.confirm(`¿Restablecer la contraseña de ${u.name}? Se le enviará una contraseña temporal por correo.`)) {
+      return
+    }
+    setUpdatingId(u._id)
+    setError(null)
+    setSuccess(null)
+    try {
+      await apiFetch('admin-users', { method: 'PATCH', token, body: { id: u._id, resetPassword: true } })
+      setSuccess(`Se envió una nueva contraseña temporal a ${u.email}.`)
+      await loadUsers()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
   return (
     <div>
       <h1 className="font-syne font-bold text-3xl text-secondary mb-1">Usuarios</h1>
@@ -173,6 +192,12 @@ export default function AdminUsuarios() {
         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <span>{error}</span>
+        </div>
+      )}
+      {success && (
+        <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-start gap-2">
+          <CheckCircle size={18} className="shrink-0 mt-0.5" />
+          <span>{success}</span>
         </div>
       )}
 
@@ -244,6 +269,15 @@ export default function AdminUsuarios() {
                       Asignar curso
                     </button>
                   )}
+
+                  <button
+                    onClick={() => handleResetPassword(u)}
+                    disabled={updatingId === u._id || u._id === currentUser?.id}
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition disabled:opacity-50"
+                  >
+                    {updatingId === u._id ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
+                    Restablecer clave
+                  </button>
                 </div>
               ))}
             </div>
