@@ -1,19 +1,52 @@
-export async function sendBookingConfirmation({ toName, toEmail, bookingDetails }) {
-  const apiKey = process.env.RESEND_API_KEY
-  const fromEmail = process.env.EMAIL_FROM || 'no-reply@espanolconsentido.com'
-  const notifyEmail = process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
+import nodemailer from 'nodemailer'
 
-  if (!apiKey) {
-    console.warn('RESEND_API_KEY not configured. Skipping email notification.')
+let cachedTransporter = null
+
+function getTransporter() {
+  const user = process.env.EMAIL_USER
+  const pass = process.env.EMAIL_PASSWORD
+  if (!user || !pass) return null
+
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass },
+    })
+  }
+  return cachedTransporter
+}
+
+// Gmail SMTP solo acepta como "from" la cuenta autenticada (EMAIL_USER) o un
+// alias verificado en "Enviar correo como" dentro de esa cuenta de Gmail.
+async function sendEmail({ to, subject, html }) {
+  const transporter = getTransporter()
+  if (!transporter) {
+    console.warn('EMAIL_USER/EMAIL_PASSWORD no configurados. Se omite el envío de correo.')
     return { skipped: true }
   }
 
+  const fromEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER
+
+  try {
+    await transporter.sendMail({
+      from: `Español conSentido <${fromEmail}>`,
+      to,
+      subject,
+      html,
+    })
+    return { sent: true }
+  } catch (err) {
+    console.error('SMTP send error:', err)
+    return { sent: false, error: err.message }
+  }
+}
+
+export async function sendBookingConfirmation({ toName, toEmail, bookingDetails }) {
+  const notifyEmail = process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
   const { date, time, serviceTitle, finalPrice, name, email } = bookingDetails
 
-  // Email to the admin/owner
-  const adminEmailPayload = {
-    from: `Español conSentido <${fromEmail}>`,
-    to: [notifyEmail],
+  await sendEmail({
+    to: notifyEmail,
     subject: `📚 Nueva reserva confirmada: ${serviceTitle} - ${name}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -29,12 +62,10 @@ export async function sendBookingConfirmation({ toName, toEmail, bookingDetails 
         <p style="color: #666; font-size: 14px;">El evento ya ha sido añadido a Google Calendar.</p>
       </div>
     `,
-  }
+  })
 
-  // Optional: confirmation email to the student
-  const studentEmailPayload = {
-    from: `Español conSentido <${fromEmail}>`,
-    to: [email],
+  await sendEmail({
+    to: toEmail,
     subject: `✅ Reserva confirmada - Español conSentido`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -49,53 +80,16 @@ export async function sendBookingConfirmation({ toName, toEmail, bookingDetails 
         <p style="color: #666; font-size: 14px;">¡Hasta pronto!<br/><strong>Juanita Sánchez</strong><br/>Español conSentido</p>
       </div>
     `,
-  }
-
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(adminEmailPayload),
   })
-
-  if (!res.ok) {
-    const err = await res.json()
-    console.error('Resend admin email error:', err)
-  }
-
-  // Send student email separately
-  const res2 = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(studentEmailPayload),
-  })
-
-  if (!res2.ok) {
-    const err = await res2.json()
-    console.error('Resend student email error:', err)
-  }
 
   return { sent: true }
 }
 
 export async function sendWelcomeCredentials({ toName, toEmail, tempPassword }) {
-  const apiKey = process.env.RESEND_API_KEY
-  const fromEmail = process.env.EMAIL_FROM || 'no-reply@espanolconsentido.com'
   const siteUrl = process.env.SITE_URL || 'https://espanolconsentido.com'
 
-  if (!apiKey) {
-    console.warn('RESEND_API_KEY not configured. Skipping welcome credentials email.')
-    return { skipped: true }
-  }
-
-  const payload = {
-    from: `Español conSentido <${fromEmail}>`,
-    to: [toEmail],
+  await sendEmail({
+    to: toEmail,
     subject: `🔑 Tu acceso a la plataforma - Español conSentido`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -111,38 +105,16 @@ export async function sendWelcomeCredentials({ toName, toEmail, tempPassword }) 
         </p>
       </div>
     `,
-  }
-
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
   })
-
-  if (!res.ok) {
-    const err = await res.json()
-    console.error('Resend welcome credentials email error:', err)
-  }
 
   return { sent: true }
 }
 
 export async function sendPasswordResetEmail({ toName, toEmail, tempPassword }) {
-  const apiKey = process.env.RESEND_API_KEY
-  const fromEmail = process.env.EMAIL_FROM || 'no-reply@espanolconsentido.com'
   const siteUrl = process.env.SITE_URL || 'https://espanolconsentido.com'
 
-  if (!apiKey) {
-    console.warn('RESEND_API_KEY not configured. Skipping password reset email.')
-    return { skipped: true }
-  }
-
-  const payload = {
-    from: `Español conSentido <${fromEmail}>`,
-    to: [toEmail],
+  await sendEmail({
+    to: toEmail,
     subject: `🔑 Restablecimos tu contraseña - Español conSentido`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -159,21 +131,7 @@ export async function sendPasswordResetEmail({ toName, toEmail, tempPassword }) 
         </p>
       </div>
     `,
-  }
-
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
   })
-
-  if (!res.ok) {
-    const err = await res.json()
-    console.error('Resend password reset email error:', err)
-  }
 
   return { sent: true }
 }
