@@ -1,6 +1,7 @@
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse, findOrCreateStudent } from './_shared/auth.js'
 import { sendWelcomeCredentials } from './_shared/email.js'
+import { logError } from './_shared/errorLog.js'
 
 async function getPromoDiscount(db, code) {
   if (!code?.trim()) return null
@@ -139,6 +140,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error('enrollments error:', err)
+    await logError('enrollments', err, { event })
     return jsonResponse(500, { error: 'Error al procesar la matrícula' })
   }
 }

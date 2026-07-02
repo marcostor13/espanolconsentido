@@ -1,4 +1,5 @@
 import { getDb } from './_shared/mongodb.js'
+import { logError } from './_shared/errorLog.js'
 
 function generateBookingId() {
   return 'b_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 11)
@@ -84,6 +85,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error('create-booking error:', err)
+    await logError('create-booking', err, { event })
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },

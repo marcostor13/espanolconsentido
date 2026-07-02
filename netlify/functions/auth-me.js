@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse, serializeUserForClient } from './_shared/auth.js'
+import { logError } from './_shared/errorLog.js'
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'GET') {
@@ -23,6 +24,7 @@ export const handler = async (event) => {
     })
   } catch (err) {
     console.error('auth-me error:', err)
+    await logError('auth-me', err, { event })
     return jsonResponse(500, { error: 'Error al obtener el usuario' })
   }
 }

@@ -1,5 +1,6 @@
 import { getDb } from './_shared/mongodb.js'
 import { hashPassword, signToken, jsonResponse, serializeUserForClient } from './_shared/auth.js'
+import { logError } from './_shared/errorLog.js'
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -47,6 +48,7 @@ export const handler = async (event) => {
     })
   } catch (err) {
     console.error('auth-register error:', err)
+    await logError('auth-register', err, { event })
     return jsonResponse(500, { error: 'Error al registrar la cuenta' })
   }
 }

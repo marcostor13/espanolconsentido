@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse, hashPassword, generateTempPassword } from './_shared/auth.js'
 import { sendPasswordResetEmail } from './_shared/email.js'
+import { logError } from './_shared/errorLog.js'
 
 function serializeUser(u) {
   return {
@@ -99,6 +100,7 @@ async function updateUser(event, db) {
       await sendPasswordResetEmail({ toName: result.name, toEmail: result.email, tempPassword })
     } catch (err) {
       console.error('admin-users: failed to send password reset email', err)
+      await logError('admin-users: password reset email', err, { event, level: 'warning' })
     }
   }
 
@@ -120,6 +122,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error('admin-users error:', err)
+    await logError('admin-users', err, { event })
     return jsonResponse(500, { error: 'Error al procesar usuarios' })
   }
 }

@@ -1,5 +1,6 @@
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
+import { logError } from './_shared/errorLog.js'
 
 function toCountMap(aggResult) {
   return Object.fromEntries(aggResult.map((r) => [r._id, r.count]))
@@ -68,6 +69,7 @@ export const handler = async (event) => {
     })
   } catch (err) {
     console.error('admin-stats error:', err)
+    await logError('admin-stats', err, { event })
     return jsonResponse(500, { error: 'Error al calcular las estadísticas' })
   }
 }

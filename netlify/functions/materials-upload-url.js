@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
+import { logError } from './_shared/errorLog.js'
 
 const ALLOWED_CONTENT_TYPES = new Set([
   'application/pdf',
@@ -77,6 +78,7 @@ export const handler = async (event) => {
     return jsonResponse(200, { uploadUrl, publicUrl, key, expiresIn: PRESIGNED_URL_EXPIRY_SECONDS })
   } catch (err) {
     console.error('materials-upload-url error:', err)
+    await logError('materials-upload-url', err, { event })
     return jsonResponse(500, { error: 'Error al generar la URL de subida' })
   }
 }

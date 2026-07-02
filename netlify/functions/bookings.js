@@ -3,6 +3,7 @@ import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { createCalendarEvent } from './_shared/google-calendar.js'
 import { sendBookingConfirmation } from './_shared/email.js'
+import { logError } from './_shared/errorLog.js'
 
 function generateBookingId() {
   return 'b_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 11)
@@ -149,6 +150,7 @@ async function createBooking(event, db) {
     })
   } catch (err) {
     console.error('bookings: failed to create calendar event', err)
+    await logError('bookings: create calendar event', err, { event, level: 'warning' })
   }
 
   try {
@@ -166,6 +168,7 @@ async function createBooking(event, db) {
     })
   } catch (err) {
     console.error('bookings: failed to send confirmation email', err)
+    await logError('bookings: send confirmation email', err, { event, level: 'warning' })
   }
 
   return jsonResponse(201, { booking })
@@ -240,6 +243,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error('bookings error:', err)
+    await logError('bookings', err, { event })
     return jsonResponse(500, { error: 'Error al procesar la reserva' })
   }
 }

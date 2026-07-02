@@ -1,6 +1,7 @@
 import { getDb } from './_shared/mongodb.js'
 import { jsonResponse, generateTempPassword, hashPassword } from './_shared/auth.js'
 import { sendPasswordResetEmail } from './_shared/email.js'
+import { logError } from './_shared/errorLog.js'
 
 // Respuesta genérica para no revelar si el email existe en el sistema.
 const GENERIC_MESSAGE = 'Si existe una cuenta con ese email, enviamos instrucciones para acceder.'
@@ -31,12 +32,14 @@ export const handler = async (event) => {
         await sendPasswordResetEmail({ toName: user.name, toEmail: user.email, tempPassword })
       } catch (err) {
         console.error('auth-forgot-password: failed to send email', err)
+        await logError('auth-forgot-password: send email', err, { event, level: 'warning' })
       }
     }
 
     return jsonResponse(200, { message: GENERIC_MESSAGE })
   } catch (err) {
     console.error('auth-forgot-password error:', err)
+    await logError('auth-forgot-password', err, { event })
     return jsonResponse(500, { error: 'Error al procesar la solicitud' })
   }
 }

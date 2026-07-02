@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
+import { logError } from './_shared/errorLog.js'
 
 async function listMaterials(event, db) {
   const { user, error } = requireAuth(event)
@@ -107,6 +108,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error('materials error:', err)
+    await logError('materials', err, { event })
     return jsonResponse(500, { error: 'Error al procesar el material' })
   }
 }

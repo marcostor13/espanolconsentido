@@ -1,4 +1,5 @@
 import { getDb } from './_shared/mongodb.js'
+import { logError } from './_shared/errorLog.js'
 
 const INITIAL_CODES = [
   { code: 'WELCOME', discountPercent: 20 },
@@ -28,6 +29,7 @@ export const handler = async () => {
     }
   } catch (err) {
     console.error('seed-promocodes error:', err)
+    await logError('seed-promocodes', err, {})
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },

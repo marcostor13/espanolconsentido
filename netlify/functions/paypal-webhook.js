@@ -2,6 +2,7 @@ import { getDb } from './_shared/mongodb.js'
 import { jsonResponse } from './_shared/auth.js'
 import { verifyPayPalWebhookSignature, capturePayPalOrder } from './_shared/paypal.js'
 import { confirmBookingPayment, BookingConfirmationError } from './_shared/bookingConfirmation.js'
+import { logError } from './_shared/errorLog.js'
 
 // Red de seguridad: si el usuario aprueba el pago en PayPal pero nunca vuelve
 // al sitio (cierra la pestaña, falla la red, etc.), este webhook captura y
@@ -45,6 +46,7 @@ export const handler = async (event) => {
     return jsonResponse(200, { received: true })
   } catch (err) {
     console.error('paypal-webhook error:', err)
+    await logError('paypal-webhook', err, { event })
     return jsonResponse(500, { error: 'Error al procesar el webhook de PayPal' })
   }
 }

@@ -25,6 +25,7 @@ import AdminUsuarios from './pages/admin/AdminUsuarios.jsx'
 import AdminMaterial from './pages/admin/AdminMaterial.jsx'
 import AdminConfiguraciones from './pages/admin/AdminConfiguraciones.jsx'
 import AdminPromocodes from './pages/admin/AdminPromocodes.jsx'
+import AdminErrores from './pages/admin/AdminErrores.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -76,6 +77,7 @@ createRoot(document.getElementById('root')).render(
               <Route path="material" element={<AdminMaterial />} />
               <Route path="promocodes" element={<AdminPromocodes />} />
               <Route path="configuraciones" element={<AdminConfiguraciones />} />
+              <Route path="errores" element={<AdminErrores />} />
             </Route>
           </Routes>
         </AuthProvider>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, ClipboardList, Users, FileText, Settings, Tag } from 'lucide-react'
+import { LayoutDashboard, Calendar, ClipboardList, Users, FileText, Settings, Tag, AlertTriangle } from 'lucide-react'
 import DashboardLayout from './DashboardLayout'
 
 const navItems = [
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/admin/material', label: 'Material', icon: FileText },
   { to: '/admin/promocodes', label: 'Descuentos', icon: Tag },
   { to: '/admin/configuraciones', label: 'Configuraciones', icon: Settings },
+  { to: '/admin/errores', label: 'Errores', icon: AlertTriangle },
 ]
 
 export default function AdminLayout() {

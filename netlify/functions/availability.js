@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { getSettings } from './_shared/settings.js'
+import { logError } from './_shared/errorLog.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const TIME_RE = /^\d{2}:\d{2}$/
@@ -122,6 +123,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error('availability error:', err)
+    await logError('availability', err, { event })
     return jsonResponse(500, { error: 'Error al procesar la disponibilidad' })
   }
 }

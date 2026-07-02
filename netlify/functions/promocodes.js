@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
+import { logError } from './_shared/errorLog.js'
 
 async function listPromocodes(event, db) {
   const { error } = requireAuth(event, ['admin'])
@@ -90,6 +91,7 @@ export const handler = async (event) => {
     }
   } catch (err) {
     console.error('promocodes error:', err)
+    await logError('promocodes', err, { event })
     return jsonResponse(500, { error: 'Error al procesar los códigos promocionales' })
   }
 }

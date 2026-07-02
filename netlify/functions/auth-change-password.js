@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse, hashPassword, comparePassword } from './_shared/auth.js'
+import { logError } from './_shared/errorLog.js'
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -36,6 +37,7 @@ export const handler = async (event) => {
     return jsonResponse(200, { success: true })
   } catch (err) {
     console.error('auth-change-password error:', err)
+    await logError('auth-change-password', err, { event })
     return jsonResponse(500, { error: 'Error al cambiar la contraseña' })
   }
 }

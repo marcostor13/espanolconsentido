@@ -2,6 +2,7 @@ import { getDb } from './_shared/mongodb.js'
 import { jsonResponse } from './_shared/auth.js'
 import { capturePayPalOrder } from './_shared/paypal.js'
 import { confirmBookingPayment, BookingConfirmationError } from './_shared/bookingConfirmation.js'
+import { logError } from './_shared/errorLog.js'
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -34,6 +35,7 @@ export const handler = async (event) => {
     return jsonResponse(200, { success: true })
   } catch (err) {
     console.error('capture-paypal-order error:', err)
+    await logError('capture-paypal-order', err, { event })
     return jsonResponse(500, { error: err.message || 'Error al confirmar el pago con PayPal' })
   }
 }

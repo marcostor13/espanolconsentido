@@ -1,6 +1,7 @@
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { getSettings, updateSettings } from './_shared/settings.js'
+import { logError } from './_shared/errorLog.js'
 
 const VALID_PACKAGE_IDS = new Set(['trial', 'inicio', 'progreso', 'pro', 'individual'])
 
@@ -59,6 +60,7 @@ export const handler = async (event) => {
     return jsonResponse(405, { error: 'Method not allowed' })
   } catch (err) {
     console.error('settings error:', err)
+    await logError('settings', err, { event })
     return jsonResponse(500, { error: 'Error al procesar la configuración' })
   }
 }

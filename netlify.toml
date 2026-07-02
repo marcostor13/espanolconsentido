@@ -93,6 +93,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/admin-errors"
+  to = "/.netlify/functions/admin-errors"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/promocodes"
   to = "/.netlify/functions/promocodes"
   status = 200

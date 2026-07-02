@@ -1,6 +1,7 @@
 import { createCalendarEvent } from './google-calendar.js'
 import { sendBookingConfirmation, sendWelcomeCredentials } from './email.js'
 import { findOrCreateStudent } from './auth.js'
+import { logError } from './errorLog.js'
 
 export class BookingConfirmationError extends Error {
   constructor(message, code) {
@@ -53,6 +54,7 @@ export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {
     await createCalendarEvent({ summary, description, start: startLocal, end: endLocal })
   } catch (err) {
     console.error('confirmBookingPayment: failed to create calendar event', err)
+    await logError('confirmBookingPayment: create calendar event', err, { level: 'warning' })
   }
 
   try {
@@ -70,6 +72,7 @@ export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {
     })
   } catch (err) {
     console.error('confirmBookingPayment: failed to send booking confirmation email', err)
+    await logError('confirmBookingPayment: send booking confirmation email', err, { level: 'warning' })
   }
 
   if (isNewAccount) {
@@ -77,6 +80,7 @@ export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {
       await sendWelcomeCredentials({ toName: booking.name, toEmail: booking.email, tempPassword })
     } catch (err) {
       console.error('confirmBookingPayment: failed to send welcome credentials email', err)
+      await logError('confirmBookingPayment: send welcome credentials email', err, { level: 'warning' })
     }
   }
 

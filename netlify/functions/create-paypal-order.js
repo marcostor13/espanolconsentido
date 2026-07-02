@@ -1,6 +1,7 @@
 import { getDb } from './_shared/mongodb.js'
 import { jsonResponse } from './_shared/auth.js'
 import { createPayPalOrder } from './_shared/paypal.js'
+import { logError } from './_shared/errorLog.js'
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -47,6 +48,7 @@ export const handler = async (event) => {
     return jsonResponse(200, { approveUrl })
   } catch (err) {
     console.error('create-paypal-order error:', err)
+    await logError('create-paypal-order', err, { event })
     return jsonResponse(500, { error: err.message || 'Error al iniciar el pago con PayPal' })
   }
 }
