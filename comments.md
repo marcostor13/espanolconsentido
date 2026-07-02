@@ -1,3 +1,6 @@
+Cinny (1 de junio, 2026)
+"I highly recommend learning with Juanita. From the very beginning, she created lessons that were personalized to my goals, interests, and learning style, which made every class engaging and productive. What I appreciated most was her kindness, patience, and genuine dedication to helping me improve. She always created a comfortable learning environment where I felt encouraged to speak and make mistakes without feeling judged. Her positive attitude and supportive teaching style made a huge difference in my confidence. Beyond being a great teacher, she is simply a wonderful person to learn with. Every lesson felt welcoming, enjoyable, and motivating. I made meaningful progress in Spanish thanks to her guidance, and I always looked forward to our classes. If you're looking for a tutor who truly cares about her students and goes the extra mile to adapt lessons to your needs, I would absolutely recommend her. 🫶"
+
 Carlos (22 de abril, 2026)
 "The dynamics of the class are very good. It encourages you to make an effort in applying what is presented. Something I would like to share is Juanita's charisma and willingness during the classes. She provides a lot of support and guidance. She is a dynamic teacher who captivates. With her, you know that the class will not be boring. I made a good choice!"
 

@@ -1,16 +1,12 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 import { translations } from './translations';
 
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState(() => {
-    return localStorage.getItem('language') || 'en';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('language', language);
-  }, [language]);
+  // La página siempre carga en inglés por defecto; el cambio de idioma
+  // solo aplica para la sesión actual (no se recuerda entre visitas).
+  const [language, setLanguage] = useState('en');
 
   const toggleLanguage = (lang) => {
     setLanguage(lang);

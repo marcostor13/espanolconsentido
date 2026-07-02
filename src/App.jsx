@@ -20,10 +20,15 @@ import {
   ChevronRight,
   Globe,
   Gift,
+  LogIn,
+  User,
 } from "lucide-react"
 
 import { Link } from "react-router-dom"
 import { useLanguage } from "./context/LanguageContext"
+import { useAuth } from "./context/AuthContext"
+import { homePathFor } from "./lib/homePath"
+import WhatsAppButton from "./components/WhatsAppButton"
 
 // --- COMPONENTS ---
 
@@ -31,6 +36,8 @@ const Header = ({ onBook }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const { t, language, toggleLanguage } = useLanguage()
+  const { user } = useAuth()
+  const accountHref = homePathFor(user)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,6 +82,13 @@ const Header = ({ onBook }) => {
             className="hover:text-primary transition-colors"
           >
             {t("nav.policies")}
+          </Link>
+          <Link
+            to={accountHref}
+            className="flex items-center gap-1.5 hover:text-primary transition-colors"
+          >
+            {user ? <User size={16} /> : <LogIn size={16} />}
+            {user ? t("nav.myAccount") : t("nav.login")}
           </Link>
           <button
             onClick={() => onBook("trial")}
@@ -177,6 +191,14 @@ const Header = ({ onBook }) => {
           >
             {t("nav.policies")}
           </Link>
+          <Link
+            to={accountHref}
+            onClick={() => setIsMenuOpen(false)}
+            className="flex items-center justify-center gap-2 font-grotesk font-bold text-xl text-white hover:text-primary transition-colors"
+          >
+            {user ? <User size={20} /> : <LogIn size={20} />}
+            {user ? t("nav.myAccount") : t("nav.login")}
+          </Link>
           <button
             onClick={() => {
               onBook("trial")
@@ -194,6 +216,13 @@ const Header = ({ onBook }) => {
 
 const Hero = ({ onBook }) => {
   const { t } = useLanguage()
+  const videoRef = useRef(null)
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+
+  const handlePlayVideo = () => {
+    videoRef.current?.play()
+    setIsVideoPlaying(true)
+  }
 
   return (
     <header className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden bg-light">
@@ -245,21 +274,27 @@ const Hero = ({ onBook }) => {
         {/* Right Video content */}
         <div className="relative group mx-auto w-full max-w-[600px] mt-8 lg:mt-0">
           <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-white">
-            <img
-              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-              alt="Video preview"
+            <video
+              ref={videoRef}
+              src="/hero-welcome.mp4"
+              poster="/hero-welcome-poster.jpg"
               className="w-full h-auto object-cover aspect-video"
+              controls={isVideoPlaying}
+              playsInline
+              onPause={() => setIsVideoPlaying(false)}
+              onEnded={() => setIsVideoPlaying(false)}
             />
             {/* Play Button Overlay */}
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-all cursor-pointer">
-              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white shadow-soft-lg hover:scale-110 transition-transform">
-                <PlayCircle className="w-10 h-10 ml-1" />
+            {!isVideoPlaying && (
+              <div
+                onClick={handlePlayVideo}
+                className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-all cursor-pointer"
+              >
+                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white shadow-soft-lg hover:scale-110 transition-transform">
+                  <PlayCircle className="w-10 h-10 ml-1" />
+                </div>
               </div>
-            </div>
-            {/* Fake Video Controls */}
-            <div className="absolute bottom-4 left-4 right-4 h-1 bg-white/30 rounded-full overflow-hidden">
-              <div className="w-1/3 h-full bg-primary rounded-full"></div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -740,22 +775,26 @@ const ReferralProgram = () => {
   return (
     <section className="py-16 px-6 bg-white font-grotesk">
       <div className="container mx-auto max-w-4xl">
-        <div
-          className="rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 shadow-soft-lg"
+        <Link
+          to="/programa-recomendacion"
+          className="rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 shadow-soft-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group text-left"
           style={{ backgroundColor: "#020410" }}
         >
-          <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center shrink-0">
+          <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
             <Gift className="w-10 h-10 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="font-syne font-bold text-2xl md:text-3xl text-white mb-3">
               {t("referral.title")}
             </h2>
-            <p className="text-gray-300 text-lg leading-relaxed">
+            <p className="text-gray-300 text-lg leading-relaxed mb-4">
               {t("referral.desc")}
             </p>
+            <span className="inline-flex items-center gap-2 text-primary font-bold group-hover:gap-3 transition-all">
+              {t("referral.cta")} <ArrowRight size={18} />
+            </span>
           </div>
-        </div>
+        </Link>
       </div>
     </section>
   )
@@ -843,6 +882,8 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
     q5: "",
   })
   const [paypalLink, setPaypalLink] = useState(null)
+  const [wiseLinks, setWiseLinks] = useState({})
+  const [stripeLoading, setStripeLoading] = useState(false)
   const [bookingId, setBookingId] = useState(null)
   const [finalPrice, setFinalPrice] = useState(null)
   const [appliedPromo, setAppliedPromo] = useState(null)
@@ -864,6 +905,14 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setAcceptedPolicies(false)
     }
   }, [isOpen, initialServiceId])
+
+  useEffect(() => {
+    if (!isOpen) return
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => setWiseLinks(data.settings?.wiseLinks || {}))
+      .catch(() => {})
+  }, [isOpen])
 
   const service = services.find((s) => s.id === serviceId) || services[0] || {}
   const servicePrice = service.price ?? 0
@@ -952,6 +1001,43 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setLoading(false)
     }
   }
+
+  const confirmManualPayment = async (method) => {
+    try {
+      const token = import.meta.env.VITE_ADMIN_TOKEN || ""
+      const url = `/api/confirm-payment?bookingId=${bookingId}&paymentMethod=${method}${token ? `&token=${token}` : ""}`
+      const res = await fetch(url)
+      const data = await res.json()
+      if (!res.ok) {
+        console.error("Error confirming payment:", data.error)
+      } else {
+        console.log("Payment confirmed:", data.message)
+      }
+    } catch (err) {
+      console.error("Failed to confirm payment:", err.message)
+    }
+    setStep(4)
+  }
+
+  const handlePayWithStripe = async () => {
+    setStripeLoading(true)
+    setBookingError(null)
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al iniciar el pago con Stripe")
+      window.location.href = data.url
+    } catch (err) {
+      setBookingError(err.message)
+      setStripeLoading(false)
+    }
+  }
+
+  const wiseLink = wiseLinks[serviceId]
 
   if (!isOpen) return null
 
@@ -1081,6 +1167,12 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 {modal.details?.title}
               </h4>
               <p className="text-gray-500 mb-8">{modal.details?.subtitle}</p>
+
+              {serviceId === "trial" && (
+                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary">
+                  {modal.details?.trialCreditNote}
+                </div>
+              )}
 
               <div className="space-y-6">
                 {bookingError && (
@@ -1314,58 +1406,66 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
               </div>
 
               <div className="space-y-4">
-                {paypalLink ? (
-                  <>
-                    <p className="text-gray-600 text-sm mb-2">
-                      {modal.payment?.bookingSaved}
-                    </p>
-                    <p className="text-gray-500 text-xs mb-4">
-                      {modal.payment?.paypalInstruction}
-                    </p>
-                    <a
-                      href={paypalLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={async () => {
-                        try {
-                          const token = import.meta.env.VITE_ADMIN_TOKEN || ""
-                          const url = `/api/confirm-payment?bookingId=${bookingId}${token ? `&token=${token}` : ""}`
-                          const res = await fetch(url)
-                          const data = await res.json()
-                          if (!res.ok) {
-                            console.error(
-                              "Error confirming payment:",
-                              data.error,
-                            )
-                          } else {
-                            console.log("Payment confirmed:", data.message)
-                          }
-                        } catch (err) {
-                          console.error(
-                            "Failed to confirm payment:",
-                            err.message,
-                          )
-                        }
-                        setStep(4)
-                      }}
-                      className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
-                    >
-                      <span className="italic">{modal.payment?.payWith}</span>
-                      <span className="italic font-extrabold text-2xl">
-                        PayPal
-                      </span>
-                    </a>
-                  </>
-                ) : (
-                  <p className="text-gray-600 text-sm">
-                    {modal.payment?.bookingSaved}
-                    {!import.meta.env.VITE_PAYPAL_ME_USERNAME && (
-                      <span className="block mt-2 text-amber-600 text-xs">
-                        {language === "es"
-                          ? "Configura VITE_PAYPAL_ME_USERNAME en .env"
-                          : "Set VITE_PAYPAL_ME_USERNAME in .env"}
-                      </span>
-                    )}
+                <p className="text-gray-600 text-sm mb-2">
+                  {modal.payment?.bookingSaved}
+                </p>
+                <p className="text-gray-500 text-xs mb-2">
+                  {modal.payment?.choosePaymentMethod}
+                </p>
+
+                {bookingError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                    {bookingError}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handlePayWithStripe}
+                  disabled={stripeLoading}
+                  className="w-full bg-[#635BFF] text-white border-2 border-[#635BFF] py-4 font-bold text-lg hover:bg-white hover:text-[#635BFF] transition shadow-hard flex justify-center items-center gap-3 rounded-xl disabled:opacity-60"
+                >
+                  <span className="italic">{modal.payment?.payWith}</span>
+                  <span className="italic font-extrabold text-2xl">
+                    {stripeLoading ? modal.payment?.redirecting : "Stripe"}
+                  </span>
+                </button>
+
+                {paypalLink && (
+                  <a
+                    href={paypalLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => confirmManualPayment("paypal")}
+                    className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
+                  >
+                    <span className="italic">{modal.payment?.payWith}</span>
+                    <span className="italic font-extrabold text-2xl">
+                      PayPal
+                    </span>
+                  </a>
+                )}
+
+                {wiseLink && (
+                  <a
+                    href={wiseLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => confirmManualPayment("wise")}
+                    className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-4 font-bold text-lg hover:bg-white transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
+                  >
+                    <span className="italic">{modal.payment?.payWith}</span>
+                    <span className="italic font-extrabold text-2xl">
+                      Wise
+                    </span>
+                  </a>
+                )}
+
+                {!paypalLink && !import.meta.env.VITE_PAYPAL_ME_USERNAME && (
+                  <p className="text-amber-600 text-xs">
+                    {language === "es"
+                      ? "Configura VITE_PAYPAL_ME_USERNAME en .env para habilitar PayPal"
+                      : "Set VITE_PAYPAL_ME_USERNAME in .env to enable PayPal"}
                   </p>
                 )}
 
@@ -1445,6 +1545,50 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   )
 }
 
+const PaymentStatusBanner = () => {
+  const { t } = useLanguage()
+  const [status, setStatus] = useState(() => {
+    const payment = new URLSearchParams(window.location.search).get("payment")
+    return payment === "success" || payment === "cancelled" ? payment : null
+  })
+
+  useEffect(() => {
+    if (!status) return
+    const params = new URLSearchParams(window.location.search)
+    params.delete("payment")
+    params.delete("bookingId")
+    const newSearch = params.toString()
+    window.history.replaceState(
+      {},
+      "",
+      window.location.pathname + (newSearch ? `?${newSearch}` : ""),
+    )
+  }, [status])
+
+  if (!status) return null
+
+  const isSuccess = status === "success"
+  return (
+    <div
+      className={`fixed top-24 left-1/2 -translate-x-1/2 z-40 max-w-md w-[calc(100%-2rem)] rounded-2xl shadow-2xl p-4 flex items-start gap-3 ${
+        isSuccess ? "bg-green-50 border border-green-200 text-green-800" : "bg-amber-50 border border-amber-200 text-amber-800"
+      }`}
+    >
+      {isSuccess ? (
+        <CheckCircle size={20} className="shrink-0 mt-0.5" />
+      ) : (
+        <AlertCircle size={20} className="shrink-0 mt-0.5" />
+      )}
+      <p className="text-sm font-medium flex-1">
+        {isSuccess ? t("paymentReturn.success") : t("paymentReturn.cancelled")}
+      </p>
+      <button onClick={() => setStatus(null)} className="shrink-0" aria-label="Cerrar">
+        <X size={18} />
+      </button>
+    </div>
+  )
+}
+
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
@@ -1456,6 +1600,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-grotesk selection:bg-primary selection:text-white">
+      <PaymentStatusBanner />
       <Header onBook={handleBook} />
       <Hero onBook={handleBook} />
       <ComoSonLasClases />
@@ -1474,6 +1619,7 @@ function App() {
         onClose={() => setIsModalOpen(false)}
         initialServiceId={selectedServiceId}
       />
+      <WhatsAppButton />
     </div>
   )
 }

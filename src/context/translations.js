@@ -5,7 +5,9 @@ export const translations = {
       classes: "Clases",
       pricing: "Precios",
       policies: "Políticas",
-      book: "Reserva tu clase"
+      book: "Reserva tu clase",
+      login: "Iniciar sesión",
+      myAccount: "Mi cuenta"
     },
     hero: {
       subtitle: "Gana confianza para hablar español en conversaciones reales. Acompañamiento personalizado para que te expreses con seguridad.",
@@ -156,9 +158,53 @@ export const translations = {
         ],
       }
     ],
+    paymentReturn: {
+      success: "¡Pago confirmado! Revisa tu correo para ver los detalles de tu clase.",
+      cancelled: "El pago fue cancelado. Puedes intentarlo de nuevo cuando quieras."
+    },
     referral: {
       title: "Programa de recomendación",
-      desc: "Si un estudiante recomienda a una nueva persona y esta adquiere un paquete de clases, el estudiante recibe 1 clase adicional sin costo en su próximo paquete."
+      desc: "Si un estudiante recomienda a una nueva persona y esta adquiere un paquete de clases, el estudiante recibe 1 clase adicional sin costo en su próximo paquete.",
+      cta: "Conoce cómo funciona"
+    },
+    referralPage: {
+      backToHome: "Volver al inicio",
+      badge: "Programa de recomendación",
+      title: "Comparte español, gana clases",
+      intro: "Cuando recomiendas a alguien y esa persona se convierte en estudiante, ambas partes salen ganando: ella comienza su camino con el español, y tú recibes una clase adicional sin costo.",
+      imageAlt: "Dos personas conversando y aprendiendo juntas",
+      howItWorksTitle: "¿Cómo funciona?",
+      steps: [
+        {
+          title: "1. Recomienda",
+          desc: "Cuéntale a un amigo, familiar o colega sobre tus clases de español con Juanita."
+        },
+        {
+          title: "2. Compra su primer paquete",
+          desc: "La persona que recomendaste reserva su clase de prueba y adquiere un paquete de clases."
+        },
+        {
+          title: "3. Recibes tu clase gratis",
+          desc: "Al mencionar tu nombre, se te acredita 1 clase adicional sin costo en tu próximo paquete."
+        }
+      ],
+      sections: [
+        {
+          title: "Condiciones del programa",
+          bullets: [
+            "La persona recomendada debe ser un estudiante nuevo (no haber tomado clases previamente).",
+            "El beneficio se acredita cuando la persona recomendada compra su primer paquete de clases (no aplica solo con la clase de prueba).",
+            "La clase gratis se suma a tu próximo paquete de clases; no se entrega en efectivo ni es transferible.",
+            "No hay límite de personas que puedes recomendar: por cada recomendación exitosa, recibes una clase adicional."
+          ]
+        },
+        {
+          title: "¿Cómo reclamar tu clase gratis?",
+          paragraphs: [
+            "Simplemente indica el nombre de la persona que recomendaste al momento de reservar o al contactar a la profesora. Ella se encargará de acreditar la clase adicional en tu siguiente paquete."
+          ]
+        }
+      ]
     },
     testimonials: {
       title: "Voces",
@@ -167,6 +213,12 @@ export const translations = {
       next: "Siguiente",
       carouselLabel: "Carrusel",
       groups: [
+        {
+          label: "Junio 2026",
+          reviews: [
+            { name: "Cinny", date: "1 de junio de 2026", text: "I highly recommend learning with Juanita. From the very beginning, she created lessons that were personalized to my goals, interests, and learning style, which made every class engaging and productive. What I appreciated most was her kindness, patience, and genuine dedication to helping me improve. She always created a comfortable learning environment where I felt encouraged to speak and make mistakes without feeling judged. Her positive attitude and supportive teaching style made a huge difference in my confidence. Beyond being a great teacher, she is simply a wonderful person to learn with. Every lesson felt welcoming, enjoyable, and motivating. I made meaningful progress in Spanish thanks to her guidance, and I always looked forward to our classes. If you're looking for a tutor who truly cares about her students and goes the extra mile to adapt lessons to your needs, I would absolutely recommend her. 🫶" }
+          ]
+        },
         {
           label: "Recientes 1",
           reviews: [
@@ -325,7 +377,8 @@ export const translations = {
         acceptPoliciesPrefix: "He leído y acepto las",
         acceptPoliciesLink: "Políticas de clases",
         acceptPoliciesOpenInNewTab: "Abrir en nueva pestaña",
-        acceptPoliciesError: "Debes aceptar las políticas de clases para continuar con la reserva."
+        acceptPoliciesError: "Debes aceptar las políticas de clases para continuar con la reserva.",
+        trialCreditNote: "💡 Si después decides continuar con un paquete de clases, te descontamos los $10 de esta clase de prueba."
       },
       payment: {
         alertTitle: "Confirmación requerida",
@@ -334,8 +387,10 @@ export const translations = {
         payWith: "Pagar con",
         secure: "Plataforma de pago encriptada y segura.",
         cancel: "Cancelar",
-        bookingSaved: "Reserva registrada. Completa el pago en PayPal para confirmar.",
-        paypalInstruction: "Haz clic en el botón para abrir PayPal y completar el pago."
+        bookingSaved: "Reserva registrada. Elige cómo quieres pagar para confirmarla.",
+        paypalInstruction: "Haz clic en el botón para abrir PayPal y completar el pago.",
+        choosePaymentMethod: "Elige tu método de pago:",
+        redirecting: "Redirigiendo..."
       },
       success: {
         title: "¡Reserva registrada!",
@@ -352,7 +407,9 @@ export const translations = {
       classes: "Classes",
       pricing: "Pricing",
       policies: "Policies",
-      book: "Book your class"
+      book: "Book your class",
+      login: "Log in",
+      myAccount: "My account"
     },
     hero: {
       subtitle: "Gain confidence to speak Spanish in real conversations. Personalized support so you can express yourself safely.",
@@ -503,9 +560,53 @@ export const translations = {
         ],
       }
     ],
+    paymentReturn: {
+      success: "Payment confirmed! Check your email for your class details.",
+      cancelled: "The payment was cancelled. You can try again whenever you'd like."
+    },
     referral: {
       title: "Referral Program",
-      desc: "If a student recommends someone new who purchases a class package, the referring student receives 1 additional class at no cost in their next package."
+      desc: "If a student recommends someone new who purchases a class package, the referring student receives 1 additional class at no cost in their next package.",
+      cta: "See how it works"
+    },
+    referralPage: {
+      backToHome: "Back to home",
+      badge: "Referral Program",
+      title: "Share Spanish, earn classes",
+      intro: "When you recommend someone and they become a student, everyone wins: they start their Spanish journey, and you get an extra class at no cost.",
+      imageAlt: "Two people talking and learning together",
+      howItWorksTitle: "How does it work?",
+      steps: [
+        {
+          title: "1. Recommend",
+          desc: "Tell a friend, family member, or colleague about your Spanish classes with Juanita."
+        },
+        {
+          title: "2. They buy their first package",
+          desc: "The person you recommended books their trial class and purchases a class package."
+        },
+        {
+          title: "3. You get a free class",
+          desc: "By mentioning your name, you'll be credited 1 additional class at no cost on your next package."
+        }
+      ],
+      sections: [
+        {
+          title: "Program terms",
+          bullets: [
+            "The recommended person must be a new student (no previous classes taken).",
+            "The benefit is credited once the recommended person purchases their first class package (the trial class alone does not qualify).",
+            "The free class is added to your next class package; it cannot be redeemed for cash or transferred.",
+            "There's no limit to how many people you can recommend: every successful referral earns you an additional class."
+          ]
+        },
+        {
+          title: "How to claim your free class",
+          paragraphs: [
+            "Simply mention the name of the person you recommended when booking or when contacting the teacher. She will credit the extra class to your next package."
+          ]
+        }
+      ]
     },
     testimonials: {
       title: "Real",
@@ -514,6 +615,12 @@ export const translations = {
       next: "Next",
       carouselLabel: "Carousel",
       groups: [
+        {
+          label: "June 2026",
+          reviews: [
+            { name: "Cinny", date: "June 1, 2026", text: "I highly recommend learning with Juanita. From the very beginning, she created lessons that were personalized to my goals, interests, and learning style, which made every class engaging and productive. What I appreciated most was her kindness, patience, and genuine dedication to helping me improve. She always created a comfortable learning environment where I felt encouraged to speak and make mistakes without feeling judged. Her positive attitude and supportive teaching style made a huge difference in my confidence. Beyond being a great teacher, she is simply a wonderful person to learn with. Every lesson felt welcoming, enjoyable, and motivating. I made meaningful progress in Spanish thanks to her guidance, and I always looked forward to our classes. If you're looking for a tutor who truly cares about her students and goes the extra mile to adapt lessons to your needs, I would absolutely recommend her. 🫶" }
+          ]
+        },
         {
           label: "Recent 1",
           reviews: [
@@ -672,7 +779,8 @@ export const translations = {
         acceptPoliciesPrefix: "I have read and accept the",
         acceptPoliciesLink: "Class policies",
         acceptPoliciesOpenInNewTab: "Open in new tab",
-        acceptPoliciesError: "You must accept the class policies to continue with your booking."
+        acceptPoliciesError: "You must accept the class policies to continue with your booking.",
+        trialCreditNote: "💡 If you decide to continue with a class package afterwards, we'll deduct the $10 of this trial class."
       },
       payment: {
         alertTitle: "Confirmation required",
@@ -681,8 +789,10 @@ export const translations = {
         payWith: "Pay with",
         secure: "Encrypted and secure payment platform.",
         cancel: "Cancel",
-        bookingSaved: "Booking saved. Complete the payment on PayPal to confirm.",
-        paypalInstruction: "Click the button to open PayPal and complete the payment."
+        bookingSaved: "Booking saved. Choose how you'd like to pay to confirm it.",
+        paypalInstruction: "Click the button to open PayPal and complete the payment.",
+        choosePaymentMethod: "Choose your payment method:",
+        redirecting: "Redirecting..."
       },
       success: {
         title: "Booking saved!",

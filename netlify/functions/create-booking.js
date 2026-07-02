@@ -8,6 +8,7 @@ async function getPromoDiscount(db, code) {
   if (!code?.trim()) return null
   const promo = await db.collection('promocodes').findOne({
     code: code.trim().toUpperCase(),
+    active: { $ne: false },
   })
   return promo
 }
@@ -78,7 +79,7 @@ export const handler = async (event) => {
         finalPrice,
         originalPrice,
         appliedPromo,
-        message: 'Reserva registrada. Completa el pago en PayPal para confirmar.',
+        message: 'Reserva registrada. Completa el pago para confirmar.',
       }),
     }
   } catch (err) {

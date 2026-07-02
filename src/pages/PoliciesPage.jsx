@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { useLanguage } from "../context/LanguageContext"
+import WhatsAppButton from "../components/WhatsAppButton"
 
 export default function PoliciesPage() {
   const { t, language, toggleLanguage } = useLanguage()
@@ -80,6 +81,7 @@ export default function PoliciesPage() {
           </div>
         </div>
       </main>
+      <WhatsAppButton />
     </div>
   )
 }

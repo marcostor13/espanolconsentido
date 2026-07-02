@@ -34,7 +34,6 @@ export async function createCalendarEvent({ summary, description, start, end, at
     calendarId,
     requestBody: event,
     sendUpdates: 'none',
-    conferenceDataVersion: 'none',
   })
 
   console.log('Event created successfully:', res.data?.id)

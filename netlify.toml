@@ -21,6 +21,96 @@
   force = true
 
 [[redirects]]
+  from = "/api/auth-register"
+  to = "/.netlify/functions/auth-register"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/auth-login"
+  to = "/.netlify/functions/auth-login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/auth-me"
+  to = "/.netlify/functions/auth-me"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/auth-change-password"
+  to = "/.netlify/functions/auth-change-password"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/availability"
+  to = "/.netlify/functions/availability"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/bookings"
+  to = "/.netlify/functions/bookings"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/enrollments"
+  to = "/.netlify/functions/enrollments"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/materials"
+  to = "/.netlify/functions/materials"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin-users"
+  to = "/.netlify/functions/admin-users"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin-stats"
+  to = "/.netlify/functions/admin-stats"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/settings"
+  to = "/.netlify/functions/settings"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/promocodes"
+  to = "/.netlify/functions/promocodes"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/materials-upload-url"
+  to = "/.netlify/functions/materials-upload-url"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/create-checkout-session"
+  to = "/.netlify/functions/create-checkout-session"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/stripe-webhook"
+  to = "/.netlify/functions/stripe-webhook"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
