@@ -5,6 +5,7 @@ export const translations = {
       classes: "Clases",
       pricing: "Precios",
       policies: "Políticas",
+      referral: "Recomendación",
       book: "Reserva tu clase",
       login: "Iniciar sesión",
       myAccount: "Mi cuenta"
@@ -103,6 +104,19 @@ export const translations = {
           "Recomendaciones claras y personalizadas para mejorar",
           "Mini plan de acción según tus objetivos",
           "Si decides continuar, el valor de esta clase se descuenta en tu primer paquete"
+        ],
+      },
+      {
+        id: "group",
+        title: "Clase grupal",
+        subtitle: "Cupo compartido, una sola sesión",
+        price: 10,
+        hidden: true,
+        features: [
+          "Practica conversación en grupo con otros estudiantes de tu nivel",
+          "Corrección en vivo dentro de un ambiente dinámico y ameno",
+          "Ideal para ganar confianza al hablar frente a otras personas",
+          "Cupos limitados según la franja grupal que elijas"
         ],
       },
       {
@@ -217,61 +231,60 @@ export const translations = {
         {
           label: "Junio 2026",
           reviews: [
-            { name: "Cinny", date: "1 de junio de 2026", text: "I highly recommend learning with Juanita. From the very beginning, she created lessons that were personalized to my goals, interests, and learning style, which made every class engaging and productive. What I appreciated most was her kindness, patience, and genuine dedication to helping me improve. She always created a comfortable learning environment where I felt encouraged to speak and make mistakes without feeling judged. Her positive attitude and supportive teaching style made a huge difference in my confidence. Beyond being a great teacher, she is simply a wonderful person to learn with. Every lesson felt welcoming, enjoyable, and motivating. I made meaningful progress in Spanish thanks to her guidance, and I always looked forward to our classes. If you're looking for a tutor who truly cares about her students and goes the extra mile to adapt lessons to your needs, I would absolutely recommend her. 🫶" }
+            { name: "Cinny", country: "us", date: "1 de junio de 2026", text: "I highly recommend learning with Juanita. From the very beginning, she created lessons that were personalized to my goals, interests, and learning style, which made every class engaging and productive. What I appreciated most was her kindness, patience, and genuine dedication to helping me improve. She always created a comfortable learning environment where I felt encouraged to speak and make mistakes without feeling judged. Her positive attitude and supportive teaching style made a huge difference in my confidence. Beyond being a great teacher, she is simply a wonderful person to learn with. Every lesson felt welcoming, enjoyable, and motivating. I made meaningful progress in Spanish thanks to her guidance, and I always looked forward to our classes. If you're looking for a tutor who truly cares about her students and goes the extra mile to adapt lessons to your needs, I would absolutely recommend her. 🫶" }
           ]
         },
         {
           label: "Recientes 1",
           reviews: [
-            { name: "Carlos", date: "22 de abril de 2026", text: "The dynamics of the class are very good. It encourages you to make an effort in applying what is presented. Something I would like to share is Juanita's charisma and willingness during the classes. She provides a lot of support and guidance. She is a dynamic teacher who captivates. With her, you know that the class will not be boring. I made a good choice!" },
-            { name: "Simone", date: "18 de enero de 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
+            { name: "Carlos", country: "br", date: "22 de abril de 2026", text: "The dynamics of the class are very good. It encourages you to make an effort in applying what is presented. Something I would like to share is Juanita's charisma and willingness during the classes. She provides a lot of support and guidance. She is a dynamic teacher who captivates. With her, you know that the class will not be boring. I made a good choice!" },
+            { name: "Simone", country: "br", date: "18 de enero de 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
           ]
         },
         {
           label: "Recientes 2",
           reviews: [
-            { name: "Elena", date: "12 de enero de 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
-            { name: "Mihai", date: "27 de noviembre de 2025", text: "Mas de lo que esperaba!" }
+            { name: "Elena", country: "it", date: "12 de enero de 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
+            { name: "Mihai", country: "ro", date: "27 de noviembre de 2025", text: "Mas de lo que esperaba!" }
           ]
         },
         {
           label: "Noviembre 2025",
           reviews: [
-            { name: "Jonathan", date: "25 de noviembre de 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
-            { name: "Hatice", date: "16 de noviembre de 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
+            { name: "Hatice", country: "tr", date: "16 de noviembre de 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
           ]
         },
         {
           label: "Octubre-Septiembre 2025",
           reviews: [
-            { name: "Mari", date: "29 de octubre de 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
-            { name: "Igor", date: "23 de septiembre de 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
+            { name: "Mari", country: "ge", date: "29 de octubre de 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
+            { name: "Igor", country: "ua", date: "23 de septiembre de 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
           ]
         },
         {
           label: "Agosto 2025",
           reviews: [
-            { name: "Rafael", date: "5 de agosto de 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
+            { name: "Rafael", country: "br", date: "5 de agosto de 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
           ]
         },
         {
           label: "Junio 2025",
           reviews: [
-            { name: "Soyeon", date: "19 de junio de 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" },
-            { name: "Oliwia", date: "16 de junio de 2025", text: "I recommend! Juanita is very nice and speaks very clearly" }
+            { name: "Soyeon", country: "kr", date: "19 de junio de 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" },
+            { name: "Oliwia", country: "pl", date: "16 de junio de 2025", text: "I recommend! Juanita is very nice and speaks very clearly" }
           ]
         },
         {
           label: "Mayo-Junio 2025",
           reviews: [
-            { name: "Beata", date: "10 de junio de 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" },
-            { name: "Vadim", date: "18 de mayo de 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" }
+            { name: "Beata", country: "pl", date: "10 de junio de 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" },
+            { name: "Vadim", country: "ru", date: "18 de mayo de 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" }
           ]
         },
         {
           label: "Mayo 2025",
           reviews: [
-            { name: "Shahad", date: "15 de mayo de 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
+            { name: "Shahad", country: "sa", date: "15 de mayo de 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
           ]
         }
       ]
@@ -345,7 +358,13 @@ export const translations = {
       },
       time: {
         title: "Selecciona tu momento",
-        continue: "Continuar"
+        continue: "Continuar",
+        loading: "Buscando horarios disponibles...",
+        empty: "No hay horarios disponibles por ahora. Escríbenos y coordinamos una franja especial para ti.",
+        contactUs: "Escríbenos por WhatsApp",
+        spotsLeft: "lugar(es) disponibles",
+        prevDates: "Fechas anteriores",
+        nextDates: "Más fechas"
       },
       details: {
         title: "Antes de nuestra clase...",
@@ -391,14 +410,18 @@ export const translations = {
         bookingSaved: "Reserva registrada. Elige cómo quieres pagar para confirmarla.",
         paypalInstruction: "Haz clic en el botón para abrir PayPal y completar el pago.",
         choosePaymentMethod: "Elige tu método de pago:",
-        redirecting: "Redirigiendo..."
+        redirecting: "Redirigiendo...",
+        packageSummary: "Podrás elegir tus horarios después de completar la compra, desde tu portal de estudiante."
       },
       success: {
         title: "¡Reserva registrada!",
         desc: "Tu reserva ha sido guardada. Completa el pago en la ventana de PayPal que se ha abierto. Te contactaremos cuando confirmemos el pago.",
         policy: "Política",
         policyDesc: "Reprogramación gratuita hasta 24h antes.",
-        return: "Volver al Inicio"
+        return: "Volver al Inicio",
+        packageTitle: "¡Compra confirmada!",
+        packageDesc: "Tu paquete ya está activo. Inicia sesión en tu portal de estudiante para agendar tus clases cuando quieras.",
+        goToPortal: "Agendar mis clases"
       }
     }
   },
@@ -408,6 +431,7 @@ export const translations = {
       classes: "Classes",
       pricing: "Pricing",
       policies: "Policies",
+      referral: "Referrals",
       book: "Book your class",
       login: "Log in",
       myAccount: "My account"
@@ -506,6 +530,19 @@ export const translations = {
           "Clear and personalized recommendations to improve",
           "Mini action plan based on your goals",
           "If you decide to continue, the value of this class is deducted from your first package"
+        ],
+      },
+      {
+        id: "group",
+        title: "Group Class",
+        subtitle: "Shared spot, single session",
+        price: 10,
+        hidden: true,
+        features: [
+          "Practice conversation in a group with other students at your level",
+          "Live correction in a dynamic, friendly environment",
+          "Great for building confidence speaking in front of others",
+          "Limited spots depending on the group session you choose"
         ],
       },
       {
@@ -620,61 +657,60 @@ export const translations = {
         {
           label: "June 2026",
           reviews: [
-            { name: "Cinny", date: "June 1, 2026", text: "I highly recommend learning with Juanita. From the very beginning, she created lessons that were personalized to my goals, interests, and learning style, which made every class engaging and productive. What I appreciated most was her kindness, patience, and genuine dedication to helping me improve. She always created a comfortable learning environment where I felt encouraged to speak and make mistakes without feeling judged. Her positive attitude and supportive teaching style made a huge difference in my confidence. Beyond being a great teacher, she is simply a wonderful person to learn with. Every lesson felt welcoming, enjoyable, and motivating. I made meaningful progress in Spanish thanks to her guidance, and I always looked forward to our classes. If you're looking for a tutor who truly cares about her students and goes the extra mile to adapt lessons to your needs, I would absolutely recommend her. 🫶" }
+            { name: "Cinny", country: "us", date: "June 1, 2026", text: "I highly recommend learning with Juanita. From the very beginning, she created lessons that were personalized to my goals, interests, and learning style, which made every class engaging and productive. What I appreciated most was her kindness, patience, and genuine dedication to helping me improve. She always created a comfortable learning environment where I felt encouraged to speak and make mistakes without feeling judged. Her positive attitude and supportive teaching style made a huge difference in my confidence. Beyond being a great teacher, she is simply a wonderful person to learn with. Every lesson felt welcoming, enjoyable, and motivating. I made meaningful progress in Spanish thanks to her guidance, and I always looked forward to our classes. If you're looking for a tutor who truly cares about her students and goes the extra mile to adapt lessons to your needs, I would absolutely recommend her. 🫶" }
           ]
         },
         {
           label: "Recent 1",
           reviews: [
-            { name: "Carlos", date: "April 22, 2026", text: "The dynamics of the class are very good. It encourages you to make an effort in applying what is presented. Something I would like to share is Juanita's charisma and willingness during the classes. She provides a lot of support and guidance. She is a dynamic teacher who captivates. With her, you know that the class will not be boring. I made a good choice!" },
-            { name: "Simone", date: "January 18, 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
+            { name: "Carlos", country: "br", date: "April 22, 2026", text: "The dynamics of the class are very good. It encourages you to make an effort in applying what is presented. Something I would like to share is Juanita's charisma and willingness during the classes. She provides a lot of support and guidance. She is a dynamic teacher who captivates. With her, you know that the class will not be boring. I made a good choice!" },
+            { name: "Simone", country: "br", date: "January 18, 2026", text: "Professora prepara a aula de acordo com o seu dia a dia.." }
           ]
         },
         {
           label: "Recent 2",
           reviews: [
-            { name: "Elena", date: "January 12, 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
-            { name: "Mihai", date: "November 27, 2025", text: "Mas de lo que esperaba!" }
+            { name: "Elena", country: "it", date: "January 12, 2026", text: "Juanita is an excellent Spanish teacher. She prepares each lesson carefully and creates a pleasant learning atmosphere. I especially appreciate that she addresses my individual needs and adjusts the lessons flexibly to my learning pace. Learning is really fun. Absolutely recommended!" },
+            { name: "Mihai", country: "ro", date: "November 27, 2025", text: "Mas de lo que esperaba!" }
           ]
         },
         {
           label: "November 2025",
           reviews: [
-            { name: "Jonathan", date: "November 25, 2025", text: "Juanita is an excellent teacher, one of the best I've had on Preply. Her classes are always well-prepared, structured, and perfectly adapted to my level. Each lesson is thoughtfully designed, with clear transitions between theory and practice, making the learning process both effective and enjoyable. I highly recommend her." },
-            { name: "Hatice", date: "November 16, 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
+            { name: "Hatice", country: "tr", date: "November 16, 2025", text: "She has a lot of patience and a very gentle personality. I really enjoy chatting with her, and she truly cares about what we do in class. I feel that she gives importance to her students, and I'm sure she is the same with everyone. I am an English teacher myself, so I can compare what is acceptable and what is not, and I can say she is an excellent teacher. Thanks to her, I found the motivation to return to learning Spanish once again." }
           ]
         },
         {
           label: "Oct-Sep 2025",
           reviews: [
-            { name: "Mari", date: "October 29, 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
-            { name: "Igor", date: "September 23, 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
+            { name: "Mari", country: "ge", date: "October 29, 2025", text: "Juanita siempre está súper bien preparada y se adapta perfectamente a mis intereses. Además, es una persona muy amable y motivadora, y en general, ¡una gran maestra!" },
+            { name: "Igor", country: "ua", date: "September 23, 2025", text: "¡La clase estuvo bien preparada y me está ayudando mucho! Estoy enriqueciendo mi vocabulario y aprendiendo más que solo español, ¡y me está gustando!" }
           ]
         },
         {
           label: "August 2025",
           reviews: [
-            { name: "Rafael", date: "August 5, 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
+            { name: "Rafael", country: "br", date: "August 5, 2025", text: "¡Las clases de español con la profesora Juanita han sido simplemente increíbles! Ella demuestra un profesionalismo excepcional al preparar las clases de forma personalizada, atendiendo exactamente a mis necesidades. El hecho de que haya investigado sobre mi trabajo y adaptado el contenido de las clases para hacerlas relevantes y atractivas fue un diferencial sensacional. Su dedicación y cuidado en la elaboración de las clases hacen que el aprendizaje no solo sea eficaz, sino también extremadamente agradable. ¡Recomiendo encarecidamente sus clases a cualquiera que quiera aprender español de manera práctica y personalizada!" }
           ]
         },
         {
           label: "June 2025",
           reviews: [
-            { name: "Soyeon", date: "June 19, 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" },
-            { name: "Oliwia", date: "June 16, 2025", text: "I recommend! Juanita is very nice and speaks very clearly" }
+            { name: "Soyeon", country: "kr", date: "June 19, 2025", text: "¡Juanita es una maestra increíble! Es muy comprometida, servicial y paciente, nada como una típica maestra de \"repite después de mí\". Estoy muy feliz de haber encontrado a la maestra adecuada para mí, y mi sueño de hablar español finalmente se está acercando. ¡Gracias, Juanita!" },
+            { name: "Oliwia", country: "pl", date: "June 16, 2025", text: "I recommend! Juanita is very nice and speaks very clearly" }
           ]
         },
         {
           label: "May-June 2025",
           reviews: [
-            { name: "Beata", date: "June 10, 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" },
-            { name: "Vadim", date: "May 18, 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" }
+            { name: "Beata", country: "pl", date: "June 10, 2025", text: "Juanita jest wspaniałym nauczycielem, skupionym na potrzebach ucznia, cierpliwa, zabawna... Zawsze jest przygotowana do lekcji, oferuje zabawne, ciekawe ćwiczenia i zadania podczas lekcji, co sprawia, że uczysz się bawiąc jednocześnie. Sama jestem nauczycielem i przygotowanie merytoryczne jest dla mnie ważne - Juanita to prawdziwa, zaangażowana i doświadczona NAUCZYCIELKA. Bardzo dziękuję i polecam z całego serca!" },
+            { name: "Vadim", country: "ru", date: "May 18, 2025", text: "Wow! Everything is perfect, clear talk and verrrrry patient and attentive!" }
           ]
         },
         {
           label: "May 2025",
           reviews: [
-            { name: "Shahad", date: "May 15, 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
+            { name: "Shahad", country: "sa", date: "May 15, 2025", text: "A wonderful teacher, understanding, and has a beautiful way of managing the lesson and getting the best possible benefit. I recommend her." }
           ]
         }
       ]
@@ -748,7 +784,13 @@ export const translations = {
       },
       time: {
         title: "Select your time",
-        continue: "Continue"
+        continue: "Continue",
+        loading: "Looking for available times...",
+        empty: "No time slots are available right now. Message us and we'll arrange a special slot for you.",
+        contactUs: "Message us on WhatsApp",
+        spotsLeft: "spot(s) left",
+        prevDates: "Earlier dates",
+        nextDates: "More dates"
       },
       details: {
         title: "Before our class...",
@@ -794,14 +836,18 @@ export const translations = {
         bookingSaved: "Booking saved. Choose how you'd like to pay to confirm it.",
         paypalInstruction: "Click the button to open PayPal and complete the payment.",
         choosePaymentMethod: "Choose your payment method:",
-        redirecting: "Redirecting..."
+        redirecting: "Redirecting...",
+        packageSummary: "You'll be able to pick your class times after checkout, from your student portal."
       },
       success: {
         title: "Booking saved!",
         desc: "Your booking has been saved. Complete the payment in the PayPal window that opened. We will contact you when we confirm the payment.",
         policy: "Policy",
         policyDesc: "Free rescheduling up to 24h in advance.",
-        return: "Back to Home"
+        return: "Back to Home",
+        packageTitle: "Purchase confirmed!",
+        packageDesc: "Your package is now active. Log into your student portal to schedule your classes whenever you like.",
+        goToPortal: "Schedule my classes"
       }
     }
   }

@@ -21,6 +21,14 @@ async function listUsers(event, db) {
   if (error) return error
 
   const params = event.queryStringParameters || {}
+
+  if (params.id) {
+    if (!ObjectId.isValid(params.id)) return jsonResponse(400, { error: 'Id de usuario inválido' })
+    const one = await db.collection('users').findOne({ _id: new ObjectId(params.id) })
+    if (!one) return jsonResponse(404, { error: 'Usuario no encontrado' })
+    return jsonResponse(200, { user: serializeUser(one) })
+  }
+
   const filter = {}
   if (params.role) filter.role = params.role
   if (params.search?.trim()) {

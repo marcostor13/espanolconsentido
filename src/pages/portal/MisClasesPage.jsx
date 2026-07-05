@@ -1,5 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Calendar as CalendarIcon, Clock, AlertCircle, CheckCircle, User, Users, CalendarClock, XCircle, Loader2 } from 'lucide-react'
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  User,
+  Users,
+  CalendarClock,
+  XCircle,
+  Loader2,
+  X,
+} from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { toDateKey } from '../../lib/date'
@@ -52,16 +64,21 @@ function BookingCard({ booking, onCancel, onReschedule, cancelling }) {
           {booking.creditRefunded ? <CheckCircle size={13} /> : <AlertCircle size={13} />}
           {booking.creditRefunded
             ? 'Se te devolvió el crédito de esta clase.'
-            : 'No se devolvió el crédito (cancelada con menos de 48h de anticipación).'}
+            : 'Esta clase se canceló con menos de 24h de anticipación, así que no se pudo devolver el crédito.'}
         </p>
       )}
 
       {canManage && (
         <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
-          <p className={`text-xs font-bold ${notice ? 'text-gray-400' : 'text-amber-600'}`}>
+          <p
+            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg ${
+              notice ? 'text-green-700 bg-green-50' : 'text-amber-700 bg-amber-50'
+            }`}
+          >
+            {notice ? <CheckCircle size={14} className="shrink-0" /> : <AlertTriangle size={14} className="shrink-0" />}
             {notice
               ? 'Puedes cancelar o reprogramar sin perder tu crédito.'
-              : 'Quedan menos de 48h: cancelar o reprogramar hará que pierdas el crédito.'}
+              : 'Quedan menos de 24h para tu clase: si cancelas o reprogramas, se perderá el crédito.'}
           </p>
           <div className="flex gap-2">
             <button
@@ -86,12 +103,75 @@ function BookingCard({ booking, onCancel, onReschedule, cancelling }) {
   )
 }
 
+function CancelBookingModal({ booking, onClose, onConfirm }) {
+  const notice = hasEnoughNotice(booking)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/60 backdrop-blur-sm p-4 font-grotesk overflow-y-auto">
+      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden my-8">
+        <div className="p-6 pb-0 flex items-start justify-between">
+          <div>
+            <h2 className="font-syne font-bold text-xl text-secondary">¿Cancelar esta clase?</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {booking.serviceTitle} · {booking.date} · {booking.time}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-primary transition-colors bg-gray-50 hover:bg-orange-50 rounded-full p-2"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {notice ? (
+            <div className="mb-5 p-4 rounded-2xl bg-green-50 border border-green-200 flex gap-3">
+              <CheckCircle size={20} className="text-green-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-green-800">
+                Estás a tiempo: si cancelas ahora, tu crédito queda disponible para que reserves otra clase cuando quieras.
+              </p>
+            </div>
+          ) : (
+            <div className="mb-5 p-4 rounded-2xl bg-amber-50 border-2 border-amber-300 flex gap-3">
+              <AlertTriangle size={22} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-bold text-amber-800 mb-1">Quedan menos de 24 horas para tu clase</p>
+                <p className="text-sm text-amber-700">
+                  Si cancelas ahora, no podremos devolverte el crédito de esta sesión. Es para que tu profesora pueda
+                  organizar bien su tiempo. ¡Gracias por tu comprensión!
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl font-bold text-sm border-2 border-gray-200 text-secondary hover:border-gray-300 transition"
+            >
+              Volver
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 py-3 rounded-xl font-bold text-sm bg-primary text-white shadow-soft hover:shadow-soft-lg transition"
+            >
+              Aceptar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MisClasesPage() {
   const { token } = useAuth()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [cancellingId, setCancellingId] = useState(null)
+  const [cancelingBooking, setCancelingBooking] = useState(null)
   const [reschedulingBooking, setReschedulingBooking] = useState(null)
 
   const loadBookings = useCallback(async () => {
@@ -109,13 +189,10 @@ export default function MisClasesPage() {
     loadBookings()
   }, [loadBookings])
 
-  const handleCancel = async (booking) => {
-    const notice = hasEnoughNotice(booking)
-    const confirmMsg = notice
-      ? '¿Cancelar esta clase? Se te devolverá el crédito.'
-      : 'Faltan menos de 48h para esta clase: al cancelarla NO se te devolverá el crédito. ¿Deseas continuar?'
-    if (!window.confirm(confirmMsg)) return
-
+  const handleConfirmCancel = async () => {
+    const booking = cancelingBooking
+    if (!booking) return
+    setCancelingBooking(null)
     setCancellingId(booking._id)
     setError(null)
     try {
@@ -157,7 +234,7 @@ export default function MisClasesPage() {
                   key={b.bookingId}
                   booking={b}
                   cancelling={cancellingId === b._id}
-                  onCancel={() => handleCancel(b)}
+                  onCancel={() => setCancelingBooking(b)}
                   onReschedule={() => setReschedulingBooking(b)}
                 />
               ))}
@@ -185,6 +262,14 @@ export default function MisClasesPage() {
             setReschedulingBooking(null)
             loadBookings()
           }}
+        />
+      )}
+
+      {cancelingBooking && (
+        <CancelBookingModal
+          booking={cancelingBooking}
+          onClose={() => setCancelingBooking(null)}
+          onConfirm={handleConfirmCancel}
         />
       )}
     </div>

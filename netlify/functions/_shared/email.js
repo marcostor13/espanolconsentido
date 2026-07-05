@@ -43,7 +43,13 @@ async function sendEmail({ to, subject, html }) {
 
 export async function sendBookingConfirmation({ toName, toEmail, bookingDetails }) {
   const notifyEmail = process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
-  const { date, time, serviceTitle, finalPrice, name, email } = bookingDetails
+  const { date, time, serviceTitle, finalPrice, name, email, isPackage, totalClasses } = bookingDetails
+  const siteUrl = process.env.SITE_URL || 'https://espanolconsentido.com'
+
+  const scheduleRowAdmin = isPackage
+    ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Clases</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${totalClasses} clase(s), por agendar desde el portal</td></tr>`
+    : `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>`
 
   await sendEmail({
     to: notifyEmail,
@@ -55,14 +61,18 @@ export async function sendBookingConfirmation({ toName, toEmail, bookingDetails 
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Estudiante</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${name}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Email</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${email}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Servicio</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${serviceTitle}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>
+          ${scheduleRowAdmin}
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Precio final</td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #f97316; font-weight: bold;">€${finalPrice}</td></tr>
         </table>
-        <p style="color: #666; font-size: 14px;">El evento ya ha sido añadido a Google Calendar.</p>
+        <p style="color: #666; font-size: 14px;">${isPackage ? 'El estudiante agendará sus clases desde el portal.' : 'El evento ya ha sido añadido a Google Calendar.'}</p>
       </div>
     `,
   })
+
+  const scheduleRowStudent = isPackage
+    ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Clases incluidas</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${totalClasses}</td></tr>`
+    : `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>`
 
   await sendEmail({
     to: toEmail,
@@ -73,11 +83,15 @@ export async function sendBookingConfirmation({ toName, toEmail, bookingDetails 
         <p>Tu reserva ha sido confirmada exitosamente.</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Servicio</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${serviceTitle}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>
+          ${scheduleRowStudent}
         </table>
-        <p style="color: #666; font-size: 14px;">Te contactaremos pronto con los detalles de la sesión.</p>
-        <p style="color: #666; font-size: 14px;">¡Hasta pronto!<br/><strong>Juanita Sánchez</strong><br/>Español conSentido</p>
+        ${
+          isPackage
+            ? `<p style="color: #666; font-size: 14px;">Ya puedes agendar tus clases cuando quieras desde tu portal de estudiante.</p>
+               <p style="margin-top: 16px;"><a href="${siteUrl}/portal/reservar" style="background: #f97316; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Agendar mis clases</a></p>`
+            : `<p style="color: #666; font-size: 14px;">Te contactaremos pronto con los detalles de la sesión.</p>`
+        }
+        <p style="color: #666; font-size: 14px; margin-top: 16px;">¡Hasta pronto!<br/><strong>Juanita Sánchez</strong><br/>Español conSentido</p>
       </div>
     `,
   })

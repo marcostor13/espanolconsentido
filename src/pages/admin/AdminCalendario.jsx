@@ -1,9 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2, Loader2, Clock, AlertCircle, Users, User } from 'lucide-react'
+import { Plus, Trash2, Loader2, Clock, AlertCircle, Users, User, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import Calendar from '../../components/Calendar'
-import { toDateKey } from '../../lib/date'
+import TimeGrid from '../../components/calendar/TimeGrid'
+import SlotDetailModal from '../../components/calendar/SlotDetailModal'
+import BulkAvailabilityModal from '../../components/calendar/BulkAvailabilityModal'
+import { toDateKey, parseDateKey, addDays, addMonths, startOfWeek, formatWeekRangeLabel, formatDayLabel } from '../../lib/date'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
+
+const VIEWS = [
+  { id: 'month', label: 'Mes' },
+  { id: 'week', label: 'Semana' },
+  { id: 'day', label: 'Día' },
+]
 
 function monthRange(month) {
   const from = new Date(month.getFullYear(), month.getMonth(), 1)
@@ -11,11 +20,27 @@ function monthRange(month) {
   return { from: toDateKey(from), to: toDateKey(to) }
 }
 
+// Punto de color por tipo de clase: relleno = tiene reserva confirmada,
+// contorno = hay franja disponible pero nadie ha reservado todavía.
+// Sobre un día seleccionado (fondo naranja) se muestra en blanco para que no se pierda el contraste.
+function DayDot({ booked, open, colorKey, isSelected }) {
+  if (!booked && !open) return null
+  if (isSelected) {
+    return <span className={`w-2 h-2 rounded-full ${booked ? 'bg-white' : 'border-2 border-white/80'}`} />
+  }
+  const solid = colorKey === 'individual' ? 'bg-primary' : 'bg-blue-500'
+  const outline = colorKey === 'individual' ? 'border-primary/50' : 'border-blue-400/60'
+  return <span className={`w-2 h-2 rounded-full ${booked ? solid + ' ring-1 ring-white' : `border-2 ${outline}`}`} />
+}
+
 export default function AdminCalendario() {
   const { token } = useAuth()
-  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  const [view, setView] = useState('week')
+  const [currentDate, setCurrentDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+
   const [slots, setSlots] = useState([])
+  const [bookings, setBookings] = useState([])
   const [groupCapacity, setGroupCapacity] = useState(4)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -26,23 +51,38 @@ export default function AdminCalendario() {
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
 
-  const loadSlots = useCallback(async () => {
+  const [detailSlot, setDetailSlot] = useState(null)
+  const [bulkRange, setBulkRange] = useState(null)
+
+  const month = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate])
+  const weekStart = useMemo(() => startOfWeek(currentDate), [currentDate])
+
+  const { from: rangeFrom, to: rangeTo } = useMemo(() => {
+    if (view === 'month') return monthRange(month)
+    if (view === 'week') return { from: toDateKey(weekStart), to: toDateKey(addDays(weekStart, 6)) }
+    return { from: toDateKey(currentDate), to: toDateKey(currentDate) }
+  }, [view, month, weekStart, currentDate])
+
+  const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const { from, to } = monthRange(month)
-      const data = await apiFetch(`availability?from=${from}&to=${to}`, { token })
-      setSlots(data.slots || [])
+      const [availData, bookingsData] = await Promise.all([
+        apiFetch(`availability?from=${rangeFrom}&to=${rangeTo}`, { token }),
+        apiFetch(`bookings?from=${rangeFrom}&to=${rangeTo}&all=true`, { token }),
+      ])
+      setSlots(availData.slots || [])
+      setBookings(bookingsData.bookings || [])
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [month, token])
+  }, [rangeFrom, rangeTo, token])
 
   useEffect(() => {
-    loadSlots()
-  }, [loadSlots])
+    loadData()
+  }, [loadData])
 
   useEffect(() => {
     apiFetch('settings', { token })
@@ -50,29 +90,61 @@ export default function AdminCalendario() {
       .catch(() => {})
   }, [token])
 
+  const bookingsBySlotId = useMemo(() => {
+    const map = {}
+    for (const b of bookings) {
+      if (!b.slotId) continue
+      if (!map[b.slotId]) map[b.slotId] = []
+      map[b.slotId].push(b)
+    }
+    return map
+  }, [bookings])
+
+  const enrichedSlots = useMemo(
+    () => slots.map((s) => ({ ...s, students: bookingsBySlotId[s._id] || [] })),
+    [slots, bookingsBySlotId],
+  )
+
   const slotsByDate = useMemo(() => {
     const map = {}
-    for (const s of slots) {
+    for (const s of enrichedSlots) {
       if (!map[s.date]) map[s.date] = []
       map[s.date].push(s)
     }
     return map
-  }, [slots])
+  }, [enrichedSlots])
 
   const selectedKey = toDateKey(selectedDate)
   const daySlots = [...(slotsByDate[selectedKey] || [])].sort((a, b) => a.time.localeCompare(b.time))
 
-  const dayContent = (date) => {
+  const dayContent = (date, isSelected) => {
     const daySlotsForDot = slotsByDate[toDateKey(date)]
     if (!daySlotsForDot?.length) return null
-    const hasOpen = daySlotsForDot.some((s) => s.status === 'open')
-    const hasFull = daySlotsForDot.some((s) => s.status === 'full')
+    const individualBooked = daySlotsForDot.some((s) => s.type === 'individual' && (s.bookedCount || 0) > 0)
+    const individualOpen = daySlotsForDot.some((s) => s.type === 'individual' && (s.bookedCount || 0) === 0)
+    const groupBooked = daySlotsForDot.some((s) => s.type === 'group' && (s.bookedCount || 0) > 0)
+    const groupOpen = daySlotsForDot.some((s) => s.type === 'group' && (s.bookedCount || 0) === 0)
+
     return (
-      <span className="flex gap-0.5 justify-center">
-        {hasOpen && <span className="w-1.5 h-1.5 rounded-full bg-green-400" />}
-        {hasFull && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+      <span className="flex gap-1 justify-center">
+        <DayDot booked={individualBooked} open={individualOpen} colorKey="individual" isSelected={isSelected} />
+        <DayDot booked={groupBooked} open={groupOpen} colorKey="group" isSelected={isSelected} />
       </span>
     )
+  }
+
+  // Resalta con un fondo de color los días que ya tienen al menos una
+  // reserva confirmada, para que salten a la vista sin tener que fijarse
+  // en los puntos pequeños.
+  const dayHighlight = (date) => {
+    const daySlotsForDate = slotsByDate[toDateKey(date)]
+    if (!daySlotsForDate?.length) return null
+    const hasIndividualBooked = daySlotsForDate.some((s) => s.type === 'individual' && (s.bookedCount || 0) > 0)
+    const hasGroupBooked = daySlotsForDate.some((s) => s.type === 'group' && (s.bookedCount || 0) > 0)
+    if (hasIndividualBooked && hasGroupBooked) return 'both'
+    if (hasIndividualBooked) return 'individual'
+    if (hasGroupBooked) return 'group'
+    return null
   }
 
   const handleAddSlot = async (e) => {
@@ -85,7 +157,7 @@ export default function AdminCalendario() {
         token,
         body: { date: selectedKey, time: newTime, durationMin: Number(newDuration), type: newType },
       })
-      await loadSlots()
+      await loadData()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -98,7 +170,7 @@ export default function AdminCalendario() {
     setError(null)
     try {
       await apiFetch(`availability?id=${id}`, { method: 'DELETE', token })
-      await loadSlots()
+      await loadData()
     } catch (err) {
       setError(err.message)
     } finally {
@@ -106,10 +178,110 @@ export default function AdminCalendario() {
     }
   }
 
+  const goToday = () => {
+    const now = new Date()
+    setCurrentDate(now)
+    setSelectedDate(now)
+  }
+
+  const goToDate = (dateKey) => {
+    if (!dateKey) return
+    const d = parseDateKey(dateKey)
+    setCurrentDate(d)
+    setSelectedDate(d)
+  }
+
+  const goPrev = () => {
+    if (view === 'month') setCurrentDate((d) => addMonths(d, -1))
+    else if (view === 'week') setCurrentDate((d) => addDays(d, -7))
+    else setCurrentDate((d) => addDays(d, -1))
+  }
+
+  const goNext = () => {
+    if (view === 'month') setCurrentDate((d) => addMonths(d, 1))
+    else if (view === 'week') setCurrentDate((d) => addDays(d, 7))
+    else setCurrentDate((d) => addDays(d, 1))
+  }
+
+  const rangeLabel =
+    view === 'month'
+      ? month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+      : view === 'week'
+        ? formatWeekRangeLabel(weekStart)
+        : formatDayLabel(currentDate)
+
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
+
+  const handleCellClick = (date, time) => {
+    setSelectedDate(date)
+    setNewTime(time)
+  }
+
+  const handleSlotUpdated = () => {
+    loadData()
+  }
+
   return (
     <div>
       <h1 className="font-syne font-bold text-3xl text-secondary mb-1">Calendario</h1>
-      <p className="text-gray-500 mb-8">Gestiona tus horarios disponibles y revisa las reservas de tus estudiantes.</p>
+      <p className="text-gray-500 mb-6">Gestiona tus horarios disponibles y revisa las reservas de tus estudiantes.</p>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={goToday}
+            className="text-xs font-bold px-3.5 py-2 rounded-xl border border-gray-200 text-secondary hover:border-primary hover:text-primary transition"
+          >
+            Hoy
+          </button>
+          <div className="flex gap-1">
+            <button
+              onClick={goPrev}
+              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition"
+              aria-label="Anterior"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={goNext}
+              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition"
+              aria-label="Siguiente"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+          <h2 className="font-syne font-bold text-lg text-secondary capitalize flex items-center gap-2">
+            <CalendarDays size={18} className="text-primary shrink-0" />
+            {rangeLabel}
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label className="relative">
+            <span className="sr-only">Ir a una fecha específica</span>
+            <input
+              type="date"
+              value={toDateKey(currentDate)}
+              onChange={(e) => goToDate(e.target.value)}
+              className="p-2.5 bg-white border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+            />
+          </label>
+
+          <div className="flex bg-gray-100 rounded-xl p-1">
+            {VIEWS.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+                  view === v.id ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-secondary'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {error && (
         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
@@ -119,7 +291,59 @@ export default function AdminCalendario() {
       )}
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
-        <Calendar month={month} onMonthChange={setMonth} selectedDate={selectedDate} onSelectDate={setSelectedDate} dayContent={dayContent} />
+        {view === 'month' && (
+          <div>
+            <div className="flex flex-wrap items-center gap-4 mb-3 px-1 text-xs font-bold text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Individual reservada
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-primary/50" /> Individual disponible
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Grupal reservada
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-blue-400/60" /> Grupal disponible
+              </span>
+              <span className="flex items-center gap-1.5 text-gray-400 font-normal normal-case">
+                · El fondo del día se colorea cuando ya tiene reservas
+              </span>
+            </div>
+            <Calendar
+              month={month}
+              onMonthChange={(m) => setCurrentDate(m)}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              onSelectRange={(start, end) => setBulkRange({ start, end })}
+              dayContent={dayContent}
+              dayHighlight={dayHighlight}
+              hideNav
+            />
+          </div>
+        )}
+
+        {view === 'week' && (
+          <TimeGrid
+            days={weekDays}
+            slotsByDate={slotsByDate}
+            selectedDate={selectedDate}
+            onSelectDay={setSelectedDate}
+            onCellClick={handleCellClick}
+            onSlotClick={setDetailSlot}
+          />
+        )}
+
+        {view === 'day' && (
+          <TimeGrid
+            days={[currentDate]}
+            slotsByDate={slotsByDate}
+            selectedDate={selectedDate}
+            onSelectDay={setSelectedDate}
+            onCellClick={handleCellClick}
+            onSlotClick={setDetailSlot}
+          />
+        )}
 
         <div className="bg-white rounded-3xl shadow-soft border border-gray-100 p-6">
           <h3 className="font-syne font-bold text-lg text-secondary mb-1">
@@ -190,6 +414,14 @@ export default function AdminCalendario() {
             </div>
           </form>
 
+          <button
+            type="button"
+            onClick={() => setBulkRange({ start: selectedDate, end: addDays(selectedDate, 6) })}
+            className="w-full mb-5 text-xs font-bold text-primary hover:text-orange-600 transition text-left"
+          >
+            + Crear varias franjas en un rango de fechas
+          </button>
+
           <div className="space-y-2">
             {daySlots.length === 0 && !loading && (
               <p className="text-sm text-gray-400 text-center py-6">No hay franjas para este día.</p>
@@ -197,38 +429,50 @@ export default function AdminCalendario() {
             {daySlots.map((slot) => {
               const isGroup = slot.type === 'group'
               const isFull = slot.status === 'full'
+              const activeStudents = (slot.students || []).filter((s) => s.status !== 'cancelled')
               return (
                 <div
                   key={slot._id}
-                  className={`flex items-center justify-between p-3 rounded-xl border ${
+                  onClick={() => setDetailSlot(slot)}
+                  className={`p-3 rounded-xl border cursor-pointer transition hover:border-primary/50 ${
                     isFull ? 'bg-orange-50 border-primary/20' : 'bg-gray-50 border-gray-100'
                   }`}
                 >
-                  <div className="flex items-center gap-2 text-sm flex-wrap">
-                    <Clock size={16} className={isFull ? 'text-primary' : 'text-gray-400'} />
-                    <span className="font-bold text-secondary">{slot.time}</span>
-                    <span className="text-gray-400">· {slot.durationMin}min</span>
-                    <span
-                      className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
-                        isGroup ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {isGroup ? <Users size={11} /> : <User size={11} />}
-                      {isGroup ? 'Grupal' : 'Individual'}
-                    </span>
-                    <span className={`text-xs font-bold ${isFull ? 'text-primary' : 'text-green-600'}`}>
-                      {slot.bookedCount || 0}/{slot.capacity} {isFull ? 'completo' : 'reservado(s)'}
-                    </span>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm flex-wrap">
+                      <Clock size={16} className={isFull ? 'text-primary' : 'text-gray-400'} />
+                      <span className="font-bold text-secondary">{slot.time}</span>
+                      <span className="text-gray-400">· {slot.durationMin}min</span>
+                      <span
+                        className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
+                          isGroup ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        {isGroup ? <Users size={11} /> : <User size={11} />}
+                        {isGroup ? 'Grupal' : 'Individual'}
+                      </span>
+                      <span className={`text-xs font-bold ${isFull ? 'text-primary' : 'text-green-600'}`}>
+                        {slot.bookedCount || 0}/{slot.capacity} {isFull ? 'completo' : 'reservado(s)'}
+                      </span>
+                    </div>
+                    {(slot.bookedCount || 0) === 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteSlot(slot._id)
+                        }}
+                        disabled={deletingId === slot._id}
+                        className="text-gray-400 hover:text-red-600 transition p-1 shrink-0"
+                        aria-label="Eliminar franja"
+                      >
+                        {deletingId === slot._id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                      </button>
+                    )}
                   </div>
-                  {(slot.bookedCount || 0) === 0 && (
-                    <button
-                      onClick={() => handleDeleteSlot(slot._id)}
-                      disabled={deletingId === slot._id}
-                      className="text-gray-400 hover:text-red-600 transition p-1 shrink-0"
-                      aria-label="Eliminar franja"
-                    >
-                      {deletingId === slot._id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                    </button>
+                  {activeStudents.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1.5 pl-6 truncate">
+                      {activeStudents.map((s) => s.userName || s.name).join(', ')}
+                    </p>
                   )}
                 </div>
               )
@@ -236,6 +480,27 @@ export default function AdminCalendario() {
           </div>
         </div>
       </div>
+
+      {detailSlot && (
+        <SlotDetailModal
+          slot={detailSlot}
+          token={token}
+          onClose={() => setDetailSlot(null)}
+          onChanged={handleSlotUpdated}
+          onDeleted={loadData}
+        />
+      )}
+
+      {bulkRange && (
+        <BulkAvailabilityModal
+          startDate={bulkRange.start}
+          endDate={bulkRange.end}
+          token={token}
+          groupCapacity={groupCapacity}
+          onClose={() => setBulkRange(null)}
+          onCreated={loadData}
+        />
+      )}
     </div>
   )
 }

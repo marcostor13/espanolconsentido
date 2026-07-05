@@ -11,7 +11,7 @@ function monthRange(month) {
   return { from: toDateKey(from), to: toDateKey(to) }
 }
 
-export default function RescheduleModal({ booking, token, onClose, onRescheduled }) {
+export default function RescheduleModal({ booking, token, onClose, onRescheduled, isAdmin = false }) {
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [slots, setSlots] = useState([])
@@ -20,7 +20,9 @@ export default function RescheduleModal({ booking, token, onClose, onRescheduled
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
-  const notice = hasEnoughNotice(booking)
+  // El admin siempre reembolsa el crédito al cancelar (ver bookings.js), así
+  // que el aviso de "vas a tiempo" aplica siempre en ese caso.
+  const notice = isAdmin || hasEnoughNotice(booking)
 
   const loadSlots = useCallback(async () => {
     setLoading(true)
@@ -71,7 +73,9 @@ export default function RescheduleModal({ booking, token, onClose, onRescheduled
       onRescheduled?.()
     } catch (err) {
       setError(
-        `${err.message}. Tu clase original ya fue liberada; revisa "Mis cursos" para ver tus créditos disponibles.`,
+        isAdmin
+          ? `${err.message}. La clase original ya fue liberada; revisa las matrículas del alumno para ver sus créditos disponibles.`
+          : `${err.message}. Tu clase original ya fue liberada; revisa "Mis cursos" para ver tus créditos disponibles.`,
       )
     } finally {
       setSubmitting(false)
@@ -104,8 +108,10 @@ export default function RescheduleModal({ booking, token, onClose, onRescheduled
           >
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             {notice
-              ? 'Estás a tiempo: tu crédito se conservará para la nueva fecha.'
-              : 'Faltan menos de 48 horas para tu clase actual: se perderá ese crédito y se usará uno nuevo para la fecha que elijas.'}
+              ? isAdmin
+                ? 'El crédito de esta clase se conservará para la nueva fecha.'
+                : 'Estás a tiempo: tu crédito se conservará para la nueva fecha.'
+              : 'Quedan menos de 24 horas para tu clase actual: al reprogramar se usará un crédito nuevo para la fecha que elijas.'}
           </div>
 
           {error && (

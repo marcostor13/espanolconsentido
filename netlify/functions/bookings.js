@@ -10,8 +10,8 @@ function generateBookingId() {
 }
 
 // Política de cancelación/reprogramación: el crédito solo se reembolsa si se
-// avisa con al menos 48h de anticipación a la hora de la clase reservada.
-const CANCELLATION_NOTICE_HOURS = 48
+// avisa con al menos 24h de anticipación a la hora de la clase reservada.
+const CANCELLATION_NOTICE_HOURS = 24
 
 function hasEnoughNotice(booking) {
   const classDateTime = new Date(`${booking.date}T${booking.time}:00`)
@@ -43,6 +43,7 @@ async function listBookings(event, db) {
   }
 
   const filter = {}
+  if (params.userId) filter.userId = params.userId
   if (params.status) filter.status = params.status
   if (params.from || params.to) {
     filter.date = {}
@@ -52,6 +53,13 @@ async function listBookings(event, db) {
   if (params.search?.trim()) {
     const re = new RegExp(params.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
     filter.$or = [{ userName: re }, { userEmail: re }, { name: re }, { email: re }, { serviceTitle: re }]
+  }
+
+  // Usado por la vista de calendario para traer todas las reservas de un
+  // rango de fechas de una sola vez, sin el límite de paginación de la tabla.
+  if (params.all === 'true') {
+    const bookings = await bookingsCol.find(filter).sort({ date: 1, time: 1 }).toArray()
+    return jsonResponse(200, { bookings, total: bookings.length })
   }
 
   const page = Math.max(1, parseInt(params.page, 10) || 1)
@@ -69,7 +77,7 @@ async function listBookings(event, db) {
 }
 
 async function createBooking(event, db) {
-  const { user, error } = requireAuth(event, ['student'])
+  const { user, error } = requireAuth(event, ['student', 'admin'])
   if (error) return error
 
   const body = JSON.parse(event.body || '{}')
@@ -81,14 +89,27 @@ async function createBooking(event, db) {
   const availabilityCol = db.collection('availability')
   const enrollmentsCol = db.collection('enrollments')
   const bookingsCol = db.collection('bookings')
+  const isAdmin = user.role === 'admin'
+
+  // El admin puede reservar/reprogramar en nombre de cualquier estudiante
+  // (usa la matrícula para saber a quién pertenece); el estudiante solo
+  // puede usar sus propias matrículas.
+  const enrollmentLookup = await enrollmentsCol.findOne(
+    isAdmin ? { _id: new ObjectId(enrollmentId) } : { _id: new ObjectId(enrollmentId), userId: user.id },
+  )
+  if (!enrollmentLookup) return jsonResponse(404, { error: 'Matrícula no encontrada' })
+
+  const targetUserId = isAdmin ? enrollmentLookup.userId : user.id
+  const targetUserEmail = isAdmin ? enrollmentLookup.studentEmail : user.email
+  const targetUserName = isAdmin ? enrollmentLookup.studentName : user.name
 
   const alreadyBooked = await bookingsCol.findOne({
     slotId,
-    userId: user.id,
+    userId: targetUserId,
     status: { $ne: 'cancelled' },
   })
   if (alreadyBooked) {
-    return jsonResponse(409, { error: 'Ya tienes una reserva en esa franja' })
+    return jsonResponse(409, { error: 'Ya tiene una reserva en esa franja' })
   }
 
   const slot = await availabilityCol.findOneAndUpdate(
@@ -104,8 +125,7 @@ async function createBooking(event, db) {
 
   const enrollment = await enrollmentsCol.findOneAndUpdate(
     {
-      _id: new ObjectId(enrollmentId),
-      userId: user.id,
+      _id: enrollmentLookup._id,
       status: 'active',
       $expr: { $lt: ['$classesUsed', '$totalClasses'] },
     },
@@ -115,7 +135,7 @@ async function createBooking(event, db) {
 
   if (!enrollment) {
     await availabilityCol.updateOne({ _id: slot._id }, { $inc: { bookedCount: -1 }, $set: { status: 'open' } })
-    return jsonResponse(409, { error: 'No tienes créditos disponibles en ese curso' })
+    return jsonResponse(409, { error: 'No hay créditos disponibles en ese curso' })
   }
 
   if (enrollment.classesUsed >= enrollment.totalClasses) {
@@ -125,9 +145,9 @@ async function createBooking(event, db) {
   const bookingId = generateBookingId()
   const booking = {
     bookingId,
-    userId: user.id,
-    userEmail: user.email,
-    userName: user.name,
+    userId: targetUserId,
+    userEmail: targetUserEmail,
+    userName: targetUserName,
     enrollmentId: String(enrollment._id),
     slotId: String(slot._id),
     serviceTitle: enrollment.serviceTitle,
@@ -143,8 +163,8 @@ async function createBooking(event, db) {
   try {
     const { startLocal, endLocal } = computeEventTimes(slot.date, slot.time, slot.durationMin)
     await createCalendarEvent({
-      summary: `${enrollment.serviceTitle} - ${user.name}`,
-      description: `Email: ${user.email}`,
+      summary: `${enrollment.serviceTitle} - ${targetUserName}`,
+      description: `Email: ${targetUserEmail}`,
       start: startLocal,
       end: endLocal,
     })
@@ -155,15 +175,15 @@ async function createBooking(event, db) {
 
   try {
     await sendBookingConfirmation({
-      toName: user.name,
-      toEmail: user.email,
+      toName: targetUserName,
+      toEmail: targetUserEmail,
       bookingDetails: {
         date: slot.date,
         time: slot.time,
         serviceTitle: enrollment.serviceTitle,
         finalPrice: enrollment.finalPrice,
-        name: user.name,
-        email: user.email,
+        name: targetUserName,
+        email: targetUserEmail,
       },
     })
   } catch (err) {
@@ -206,7 +226,7 @@ async function updateBooking(event, db) {
 
   if (status === 'cancelled' && booking.status !== 'cancelled') {
     // El admin siempre puede reembolsar (p. ej. si canceló la profesora); el
-    // estudiante solo conserva el crédito si avisó con 48h de anticipación.
+    // estudiante solo conserva el crédito si avisó con 24h de anticipación.
     creditRefunded = isAdmin || hasEnoughNotice(booking)
 
     if (booking.slotId && ObjectId.isValid(booking.slotId)) {

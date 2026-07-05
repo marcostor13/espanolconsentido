@@ -20,6 +20,8 @@ import MisCursosPage from './pages/portal/MisCursosPage.jsx'
 import MaterialPage from './pages/portal/MaterialPage.jsx'
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 import AdminCalendario from './pages/admin/AdminCalendario.jsx'
+import AdminAlumnos from './pages/admin/AdminAlumnos.jsx'
+import AdminAlumnoDetalle from './pages/admin/AdminAlumnoDetalle.jsx'
 import AdminReservas from './pages/admin/AdminReservas.jsx'
 import AdminUsuarios from './pages/admin/AdminUsuarios.jsx'
 import AdminMaterial from './pages/admin/AdminMaterial.jsx'
@@ -72,6 +74,8 @@ createRoot(document.getElementById('root')).render(
             >
               <Route index element={<AdminDashboard />} />
               <Route path="calendario" element={<AdminCalendario />} />
+              <Route path="alumnos" element={<AdminAlumnos />} />
+              <Route path="alumnos/:id" element={<AdminAlumnoDetalle />} />
               <Route path="reservas" element={<AdminReservas />} />
               <Route path="usuarios" element={<AdminUsuarios />} />
               <Route path="material" element={<AdminMaterial />} />

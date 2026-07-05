@@ -35,6 +35,7 @@ async function getAvailability(event, col) {
     if (params.from) filter.date.$gte = params.from
     if (params.to) filter.date.$lte = params.to
   }
+  if (SLOT_TYPES.includes(params.type)) filter.type = params.type
   if (!isAdmin) filter.status = 'open'
   else if (params.status) filter.status = params.status
 

@@ -1,9 +1,10 @@
-import { LayoutDashboard, Calendar, ClipboardList, Users, FileText, Settings, Tag, AlertTriangle } from 'lucide-react'
+import { LayoutDashboard, Calendar, ClipboardList, Users, GraduationCap, FileText, Settings, Tag, AlertTriangle } from 'lucide-react'
 import DashboardLayout from './DashboardLayout'
 
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/calendario', label: 'Calendario', icon: Calendar },
+  { to: '/admin/alumnos', label: 'Alumnos', icon: GraduationCap },
   { to: '/admin/reservas', label: 'Reservas', icon: ClipboardList },
   { to: '/admin/usuarios', label: 'Usuarios', icon: Users },
   { to: '/admin/material', label: 'Material', icon: FileText },

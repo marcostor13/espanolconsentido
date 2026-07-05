@@ -1,9 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle, Clock, Loader2, User, Users } from 'lucide-react'
+import { AlertCircle, CheckCircle, Check, Clock, Loader2, User, Users, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import Calendar from '../../components/Calendar'
-import { toDateKey } from '../../lib/date'
+import TimeGrid from '../../components/calendar/TimeGrid'
+import {
+  toDateKey,
+  parseDateKey,
+  addDays,
+  addMonths,
+  startOfWeek,
+  formatWeekRangeLabel,
+  formatDayLabel,
+} from '../../lib/date'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
+
+const VIEWS = [
+  { id: 'month', label: 'Mes' },
+  { id: 'week', label: 'Semana' },
+  { id: 'day', label: 'Día' },
+]
 
 function monthRange(month) {
   const from = new Date(month.getFullYear(), month.getMonth(), 1)
@@ -15,9 +30,13 @@ export default function ReservarPage() {
   const { token } = useAuth()
   const [enrollments, setEnrollments] = useState([])
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState('')
-  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+
+  const [view, setView] = useState('week')
+  const [currentDate, setCurrentDate] = useState(() => new Date())
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+
   const [slots, setSlots] = useState([])
+  const [myBookings, setMyBookings] = useState([])
   const [selectedSlotId, setSelectedSlotId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [booking, setBooking] = useState(false)
@@ -28,6 +47,16 @@ export default function ReservarPage() {
     () => enrollments.filter((e) => e.status === 'active' && e.classesUsed < e.totalClasses),
     [enrollments],
   )
+
+  const month = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate])
+  const weekStart = useMemo(() => startOfWeek(currentDate), [currentDate])
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
+
+  const { from: rangeFrom, to: rangeTo } = useMemo(() => {
+    if (view === 'month') return monthRange(month)
+    if (view === 'week') return { from: toDateKey(weekStart), to: toDateKey(addDays(weekStart, 6)) }
+    return { from: toDateKey(currentDate), to: toDateKey(currentDate) }
+  }, [view, month, weekStart, currentDate])
 
   const loadEnrollments = useCallback(async () => {
     try {
@@ -41,15 +70,23 @@ export default function ReservarPage() {
   const loadSlots = useCallback(async () => {
     setLoading(true)
     try {
-      const { from, to } = monthRange(month)
-      const data = await apiFetch(`availability?from=${from}&to=${to}`, { token })
+      const data = await apiFetch(`availability?from=${rangeFrom}&to=${rangeTo}`, { token })
       setSlots(data.slots || [])
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [month, token])
+  }, [rangeFrom, rangeTo, token])
+
+  const loadMyBookings = useCallback(async () => {
+    try {
+      const data = await apiFetch('bookings', { token })
+      setMyBookings(data.bookings || [])
+    } catch (err) {
+      setError(err.message)
+    }
+  }, [token])
 
   useEffect(() => {
     loadEnrollments()
@@ -58,6 +95,10 @@ export default function ReservarPage() {
   useEffect(() => {
     loadSlots()
   }, [loadSlots])
+
+  useEffect(() => {
+    loadMyBookings()
+  }, [loadMyBookings])
 
   useEffect(() => {
     if (!selectedEnrollmentId && availableEnrollments.length > 0) {
@@ -78,9 +119,73 @@ export default function ReservarPage() {
   const selectedKey = toDateKey(selectedDate)
   const daySlots = [...(slotsByDate[selectedKey] || [])].sort((a, b) => a.time.localeCompare(b.time))
 
-  const dayContent = (date) => {
-    const has = slotsByDate[toDateKey(date)]?.length > 0
-    return has ? <span className="w-1.5 h-1.5 rounded-full bg-green-400 mx-auto block" /> : null
+  // Días en los que ya tienes una clase confirmada, para que resalten en el
+  // calendario y evitar que reserves a ciegas sin ver lo que ya tienes agendado.
+  const reservedDateKeys = useMemo(
+    () => new Set(myBookings.filter((b) => b.status === 'paid').map((b) => b.date)),
+    [myBookings],
+  )
+
+  const dayContent = (date, isSelected) => {
+    const key = toDateKey(date)
+    const daySlotsForDot = slotsByDate[key]
+    const isReserved = reservedDateKeys.has(key)
+    if (!daySlotsForDot?.length && !isReserved) return null
+    const hasIndividual = daySlotsForDot?.some((s) => s.type === 'individual')
+    const hasGroup = daySlotsForDot?.some((s) => s.type === 'group')
+    // Sobre un día seleccionado (fondo naranja) los indicadores se pintan en
+    // blanco para no perder contraste contra el mismo color de fondo.
+    return (
+      <span className="flex items-center gap-1 justify-center">
+        {isReserved && <Check size={11} strokeWidth={3} className={isSelected ? 'text-white' : 'text-green-600'} />}
+        {hasIndividual && (
+          <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-primary'}`} />
+        )}
+        {hasGroup && (
+          <span className={`w-2 h-2 rounded-full ${isSelected ? 'border-2 border-white/80' : 'bg-blue-500'}`} />
+        )}
+      </span>
+    )
+  }
+
+  // Fondo verde para marcar de un vistazo los días con una clase ya reservada.
+  const dayHighlight = (date) => (reservedDateKeys.has(toDateKey(date)) ? 'reserved' : null)
+
+  const goToday = () => {
+    const now = new Date()
+    setCurrentDate(now)
+    setSelectedDate(now)
+  }
+
+  const goToDate = (dateKey) => {
+    if (!dateKey) return
+    const d = parseDateKey(dateKey)
+    setCurrentDate(d)
+    setSelectedDate(d)
+  }
+
+  const goPrev = () => {
+    if (view === 'month') setCurrentDate((d) => addMonths(d, -1))
+    else if (view === 'week') setCurrentDate((d) => addDays(d, -7))
+    else setCurrentDate((d) => addDays(d, -1))
+  }
+
+  const goNext = () => {
+    if (view === 'month') setCurrentDate((d) => addMonths(d, 1))
+    else if (view === 'week') setCurrentDate((d) => addDays(d, 7))
+    else setCurrentDate((d) => addDays(d, 1))
+  }
+
+  const rangeLabel =
+    view === 'month'
+      ? month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+      : view === 'week'
+        ? formatWeekRangeLabel(weekStart)
+        : formatDayLabel(currentDate)
+
+  const handleGridSlotClick = (slot) => {
+    setSelectedDate(parseDateKey(slot.date))
+    setSelectedSlotId(slot._id)
   }
 
   const handleConfirm = async () => {
@@ -96,7 +201,7 @@ export default function ReservarPage() {
       })
       setSuccess('¡Clase reservada con éxito! Revisa tu email para la confirmación.')
       setSelectedSlotId(null)
-      await Promise.all([loadEnrollments(), loadSlots()])
+      await Promise.all([loadEnrollments(), loadSlots(), loadMyBookings()])
     } catch (err) {
       setError(err.message)
     } finally {
@@ -155,18 +260,123 @@ export default function ReservarPage() {
         </select>
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={goToday}
+            className="text-xs font-bold px-3.5 py-2 rounded-xl border border-gray-200 text-secondary hover:border-primary hover:text-primary transition"
+          >
+            Hoy
+          </button>
+          <div className="flex gap-1">
+            <button
+              onClick={goPrev}
+              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition"
+              aria-label="Anterior"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={goNext}
+              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition"
+              aria-label="Siguiente"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+          <h2 className="font-syne font-bold text-lg text-secondary capitalize flex items-center gap-2">
+            <CalendarDays size={18} className="text-primary shrink-0" />
+            {rangeLabel}
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label className="relative">
+            <span className="sr-only">Ir a una fecha específica</span>
+            <input
+              type="date"
+              min={toDateKey(new Date())}
+              value={toDateKey(currentDate)}
+              onChange={(e) => goToDate(e.target.value)}
+              className="p-2.5 bg-white border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+            />
+          </label>
+
+          <div className="flex bg-gray-100 rounded-xl p-1">
+            {VIEWS.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setView(v.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+                  view === v.id ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-secondary'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-[1fr_340px] gap-6 items-start">
-        <Calendar
-          month={month}
-          onMonthChange={setMonth}
-          selectedDate={selectedDate}
-          onSelectDate={(d) => {
-            setSelectedDate(d)
-            setSelectedSlotId(null)
-          }}
-          dayContent={dayContent}
-          minDate={new Date(new Date().toDateString())}
-        />
+        {view === 'month' && (
+          <div>
+            <div className="flex flex-wrap items-center gap-4 mb-3 px-1 text-xs font-bold text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary" /> Individual
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Grupal
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check size={12} strokeWidth={3} className="text-green-600" /> Ya tienes clase reservada
+              </span>
+            </div>
+            <Calendar
+              month={month}
+              onMonthChange={(m) => setCurrentDate(m)}
+              selectedDate={selectedDate}
+              onSelectDate={(d) => {
+                setSelectedDate(d)
+                setSelectedSlotId(null)
+              }}
+              dayContent={dayContent}
+              dayHighlight={dayHighlight}
+              minDate={new Date(new Date().toDateString())}
+              hideNav
+            />
+          </div>
+        )}
+
+        {view === 'week' && (
+          <TimeGrid
+            days={weekDays}
+            slotsByDate={slotsByDate}
+            selectedDate={selectedDate}
+            onSelectDay={(d) => {
+              setSelectedDate(d)
+              setSelectedSlotId(null)
+            }}
+            onSlotClick={handleGridSlotClick}
+            variant="student"
+            selectedSlotId={selectedSlotId}
+          />
+        )}
+
+        {view === 'day' && (
+          <TimeGrid
+            days={[currentDate]}
+            slotsByDate={slotsByDate}
+            selectedDate={selectedDate}
+            onSelectDay={(d) => {
+              setSelectedDate(d)
+              setSelectedSlotId(null)
+            }}
+            onSlotClick={handleGridSlotClick}
+            variant="student"
+            selectedSlotId={selectedSlotId}
+          />
+        )}
 
         <div className="bg-white rounded-3xl shadow-soft border border-gray-100 p-6">
           <h3 className="font-syne font-bold text-lg text-secondary mb-1">

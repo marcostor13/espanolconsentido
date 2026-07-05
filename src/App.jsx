@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import {
   Menu,
   X,
@@ -22,6 +22,7 @@ import {
   Gift,
   LogIn,
   User,
+  Users,
   Loader2,
 } from "lucide-react"
 
@@ -29,6 +30,8 @@ import { Link } from "react-router-dom"
 import { useLanguage } from "./context/LanguageContext"
 import { useAuth } from "./context/AuthContext"
 import { homePathFor } from "./lib/homePath"
+import { toDateKey, addDays } from "./lib/date"
+import { SLOT_BASED_SERVICE_IDS, SERVICE_SLOT_TYPE } from "./lib/packages"
 import WhatsAppButton from "./components/WhatsAppButton"
 
 // --- COMPONENTS ---
@@ -59,12 +62,15 @@ const Header = ({ onBook }) => {
     >
       <div className="container mx-auto px-6 flex justify-between items-center text-white">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group relative z-50">
+        <Link to="/" className="flex flex-col items-center group relative z-50">
           <img
             src="/logo2_nobg2.png"
             alt="Español con Sentido - Juanita Sánchez"
-            className="h-20 md:h-24 w-auto object-contain transition-transform hover:scale-105"
+            className="h-16 md:h-20 w-auto object-contain transition-transform group-hover:scale-105"
           />
+          <span className="-mt-1 text-[9px] md:text-[10px] font-grotesk font-semibold tracking-[0.35em] text-white/60 uppercase">
+            Comunica · Expresa · Siente
+          </span>
         </Link>
 
         {/* Desktop Menu */}
@@ -83,6 +89,12 @@ const Header = ({ onBook }) => {
             className="hover:text-primary transition-colors"
           >
             {t("nav.policies")}
+          </Link>
+          <Link
+            to="/programa-recomendacion"
+            className="hover:text-primary transition-colors"
+          >
+            {t("nav.referral")}
           </Link>
           <Link
             to={accountHref}
@@ -193,6 +205,13 @@ const Header = ({ onBook }) => {
             {t("nav.policies")}
           </Link>
           <Link
+            to="/programa-recomendacion"
+            onClick={() => setIsMenuOpen(false)}
+            className="font-grotesk font-bold text-xl text-white hover:text-primary transition-colors"
+          >
+            {t("nav.referral")}
+          </Link>
+          <Link
             to={accountHref}
             onClick={() => setIsMenuOpen(false)}
             className="flex items-center justify-center gap-2 font-grotesk font-bold text-xl text-white hover:text-primary transition-colors"
@@ -264,7 +283,7 @@ const Hero = ({ onBook }) => {
               {t("hero.cta")}
             </button>
             <button
-              onClick={() => onBook("trial")}
+              onClick={() => onBook("group")}
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-lg border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white transition-all"
             >
               {t("hero.groupClasses")}
@@ -735,7 +754,28 @@ const Testimonials = () => {
                 data-testimonial-card
                 className="bg-gradient-to-b from-gray-50 to-white p-6 sm:p-7 rounded-2xl border border-gray-100/90 shadow-sm shrink-0 w-[min(calc(100vw-2rem),22rem)] sm:w-[24rem] max-w-[90vw] snap-center snap-always self-start transition-shadow duration-300 hover:shadow-md hover:border-primary/15"
               >
-                <div className="flex items-center gap-1 mb-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-11 h-11 bg-[#020410] text-white rounded-full flex items-center justify-center font-bold text-base shrink-0 ring-2 ring-white shadow-sm">
+                    {rev.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-secondary text-sm leading-tight flex items-center gap-1.5">
+                      {rev.name}
+                      {rev.country && (
+                        <img
+                          src={`https://flagcdn.com/w20/${rev.country}.png`}
+                          alt=""
+                          aria-hidden="true"
+                          className="w-4 h-auto rounded-sm shrink-0"
+                        />
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">
+                      {rev.date}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 mb-3">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
@@ -749,19 +789,6 @@ const Testimonials = () => {
                 <p className="text-gray-600 font-grotesk leading-relaxed text-[15px] sm:text-base">
                   &ldquo;{rev.text}&rdquo;
                 </p>
-                <div className="flex items-center gap-3 mt-5 pt-5 border-t border-gray-100">
-                  <div className="w-11 h-11 bg-[#020410] text-white rounded-full flex items-center justify-center font-bold text-base shrink-0 ring-2 ring-white shadow-sm">
-                    {rev.name.charAt(0)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-secondary text-sm leading-tight">
-                      {rev.name}
-                    </p>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">
-                      {rev.date}
-                    </p>
-                  </div>
-                </div>
               </article>
             ))}
           </div>
@@ -811,12 +838,15 @@ const Footer = () => {
       <div className="container mx-auto max-w-6xl px-6 py-16 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-center md:items-start md:mb-12 gap-8 text-center md:text-left">
           <div>
-            <a href="#" className="inline-block">
+            <a href="#" className="inline-flex flex-col items-center md:items-start">
               <img
                 src="/logo2_nobg2.png"
                 alt="Español con Sentido - Juanita Sánchez"
-                className="h-20 md:h-24 w-auto object-contain"
+                className="h-16 md:h-20 w-auto object-contain"
               />
+              <span className="-mt-1 text-[10px] font-grotesk font-semibold tracking-[0.35em] text-white/50 uppercase">
+                Comunica · Expresa · Siente
+              </span>
             </a>
           </div>
 
@@ -869,8 +899,11 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   const modal = t("modal") || {}
 
   const [step, setStep] = useState(1)
-  const [selectedDate, setSelectedDate] = useState(null)
-  const [selectedTime, setSelectedTime] = useState(null)
+  const [selectedSlot, setSelectedSlot] = useState(null)
+  const [availableSlots, setAvailableSlots] = useState([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
+  const [selectedDateKey, setSelectedDateKey] = useState(null)
+  const [dateWindowStart, setDateWindowStart] = useState(0)
   const [serviceId, setServiceId] = useState(initialServiceId)
   const [formData, setFormData] = useState({
     name: "",
@@ -891,12 +924,18 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   const [bookingError, setBookingError] = useState(null)
   const [acceptedPolicies, setAcceptedPolicies] = useState(false)
 
+  const isSlotBasedService = SLOT_BASED_SERVICE_IDS.includes(serviceId)
+
   useEffect(() => {
     if (isOpen && initialServiceId) {
       setServiceId(initialServiceId)
-      setStep(1)
-      setSelectedDate(null)
-      setSelectedTime(null)
+      // Los paquetes de varias clases no reservan un horario al comprar: se
+      // agendan después desde el portal, así que arrancan directo en el
+      // paso de datos del estudiante.
+      setStep(SLOT_BASED_SERVICE_IDS.includes(initialServiceId) ? 1 : 2)
+      setSelectedSlot(null)
+      setSelectedDateKey(null)
+      setDateWindowStart(0)
       setBookingId(null)
       setFinalPrice(null)
       setAppliedPromo(null)
@@ -913,30 +952,50 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       .catch(() => {})
   }, [isOpen])
 
+  useEffect(() => {
+    if (!isOpen || !isSlotBasedService) return
+    setSlotsLoading(true)
+    const from = toDateKey(new Date())
+    const to = toDateKey(addDays(new Date(), 60))
+    const type = SERVICE_SLOT_TYPE[serviceId]
+    fetch(`/api/availability?from=${from}&to=${to}&type=${type}`)
+      .then((res) => res.json())
+      .then((data) => setAvailableSlots(data.slots || []))
+      .catch(() => setAvailableSlots([]))
+      .finally(() => setSlotsLoading(false))
+  }, [isOpen, serviceId, isSlotBasedService])
+
   const service = services.find((s) => s.id === serviceId) || services[0] || {}
   const servicePrice = service.price ?? 0
 
-  const timeSlots = ["09:00", "10:00", "11:00", "15:00", "16:00", "17:00"]
-  const nextDays = React.useMemo(
-    () =>
-      Array.from({ length: 5 }, (_, i) => {
-        const d = new Date()
-        d.setDate(d.getDate() + i + 1)
-        return {
-          day: d.toLocaleDateString(language === "es" ? "es-ES" : "en-US", {
-            weekday: "short",
-          }),
-          date: d.getDate(),
-          fullDate: d,
-          id: d.toISOString().split("T")[0],
-        }
-      }),
-    [language],
-  )
+  const slotDates = useMemo(() => {
+    const map = {}
+    for (const s of availableSlots) {
+      if (s.status !== "open") continue
+      if (!map[s.date]) map[s.date] = []
+      map[s.date].push(s)
+    }
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, slots]) => ({
+        date,
+        fullDate: new Date(`${date}T00:00:00`),
+        slots: slots.sort((a, b) => a.time.localeCompare(b.time)),
+      }))
+  }, [availableSlots])
 
-  const handleDateSelect = (date, time) => {
-    if (date) setSelectedDate(date)
-    if (time) setSelectedTime(time)
+  useEffect(() => {
+    if (slotDates.length > 0 && !slotDates.some((d) => d.date === selectedDateKey)) {
+      setSelectedDateKey(slotDates[0].date)
+      setDateWindowStart(0)
+    }
+  }, [slotDates, selectedDateKey])
+
+  const visibleDates = slotDates.slice(dateWindowStart, dateWindowStart + 5)
+  const timesForSelectedDate = slotDates.find((d) => d.date === selectedDateKey)?.slots || []
+
+  const handleSelectSlot = (slot) => {
+    setSelectedSlot(slot)
   }
 
   const updateForm = (field, value) => {
@@ -965,8 +1024,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
         body: JSON.stringify({
           name: formData.name.trim(),
           email: formData.email.trim(),
-          date: selectedDate?.id,
-          time: selectedTime,
+          slotId: isSlotBasedService ? selectedSlot?._id : undefined,
           serviceId,
           serviceTitle: service.title,
           price: servicePrice,
@@ -1058,24 +1116,28 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
           {/* Progress Bar */}
           {step < 4 && (
             <div className="flex items-center justify-center mb-10 text-xs font-bold uppercase tracking-widest">
-              <div
-                className={`flex items-center gap-2 ${
-                  step >= 1 ? "text-primary" : "text-gray-300"
-                }`}
-              >
-                <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
-                  1
-                </span>{" "}
-                {modal.steps?.time}
-              </div>
-              <div className="w-12 h-0.5 bg-gray-200 mx-4"></div>
+              {isSlotBasedService && (
+                <>
+                  <div
+                    className={`flex items-center gap-2 ${
+                      step >= 1 ? "text-primary" : "text-gray-300"
+                    }`}
+                  >
+                    <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
+                      1
+                    </span>{" "}
+                    {modal.steps?.time}
+                  </div>
+                  <div className="w-12 h-0.5 bg-gray-200 mx-4"></div>
+                </>
+              )}
               <div
                 className={`flex items-center gap-2 ${
                   step >= 2 ? "text-primary" : "text-gray-300"
                 }`}
               >
                 <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
-                  2
+                  {isSlotBasedService ? 2 : 1}
                 </span>{" "}
                 {modal.steps?.details}
               </div>
@@ -1086,62 +1148,124 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 }`}
               >
                 <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
-                  3
+                  {isSlotBasedService ? 3 : 2}
                 </span>{" "}
                 {modal.steps?.payment}
               </div>
             </div>
           )}
 
-          {/* STEP 1: CALENDAR */}
+          {/* STEP 1: CALENDAR (horarios reales del calendario de la profesora) */}
           {step === 1 && (
             <div className="animate-fadeIn">
               <h4 className="text-2xl font-syne font-bold text-secondary mb-6">
                 {modal.time?.title}
               </h4>
 
-              <div className="grid grid-cols-5 gap-3 mb-8">
-                {nextDays.map((d, i) => (
-                  <div
-                    key={i}
-                    className="text-center group cursor-pointer"
-                    onClick={() => handleDateSelect(d, null)}
-                  >
-                    <div className="text-xs text-gray-500 uppercase font-bold mb-2">
-                      {d.day}
-                    </div>
-                    <div
-                      className={`py-3 font-bold text-lg border-2 transition rounded-xl ${
-                        selectedDate?.id === d.id
-                          ? "bg-primary border-primary text-white shadow-soft-sm"
-                          : "bg-white border-gray-200 text-secondary hover:border-primary/50"
-                      }`}
+              {slotsLoading ? (
+                <div className="flex items-center justify-center gap-2 text-gray-400 py-16">
+                  <Loader2 size={20} className="animate-spin" />
+                  {modal.time?.loading}
+                </div>
+              ) : slotDates.length === 0 ? (
+                <div className="text-center py-12 px-4 bg-gray-50 rounded-2xl">
+                  <p className="text-gray-500 mb-4">{modal.time?.empty}</p>
+                  {import.meta.env.VITE_WHATSAPP_NUMBER && (
+                    <a
+                      href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-[#25D366] text-white px-5 py-2.5 rounded-xl font-bold hover:opacity-90 transition"
                     >
-                      {d.date}
+                      {modal.time?.contactUs}
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-8">
+                    <button
+                      type="button"
+                      onClick={() => setDateWindowStart((n) => Math.max(0, n - 5))}
+                      disabled={dateWindowStart === 0}
+                      aria-label={modal.time?.prevDates}
+                      className="shrink-0 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-secondary hover:border-primary hover:text-primary transition disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <div className="grid grid-cols-5 gap-3 flex-1">
+                      {visibleDates.map((d) => (
+                        <div
+                          key={d.date}
+                          className="text-center group cursor-pointer"
+                          onClick={() => {
+                            setSelectedDateKey(d.date)
+                            setSelectedSlot(null)
+                          }}
+                        >
+                          <div className="text-xs text-gray-500 uppercase font-bold mb-2">
+                            {d.fullDate.toLocaleDateString(language === "es" ? "es-ES" : "en-US", {
+                              weekday: "short",
+                            })}
+                          </div>
+                          <div
+                            className={`py-3 font-bold text-lg border-2 transition rounded-xl ${
+                              selectedDateKey === d.date
+                                ? "bg-primary border-primary text-white shadow-soft-sm"
+                                : "bg-white border-gray-200 text-secondary hover:border-primary/50"
+                            }`}
+                          >
+                            {d.fullDate.getDate()}
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setDateWindowStart((n) => Math.min(slotDates.length - 5, n + 5))}
+                      disabled={dateWindowStart + 5 >= slotDates.length}
+                      aria-label={modal.time?.nextDates}
+                      className="shrink-0 w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-secondary hover:border-primary hover:text-primary transition disabled:opacity-30 disabled:pointer-events-none"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
                   </div>
-                ))}
-              </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                {timeSlots.map((time) => (
-                  <button
-                    key={time}
-                    onClick={() => handleDateSelect(null, time)}
-                    className={`py-3 border-2 text-sm font-bold transition rounded-xl ${
-                      selectedTime === time
-                        ? "bg-primary border-primary text-white shadow-soft-sm"
-                        : "bg-white border-gray-200 text-secondary hover:border-primary/50"
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))}
-              </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {timesForSelectedDate.map((slot) => {
+                      const isGroup = slot.type === "group"
+                      const remaining = slot.capacity - (slot.bookedCount || 0)
+                      return (
+                        <button
+                          key={slot._id}
+                          onClick={() => handleSelectSlot(slot)}
+                          className={`flex flex-col items-center justify-center gap-1 py-3 border-2 text-sm font-bold transition rounded-xl ${
+                            selectedSlot?._id === slot._id
+                              ? "bg-primary border-primary text-white shadow-soft-sm"
+                              : "bg-white border-gray-200 text-secondary hover:border-primary/50"
+                          }`}
+                        >
+                          <span>{slot.time}</span>
+                          {isGroup && (
+                            <span
+                              className={`flex items-center gap-1 text-[11px] font-bold ${
+                                selectedSlot?._id === slot._id ? "text-white/90" : "text-gray-400"
+                              }`}
+                            >
+                              <Users size={11} />
+                              {remaining} {modal.time?.spotsLeft}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
 
               <div className="mt-10 flex justify-end">
                 <button
-                  disabled={!selectedDate || !selectedTime}
+                  disabled={!selectedSlot}
                   onClick={() => setStep(2)}
                   className="bg-[#020410] text-white px-8 py-3.5 rounded-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#020410]/90 transition-all shadow-soft"
                 >
@@ -1323,7 +1447,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
 
               <div className="mt-10 flex justify-between items-center pt-6 border-t border-gray-100">
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => (isSlotBasedService ? setStep(1) : onClose())}
                   className="text-gray-500 font-bold hover:text-secondary transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
                 >
                   {modal.details?.back}
@@ -1381,8 +1505,9 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 )}
                 <div className="flex justify-between items-center text-sm text-gray-600">
                   <span>
-                    {selectedDate?.fullDate?.toLocaleDateString()} —{" "}
-                    {selectedTime}
+                    {isSlotBasedService
+                      ? `${selectedSlot?.date} — ${selectedSlot?.time}`
+                      : modal.payment?.packageSummary}
                   </span>
                 </div>
                 <div className="h-0.5 bg-black my-4"></div>
@@ -1458,45 +1583,67 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 <CheckCircle size={40} />
               </div>
               <h4 className="text-3xl font-syne font-bold text-black mb-4 uppercase">
-                {modal.success?.title}
+                {isSlotBasedService ? modal.success?.title : modal.success?.packageTitle}
               </h4>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                {modal.success?.desc}
+                {isSlotBasedService ? modal.success?.desc : modal.success?.packageDesc}
               </p>
 
               <div className="bg-white p-6 rounded-none border-2 border-black shadow-hard-sm text-left space-y-4">
-                <div className="flex gap-4 items-center">
-                  <div className="w-10 h-10 border-2 border-black bg-[#020410] flex items-center justify-center shrink-0">
-                    <Video className="text-white" size={20} />
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-black text-sm uppercase">
-                      Google Meet
-                    </h5>
-                    <a
-                      href="#"
-                      className="text-primary font-bold text-sm hover:underline"
-                    >
-                      meet.google.com/abc-defg-hij
-                    </a>
-                  </div>
-                </div>
+                {isSlotBasedService ? (
+                  <>
+                    <div className="flex gap-4 items-center">
+                      <div className="w-10 h-10 border-2 border-black bg-[#020410] flex items-center justify-center shrink-0">
+                        <Video className="text-white" size={20} />
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-black text-sm uppercase">
+                          Google Meet
+                        </h5>
+                        <a
+                          href="#"
+                          className="text-primary font-bold text-sm hover:underline"
+                        >
+                          meet.google.com/abc-defg-hij
+                        </a>
+                      </div>
+                    </div>
 
-                <div className="h-0.5 bg-gray-100"></div>
+                    <div className="h-0.5 bg-gray-100"></div>
 
-                <div className="flex gap-4 items-center">
-                  <div className="w-10 h-10 border-2 border-black bg-[#020410] flex items-center justify-center shrink-0">
-                    <Clock className="text-white" size={20} />
+                    <div className="flex gap-4 items-center">
+                      <div className="w-10 h-10 border-2 border-black bg-[#020410] flex items-center justify-center shrink-0">
+                        <Clock className="text-white" size={20} />
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-black text-sm uppercase">
+                          {modal.success?.policy}
+                        </h5>
+                        <p className="text-sm text-gray-500">
+                          {modal.success?.policyDesc}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex gap-4 items-center">
+                    <div className="w-10 h-10 border-2 border-black bg-[#020410] flex items-center justify-center shrink-0">
+                      <ArrowRight className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-black text-sm uppercase">
+                        {modal.success?.goToPortal}
+                      </h5>
+                      <Link
+                        to="/portal/reservar"
+                        onClick={onClose}
+                        className="text-primary font-bold text-sm hover:underline"
+                      >
+                        {modal.success?.goToPortal}
+                      </Link>
+                    </div>
                   </div>
-                  <div>
-                    <h5 className="font-bold text-black text-sm uppercase">
-                      {modal.success?.policy}
-                    </h5>
-                    <p className="text-sm text-gray-500">
-                      {modal.success?.policyDesc}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
 
               <button

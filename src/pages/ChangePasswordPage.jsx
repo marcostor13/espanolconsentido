@@ -45,8 +45,11 @@ export default function ChangePasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-light font-grotesk px-6 py-12">
       <div className="w-full max-w-md">
-        <Link to="/" className="flex justify-center mb-8">
+        <Link to="/" className="flex flex-col items-center mb-8">
           <img src="/logo2_nobg2.png" alt="Español con Sentido" className="h-16 w-auto object-contain" />
+          <span className="-mt-1 text-[10px] font-grotesk font-semibold tracking-[0.35em] text-gray-400 uppercase">
+            Comunica · Expresa · Siente
+          </span>
         </Link>
 
         <div className="bg-white rounded-3xl shadow-soft-lg border border-gray-100 p-8">

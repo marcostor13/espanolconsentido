@@ -1,16 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, CheckCircle, Loader2, PlusCircle, Clock, Search, ChevronLeft, ChevronRight, Wallet } from 'lucide-react'
+import { AlertCircle, CheckCircle, Loader2, PlusCircle, Wallet } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { PACKAGES } from '../../lib/packages'
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL } from '../../lib/paymentMethods'
-
-const STATUS_LABEL = {
-  pending: { label: 'Pendiente', className: 'bg-gray-100 text-gray-600' },
-  paid: { label: 'Confirmada', className: 'bg-green-50 text-green-700' },
-  completed: { label: 'Completada', className: 'bg-blue-50 text-blue-700' },
-  cancelled: { label: 'Cancelada', className: 'bg-red-50 text-red-700' },
-}
 
 function EnrollmentForm({ token, onCreated }) {
   const [studentName, setStudentName] = useState('')
@@ -193,15 +186,9 @@ function EnrollmentForm({ token, onCreated }) {
   )
 }
 
-const PAGE_SIZE = 10
-
 export default function AdminReservas() {
   const { token } = useAuth()
-  const [bookings, setBookings] = useState([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [updatingId, setUpdatingId] = useState(null)
 
   const [enrollments, setEnrollments] = useState([])
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true)
@@ -222,67 +209,12 @@ export default function AdminReservas() {
     loadEnrollments()
   }, [loadEnrollments])
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [page, setPage] = useState(1)
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-
-  const loadBookings = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) })
-      if (statusFilter) params.set('status', statusFilter)
-      if (dateFrom) params.set('from', dateFrom)
-      if (dateTo) params.set('to', dateTo)
-      if (search.trim()) params.set('search', search.trim())
-
-      const data = await apiFetch(`bookings?${params.toString()}`, { token })
-      setBookings(data.bookings || [])
-      setTotal(data.total || 0)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [token, page, statusFilter, dateFrom, dateTo, search])
-
-  useEffect(() => {
-    setPage(1)
-  }, [search, statusFilter, dateFrom, dateTo])
-
-  useEffect(() => {
-    const timeout = setTimeout(loadBookings, 300)
-    return () => clearTimeout(timeout)
-  }, [loadBookings])
-
-  const handleStatusChange = async (id, status) => {
-    setUpdatingId(id)
-    setError(null)
-    try {
-      await apiFetch('bookings', { method: 'PATCH', token, body: { id, status } })
-      await loadBookings()
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setUpdatingId(null)
-    }
-  }
-
   return (
     <div>
       <h1 className="font-syne font-bold text-3xl text-secondary mb-1">Reservas</h1>
       <p className="text-gray-500 mb-8">Registra compras de cursos y gestiona las reservas de tus estudiantes.</p>
 
-      <EnrollmentForm
-        token={token}
-        onCreated={() => {
-          loadBookings()
-          loadEnrollments()
-        }}
-      />
+      <EnrollmentForm token={token} onCreated={loadEnrollments} />
 
       {error && (
         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
@@ -292,155 +224,6 @@ export default function AdminReservas() {
       )}
 
       <div className="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden">
-        <h2 className="font-syne font-bold text-xl text-secondary p-6 pb-0">Todas las reservas</h2>
-
-        <div className="p-6 pb-0 flex flex-wrap items-end gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <label className="block text-xs font-bold text-secondary mb-1.5">Buscar</label>
-            <Search size={16} className="absolute left-3 top-[calc(50%+8px)] -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nombre, email o curso"
-              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-secondary mb-1.5">Estado</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
-            >
-              <option value="">Todos</option>
-              <option value="pending">Pendiente</option>
-              <option value="paid">Confirmada</option>
-              <option value="completed">Completada</option>
-              <option value="cancelled">Cancelada</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-secondary mb-1.5">Desde</label>
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-secondary mb-1.5">Hasta</label>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
-            />
-          </div>
-          {(search || statusFilter || dateFrom || dateTo) && (
-            <button
-              onClick={() => {
-                setSearch('')
-                setStatusFilter('')
-                setDateFrom('')
-                setDateTo('')
-              }}
-              className="text-xs font-bold text-gray-400 hover:text-primary transition px-2 py-2.5"
-            >
-              Limpiar filtros
-            </button>
-          )}
-        </div>
-
-        <div className="p-6">
-          {loading ? (
-            <p className="text-gray-400">Cargando...</p>
-          ) : bookings.length === 0 ? (
-            <p className="text-gray-400 text-center py-6">
-              {search || statusFilter || dateFrom || dateTo ? 'Ninguna reserva coincide con los filtros.' : 'Aún no hay reservas.'}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {bookings.map((b) => {
-                const status = STATUS_LABEL[b.status] || STATUS_LABEL.pending
-                return (
-                  <div
-                    key={b.bookingId}
-                    className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50/60"
-                  >
-                    <div>
-                      <p className="font-bold text-secondary">{b.userName || b.name}</p>
-                      <p className="text-sm text-gray-500">{b.userEmail || b.email}</p>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p className="font-bold">{b.serviceTitle}</p>
-                      <p className="flex items-center gap-1.5 text-gray-500">
-                        {b.date} <Clock size={13} /> {b.time}
-                      </p>
-                    </div>
-                    {b.paymentMethod && (
-                      <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">
-                        <Wallet size={12} />
-                        {PAYMENT_METHOD_LABEL[b.paymentMethod] || b.paymentMethod}
-                      </span>
-                    )}
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${status.className}`}>{status.label}</span>
-                    <div className="flex gap-2">
-                      {b.status === 'paid' && (
-                        <>
-                          <button
-                            onClick={() => handleStatusChange(b._id, 'completed')}
-                            disabled={updatingId === b._id}
-                            className="text-xs font-bold px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition disabled:opacity-50"
-                          >
-                            Marcar completada
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(b._id, 'cancelled')}
-                            disabled={updatingId === b._id}
-                            className="text-xs font-bold px-3 py-2 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition disabled:opacity-50"
-                          >
-                            Cancelar
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {!loading && total > 0 && (
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-100">
-              <p className="text-sm text-gray-400">
-                Página {page} de {totalPages} · {total} reserva(s)
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition disabled:opacity-30 disabled:pointer-events-none"
-                  aria-label="Página anterior"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary transition disabled:opacity-30 disabled:pointer-events-none"
-                  aria-label="Página siguiente"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden mt-8">
         <h2 className="font-syne font-bold text-xl text-secondary p-6 pb-0">Compras de cursos</h2>
         <div className="p-6">
           {enrollmentsLoading ? (

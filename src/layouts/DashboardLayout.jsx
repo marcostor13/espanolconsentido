@@ -54,8 +54,11 @@ export default function DashboardLayout({ title, navItems }) {
     <div className="min-h-screen bg-light font-grotesk flex">
       {/* Sidebar - desktop */}
       <aside className="hidden md:flex md:flex-col w-72 shrink-0 bg-white border-r border-gray-100 p-6">
-        <Link to="/" className="flex items-center mb-8">
+        <Link to="/" className="flex flex-col items-center mb-8">
           <img src="/logo2_nobg2.png" alt="Español con Sentido" className="h-14 w-auto object-contain" />
+          <span className="-mt-1 text-[9px] font-grotesk font-semibold tracking-[0.3em] text-gray-400 uppercase">
+            Comunica · Expresa · Siente
+          </span>
         </Link>
         <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 px-4">{title}</p>
         <Nav navItems={navItems} onNavigate={closeMenu} />
