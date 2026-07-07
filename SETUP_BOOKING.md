@@ -7,8 +7,11 @@ Configura estas variables en Netlify: Site settings > Environment variables
 | Variable | Descripción |
 |----------|-------------|
 | `MONGODB_URI` | URI de conexión MongoDB |
-| `VITE_PAYPAL_ME_USERNAME` | Usuario de PayPal.me para el link (ej. `juanita`) |
-| `VITE_WHATSAPP_NUMBER` | Número de WhatsApp (con código de país, sin +) para el botón flotante |
+| `PAYPAL_CLIENT_ID` | Client ID de la app de PayPal (Orders API v2) |
+| `PAYPAL_CLIENT_SECRET` | Client Secret de la app de PayPal |
+| `PAYPAL_WEBHOOK_ID` | Webhook ID de la app de PayPal (evento `CHECKOUT.ORDER.APPROVED`) |
+| `PAYPAL_ENV` | `sandbox` para pruebas, `live` para cobros reales |
+| `VITE_WHATSAPP_NUMBER` | Número de WhatsApp (con código de país, sin +) para el botón flotante — variable `VITE_`, se incrusta en el build: tras agregarla/cambiarla hay que forzar un nuevo deploy (no solo redeploy del build existente) |
 | `GOOGLE_CALENDAR_ID` | ID del calendario de Google |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Email del Service Account |
 | `GOOGLE_PRIVATE_KEY` | Clave privada del JSON (con \n para saltos de línea) |

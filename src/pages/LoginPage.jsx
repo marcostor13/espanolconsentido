@@ -40,7 +40,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <Link to="/" className="flex flex-col items-center mb-8">
           <img
-            src="/logo2_nobg2.png"
+            src="/logo2_nobg.png"
             alt="Español con Sentido"
             className="h-16 w-auto object-contain"
           />
