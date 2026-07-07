@@ -38,6 +38,19 @@ export const handler = async (event) => {
       await bookingsCol.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]).toArray(),
     )
 
+    // Reprogramar cancela la reserva vieja y crea una nueva (RescheduleModal),
+    // así que dentro de status='cancelled' hay que separar las que en
+    // realidad fueron una reprogramación (cancelReason='reschedule') de las
+    // cancelaciones reales, para no mezclarlas en el dashboard.
+    const cancelReasonCounts = toCountMap(
+      await bookingsCol
+        .aggregate([
+          { $match: { status: 'cancelled' } },
+          { $group: { _id: { $ifNull: ['$cancelReason', 'cancelled'] }, count: { $sum: 1 } } },
+        ])
+        .toArray(),
+    )
+
     const enrollmentStatusCounts = toCountMap(
       await enrollmentsCol.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]).toArray(),
     )
@@ -57,7 +70,8 @@ export const handler = async (event) => {
         total: (bookingStatusCounts.paid || 0) + (bookingStatusCounts.completed || 0) + (bookingStatusCounts.cancelled || 0),
         paid: bookingStatusCounts.paid || 0,
         completed: bookingStatusCounts.completed || 0,
-        cancelled: bookingStatusCounts.cancelled || 0,
+        cancelled: cancelReasonCounts.cancelled || 0,
+        rescheduled: cancelReasonCounts.reschedule || 0,
       },
       students: { total: totalStudents, active: activeStudents },
       enrollments: {

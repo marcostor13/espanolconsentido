@@ -1,9 +1,120 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, CheckCircle, Loader2, PlusCircle, Wallet } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, Loader2, PlusCircle, Wallet } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { PACKAGES } from '../../lib/packages'
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL } from '../../lib/paymentMethods'
+
+// Reservas del landing (prueba/individual/grupal/paquete) que quedaron
+// `pending` porque el estudiante pagó por un medio manual (Wise,
+// transferencia, efectivo): no hay webhook que las confirme solo, así que la
+// admin las revisa aquí y confirma el pago a mano después de verificarlo.
+function PendingPaymentsPanel({ token, onConfirmed }) {
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [confirmingId, setConfirmingId] = useState(null)
+  const [paymentMethodById, setPaymentMethodById] = useState({})
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await apiFetch('bookings?status=pending&all=true', { token })
+      setBookings(data.bookings || [])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const handleConfirm = async (booking) => {
+    setConfirmingId(booking.bookingId)
+    setError(null)
+    try {
+      await apiFetch('confirm-payment', {
+        method: 'POST',
+        token,
+        body: { bookingId: booking.bookingId, paymentMethod: paymentMethodById[booking.bookingId] || 'wise' },
+      })
+      setBookings((prev) => prev.filter((b) => b.bookingId !== booking.bookingId))
+      onConfirmed?.()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setConfirmingId(null)
+    }
+  }
+
+  if (loading) return null
+  if (bookings.length === 0) return null
+
+  return (
+    <div className="bg-white rounded-3xl shadow-soft border border-amber-200 overflow-hidden mb-8">
+      <div className="p-6 pb-0 flex items-center gap-2">
+        <Clock size={18} className="text-amber-600" />
+        <h2 className="font-syne font-bold text-xl text-secondary">Pagos pendientes de confirmar</h2>
+      </div>
+      <p className="text-sm text-gray-500 px-6 pt-1">
+        Reservas del sitio público con pago manual (Wise, transferencia, efectivo). Confírmalas solo después de
+        verificar que el dinero llegó: al confirmar se reserva la franja y se agenda la clase.
+      </p>
+      <div className="p-6">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+        <div className="space-y-3">
+          {bookings.map((b) => (
+            <div
+              key={b.bookingId}
+              className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-amber-100 bg-amber-50/40"
+            >
+              <div>
+                <p className="font-bold text-secondary">{b.name}</p>
+                <p className="text-sm text-gray-500">{b.email}</p>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p className="font-bold">{b.serviceTitle}</p>
+                {b.date && (
+                  <p className="text-gray-500">
+                    {b.date} · {b.time}
+                  </p>
+                )}
+              </div>
+              <p className="font-bold text-secondary">${b.finalPrice}</p>
+              <select
+                value={paymentMethodById[b.bookingId] || 'wise'}
+                onChange={(e) => setPaymentMethodById((prev) => ({ ...prev, [b.bookingId]: e.target.value }))}
+                className="p-2 bg-white border border-gray-200 rounded-lg text-sm text-secondary outline-none focus:border-primary"
+              >
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => handleConfirm(b)}
+                disabled={confirmingId === b.bookingId}
+                className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2.5 rounded-xl bg-primary text-white hover:bg-orange-500 transition disabled:opacity-50"
+              >
+                {confirmingId === b.bookingId ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                Confirmar pago
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function EnrollmentForm({ token, onCreated }) {
   const [studentName, setStudentName] = useState('')
@@ -213,6 +324,8 @@ export default function AdminReservas() {
     <div>
       <h1 className="font-syne font-bold text-3xl text-secondary mb-1">Reservas</h1>
       <p className="text-gray-500 mb-8">Registra compras de cursos y gestiona las reservas de tus estudiantes.</p>
+
+      <PendingPaymentsPanel token={token} onConfirmed={loadEnrollments} />
 
       <EnrollmentForm token={token} onCreated={loadEnrollments} />
 

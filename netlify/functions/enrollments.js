@@ -2,33 +2,11 @@ import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse, findOrCreateStudent } from './_shared/auth.js'
 import { sendWelcomeCredentials } from './_shared/email.js'
 import { logError } from './_shared/errorLog.js'
+import { TRIAL_CREDIT_AMOUNT, findUnusedTrialCredit, markTrialCreditApplied } from './_shared/trialCredit.js'
 
 async function getPromoDiscount(db, code) {
   if (!code?.trim()) return null
   return db.collection('promocodes').findOne({ code: code.trim().toUpperCase(), active: { $ne: false } })
-}
-
-// El valor de la clase de prueba ($10) se descuenta una única vez del primer
-// paquete de clases que compre el estudiante, si ya pagó una clase de prueba.
-const TRIAL_CREDIT_AMOUNT = 10
-
-async function findUnusedTrialCredit(db, userId) {
-  const trialBooking = await db.collection('bookings').findOne({
-    userId,
-    serviceId: 'trial',
-    status: { $in: ['paid', 'completed'] },
-    trialCreditApplied: { $ne: true },
-  })
-  if (trialBooking) return { collection: 'bookings', id: trialBooking._id }
-
-  const trialEnrollment = await db.collection('enrollments').findOne({
-    userId,
-    serviceId: 'trial',
-    trialCreditApplied: { $ne: true },
-  })
-  if (trialEnrollment) return { collection: 'enrollments', id: trialEnrollment._id }
-
-  return null
 }
 
 async function listEnrollments(event, db) {
@@ -88,7 +66,7 @@ async function createEnrollment(event, db) {
   const studentUserId = String(student._id)
   let trialCredit = null
   if (serviceId !== 'trial') {
-    trialCredit = await findUnusedTrialCredit(db, studentUserId)
+    trialCredit = await findUnusedTrialCredit(db, { userId: studentUserId })
     if (trialCredit) {
       finalPrice = Math.max(0, Math.round((finalPrice - TRIAL_CREDIT_AMOUNT) * 100) / 100)
     }
@@ -117,7 +95,7 @@ async function createEnrollment(event, db) {
   enrollment._id = result.insertedId
 
   if (trialCredit) {
-    await db.collection(trialCredit.collection).updateOne({ _id: trialCredit.id }, { $set: { trialCreditApplied: true } })
+    await markTrialCreditApplied(db, trialCredit)
   }
 
   if (isNewAccount) {

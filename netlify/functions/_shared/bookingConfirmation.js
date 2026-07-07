@@ -3,6 +3,7 @@ import { createCalendarEvent } from './google-calendar.js'
 import { sendBookingConfirmation, sendWelcomeCredentials } from './email.js'
 import { findOrCreateStudent } from './auth.js'
 import { logError } from './errorLog.js'
+import { markTrialCreditApplied } from './trialCredit.js'
 
 // Debe reflejar src/lib/packages.js: ids de paquetes de varias clases que,
 // al confirmarse el pago, generan una matrícula real (enrollment) en vez de
@@ -31,6 +32,11 @@ async function reserveAvailabilitySlot(db, slotId) {
 }
 
 async function createEnrollmentFromBooking(db, booking, studentUser, paymentMethod) {
+  // El descuento de la clase de prueba ya se calculó y se restó de
+  // booking.finalPrice en create-booking.js (antes de cobrar por PayPal), así
+  // que aquí solo se propaga y se marca la clase de prueba original como
+  // consumida; no se vuelve a tocar el precio para no desajustarlo de lo que
+  // realmente se cobró.
   const enrollment = {
     userId: String(studentUser._id),
     studentEmail: studentUser.email,
@@ -42,8 +48,8 @@ async function createEnrollmentFromBooking(db, booking, studentUser, paymentMeth
     price: booking.price,
     finalPrice: booking.finalPrice,
     appliedPromo: booking.appliedPromo || null,
-    trialCreditApplied: false,
-    trialCreditAmount: 0,
+    trialCreditApplied: Boolean(booking.trialCreditApplied),
+    trialCreditAmount: booking.trialCreditAmount || 0,
     paymentMethod: paymentMethod || booking.paymentMethod || 'other',
     status: 'active',
     createdAt: new Date(),
@@ -51,6 +57,14 @@ async function createEnrollmentFromBooking(db, booking, studentUser, paymentMeth
   }
   const result = await db.collection('enrollments').insertOne(enrollment)
   enrollment._id = result.insertedId
+
+  if (booking.trialCreditApplied && booking.trialCreditSourceCollection && booking.trialCreditSourceId) {
+    await markTrialCreditApplied(db, {
+      collection: booking.trialCreditSourceCollection,
+      id: new ObjectId(booking.trialCreditSourceId),
+    })
+  }
+
   return enrollment
 }
 
@@ -109,7 +123,7 @@ export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {
 
     const [hours, minutes] = booking.time.split(':').map(Number)
     const pad = (n) => String(n).padStart(2, '0')
-    const durationMin = booking.durationMin || 60
+    const durationMin = booking.durationMin || 55
     const startLocal = `${booking.date}T${pad(hours)}:${pad(minutes)}:00`
     const endMinutes = hours * 60 + minutes + durationMin
     const endHour = Math.floor(endMinutes / 60)

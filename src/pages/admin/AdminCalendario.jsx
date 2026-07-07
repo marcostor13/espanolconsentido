@@ -46,7 +46,7 @@ export default function AdminCalendario() {
   const [error, setError] = useState(null)
 
   const [newTime, setNewTime] = useState('09:00')
-  const [newDuration, setNewDuration] = useState(60)
+  const [newDuration, setNewDuration] = useState(55)
   const [newType, setNewType] = useState('individual')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -399,6 +399,7 @@ export default function AdminCalendario() {
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
                 >
                   <option value={30}>30</option>
+                  <option value={55}>55</option>
                   <option value={60}>60</option>
                   <option value={90}>90</option>
                 </select>

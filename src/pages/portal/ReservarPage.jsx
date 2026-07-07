@@ -106,10 +106,13 @@ export default function ReservarPage() {
     }
   }, [availableEnrollments, selectedEnrollmentId])
 
+  // Los créditos de paquete (inicio/progreso/pro) solo agendan clases
+  // individuales; las franjas grupales tienen su propio flujo de compra y no
+  // deben mostrarse aquí como si fueran intercambiables.
   const slotsByDate = useMemo(() => {
     const map = {}
     for (const s of slots) {
-      if (s.status !== 'open') continue
+      if (s.status !== 'open' || s.type !== 'individual') continue
       if (!map[s.date]) map[s.date] = []
       map[s.date].push(s)
     }

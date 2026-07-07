@@ -920,6 +920,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   const [bookingId, setBookingId] = useState(null)
   const [finalPrice, setFinalPrice] = useState(null)
   const [appliedPromo, setAppliedPromo] = useState(null)
+  const [trialCreditAmount, setTrialCreditAmount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [bookingError, setBookingError] = useState(null)
   const [acceptedPolicies, setAcceptedPolicies] = useState(false)
@@ -939,6 +940,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setBookingId(null)
       setFinalPrice(null)
       setAppliedPromo(null)
+      setTrialCreditAmount(0)
       setBookingError(null)
       setAcceptedPolicies(false)
     }
@@ -1043,29 +1045,13 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setBookingId(data.bookingId)
       setFinalPrice(data.finalPrice)
       setAppliedPromo(data.appliedPromo || null)
+      setTrialCreditAmount(data.trialCreditApplied ? data.trialCreditAmount : 0)
       setStep(3)
     } catch (err) {
       setBookingError(err.message)
     } finally {
       setLoading(false)
     }
-  }
-
-  const confirmWisePayment = async () => {
-    try {
-      const token = import.meta.env.VITE_ADMIN_TOKEN || ""
-      const url = `/api/confirm-payment?bookingId=${bookingId}&paymentMethod=wise${token ? `&token=${token}` : ""}`
-      const res = await fetch(url)
-      const data = await res.json()
-      if (!res.ok) {
-        console.error("Error confirming payment:", data.error)
-      } else {
-        console.log("Payment confirmed:", data.message)
-      }
-    } catch (err) {
-      console.error("Failed to confirm payment:", err.message)
-    }
-    setStep(4)
   }
 
   const handlePayWithPayPal = async () => {
@@ -1499,8 +1485,16 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                       {appliedPromo.code} -{appliedPromo.discountPercent}%)
                     </span>
                     <span>
-                      -${(servicePrice - (finalPrice ?? servicePrice)).toFixed(2)}
+                      -${((servicePrice * appliedPromo.discountPercent) / 100).toFixed(2)}
                     </span>
+                  </div>
+                )}
+                {trialCreditAmount > 0 && (
+                  <div className="flex justify-between items-center text-sm text-green-600 mb-1">
+                    <span>
+                      {language === "es" ? "Crédito por tu clase de prueba" : "Trial class credit"}
+                    </span>
+                    <span>-${trialCreditAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center text-sm text-gray-600">
@@ -1552,7 +1546,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                     href={wiseLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={confirmWisePayment}
+                    // Solo abre el link de pago; la reserva se confirma cuando
+                    // la profesora verifica la transferencia y la marca como
+                    // pagada desde el panel de admin, nunca al hacer clic aquí.
+                    onClick={() => setStep(4)}
                     className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-4 font-bold text-lg hover:bg-white transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
                   >
                     <span className="italic">{modal.payment?.payWith}</span>

@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { logError } from './_shared/errorLog.js'
+import { TRIAL_CREDIT_AMOUNT, findUnusedTrialCredit } from './_shared/trialCredit.js'
 
 // Debe reflejar src/lib/packages.js (SLOT_BASED_SERVICE_IDS / SERVICE_SLOT_TYPE):
 // servicios de una sola clase que se reservan contra una franja real del
@@ -9,6 +10,8 @@ import { logError } from './_shared/errorLog.js'
 const SLOT_BASED_SERVICE_IDS = ['trial', 'individual', 'group']
 const SERVICE_SLOT_TYPE = { trial: 'individual', individual: 'individual', group: 'group' }
 const PACKAGE_TOTAL_CLASSES = { inicio: 4, progreso: 8, pro: 12 }
+// Debe reflejar PACKAGE_SERVICE_IDS en _shared/bookingConfirmation.js.
+const PACKAGE_SERVICE_IDS = ['inicio', 'progreso', 'pro']
 
 function generateBookingId() {
   return 'b_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 11)
@@ -99,6 +102,18 @@ export const handler = async (event) => {
       appliedPromo = { code: promo.code, discountPercent: discount }
     }
 
+    // Si el estudiante ya pagó una clase de prueba y compra un paquete, se le
+    // descuentan los $10 antes de cobrar (no después), para que lo que pague
+    // por PayPal ya sea el monto con el descuento aplicado. Se busca por
+    // email porque a esta altura puede que todavía no exista su cuenta.
+    let trialCredit = null
+    if (PACKAGE_SERVICE_IDS.includes(serviceId)) {
+      trialCredit = await findUnusedTrialCredit(db, { email: email.trim() })
+      if (trialCredit) {
+        finalPrice = Math.max(0, Math.round((finalPrice - TRIAL_CREDIT_AMOUNT) * 100) / 100)
+      }
+    }
+
     const bookingId = generateBookingId()
     const collection = db.collection('bookings')
 
@@ -117,6 +132,10 @@ export const handler = async (event) => {
       price: originalPrice,
       finalPrice,
       appliedPromo,
+      trialCreditApplied: Boolean(trialCredit),
+      trialCreditAmount: trialCredit ? TRIAL_CREDIT_AMOUNT : 0,
+      trialCreditSourceCollection: trialCredit ? trialCredit.collection : null,
+      trialCreditSourceId: trialCredit ? String(trialCredit.id) : null,
       questions: questions || {},
       status: 'pending',
       createdAt: new Date(),
@@ -132,6 +151,8 @@ export const handler = async (event) => {
         finalPrice,
         originalPrice,
         appliedPromo,
+        trialCreditApplied: Boolean(trialCredit),
+        trialCreditAmount: trialCredit ? TRIAL_CREDIT_AMOUNT : 0,
         message: 'Reserva registrada. Completa el pago para confirmar.',
       }),
     }

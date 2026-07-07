@@ -415,7 +415,7 @@ export const translations = {
       },
       success: {
         title: "¡Reserva registrada!",
-        desc: "Tu reserva ha sido guardada. Completa el pago en la ventana de PayPal que se ha abierto. Te contactaremos cuando confirmemos el pago.",
+        desc: "Tu reserva ha sido guardada. Completa el pago en la ventana que se ha abierto. Te contactaremos por correo en cuanto confirmemos el pago.",
         policy: "Política",
         policyDesc: "Reprogramación gratuita hasta 24h antes.",
         return: "Volver al Inicio",
@@ -841,7 +841,7 @@ export const translations = {
       },
       success: {
         title: "Booking saved!",
-        desc: "Your booking has been saved. Complete the payment in the PayPal window that opened. We will contact you when we confirm the payment.",
+        desc: "Your booking has been saved. Complete the payment in the window that opened. We'll email you as soon as we confirm the payment.",
         policy: "Policy",
         policyDesc: "Free rescheduling up to 24h in advance.",
         return: "Back to Home",

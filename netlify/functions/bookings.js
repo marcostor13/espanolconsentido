@@ -81,7 +81,7 @@ async function createBooking(event, db) {
   if (error) return error
 
   const body = JSON.parse(event.body || '{}')
-  const { enrollmentId, slotId } = body
+  const { enrollmentId, slotId, rescheduledFrom } = body
   if (!enrollmentId || !slotId || !ObjectId.isValid(enrollmentId) || !ObjectId.isValid(slotId)) {
     return jsonResponse(400, { error: 'Faltan enrollmentId o slotId válidos' })
   }
@@ -112,12 +112,21 @@ async function createBooking(event, db) {
     return jsonResponse(409, { error: 'Ya tiene una reserva en esa franja' })
   }
 
+  // Las matrículas por paquete (inicio/progreso/pro) son siempre de clases
+  // individuales; una franja grupal nunca debe poder consumirse con estos
+  // créditos, para que la disponibilidad de cada tipo sea independiente.
   const slot = await availabilityCol.findOneAndUpdate(
-    { _id: new ObjectId(slotId), status: 'open', $expr: { $lt: ['$bookedCount', '$capacity'] } },
+    { _id: new ObjectId(slotId), status: 'open', type: 'individual', $expr: { $lt: ['$bookedCount', '$capacity'] } },
     { $inc: { bookedCount: 1 } },
     { returnDocument: 'after' },
   )
-  if (!slot) return jsonResponse(409, { error: 'Esa franja ya no está disponible' })
+  if (!slot) {
+    const existing = await availabilityCol.findOne({ _id: new ObjectId(slotId) })
+    if (existing && existing.type !== 'individual') {
+      return jsonResponse(400, { error: 'Esa franja es de clase grupal; los cursos por paquete solo agendan clases individuales' })
+    }
+    return jsonResponse(409, { error: 'Esa franja ya no está disponible' })
+  }
 
   if (slot.bookedCount >= slot.capacity) {
     await availabilityCol.updateOne({ _id: slot._id }, { $set: { status: 'full' } })
@@ -156,6 +165,7 @@ async function createBooking(event, db) {
     time: slot.time,
     durationMin: slot.durationMin,
     status: 'paid',
+    rescheduledFrom: rescheduledFrom && ObjectId.isValid(rescheduledFrom) ? String(rescheduledFrom) : null,
     createdAt: new Date(),
   }
   await bookingsCol.insertOne(booking)
@@ -199,7 +209,7 @@ async function updateBooking(event, db) {
   if (error) return error
 
   const body = JSON.parse(event.body || '{}')
-  const { id, status } = body
+  const { id, status, reason } = body
   if (!id || !ObjectId.isValid(id) || !['paid', 'completed', 'cancelled'].includes(status)) {
     return jsonResponse(400, { error: 'Datos inválidos: se requiere id y status (paid|completed|cancelled)' })
   }
@@ -242,7 +252,13 @@ async function updateBooking(event, db) {
   }
 
   const update = { status, updatedAt: new Date() }
-  if (status === 'cancelled') update.creditRefunded = creditRefunded
+  if (status === 'cancelled') {
+    update.creditRefunded = creditRefunded
+    // Marca si la cancelación viene de una reprogramación (RescheduleModal:
+    // cancela esta y crea una nueva enseguida) para no contarla como
+    // cancelación real en las estadísticas del dashboard.
+    update.cancelReason = reason === 'reschedule' ? 'reschedule' : 'cancelled'
+  }
 
   await bookingsCol.updateOne({ _id: new ObjectId(id) }, { $set: update })
   return jsonResponse(200, { success: true, creditRefunded })

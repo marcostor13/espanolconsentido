@@ -41,10 +41,12 @@ export default function RescheduleModal({ booking, token, onClose, onRescheduled
     loadSlots()
   }, [loadSlots])
 
+  // Reprogramar usa el mismo crédito de la matrícula, que solo agenda clases
+  // individuales (ver bookings.js); las franjas grupales no aplican aquí.
   const slotsByDate = useMemo(() => {
     const map = {}
     for (const s of slots) {
-      if (s.status !== 'open' || s._id === booking.slotId) continue
+      if (s.status !== 'open' || s._id === booking.slotId || s.type !== 'individual') continue
       if (!map[s.date]) map[s.date] = []
       map[s.date].push(s)
     }
@@ -64,11 +66,15 @@ export default function RescheduleModal({ booking, token, onClose, onRescheduled
     setSubmitting(true)
     setError(null)
     try {
-      await apiFetch('bookings', { method: 'PATCH', token, body: { id: booking._id, status: 'cancelled' } })
+      await apiFetch('bookings', {
+        method: 'PATCH',
+        token,
+        body: { id: booking._id, status: 'cancelled', reason: 'reschedule' },
+      })
       await apiFetch('bookings', {
         method: 'POST',
         token,
-        body: { enrollmentId: booking.enrollmentId, slotId: selectedSlotId },
+        body: { enrollmentId: booking.enrollmentId, slotId: selectedSlotId, rescheduledFrom: booking._id },
       })
       onRescheduled?.()
     } catch (err) {

@@ -8,7 +8,7 @@ Configura estas variables en Netlify: Site settings > Environment variables
 |----------|-------------|
 | `MONGODB_URI` | URI de conexión MongoDB |
 | `VITE_PAYPAL_ME_USERNAME` | Usuario de PayPal.me para el link (ej. `juanita`) |
-| `ADMIN_TOKEN` | Token secreto para confirmar pagos |
+| `VITE_WHATSAPP_NUMBER` | Número de WhatsApp (con código de país, sin +) para el botón flotante |
 | `GOOGLE_CALENDAR_ID` | ID del calendario de Google |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Email del Service Account |
 | `GOOGLE_PRIVATE_KEY` | Clave privada del JSON (con \n para saltos de línea) |
@@ -21,15 +21,12 @@ npm run dev:netlify
 
 Esto ejecuta Vite + Netlify Functions. Crea un archivo `.env` con las variables para pruebas locales.
 
-## Confirmar pago (profesor)
+## Confirmar pago manual (Wise, transferencia, efectivo)
 
-Tras verificar el pago en PayPal, accede a:
-
-```
-https://tu-dominio.netlify.app/api/confirm-payment?bookingId=XXX&token=TU_ADMIN_TOKEN
-```
-
-O con header: `x-admin-token: TU_ADMIN_TOKEN`
+Los pagos con PayPal se confirman solos (retorno del checkout + webhook). Los pagos manuales quedan como
+reserva `pending` hasta que la profesora los confirma a mano desde **Panel admin > Reservas > Pagos
+pendientes de confirmar**, tras verificar que el dinero llegó. Esa acción llama a `/api/confirm-payment`
+autenticada con la sesión de admin (ya no usa un token separado).
 
 ## Códigos promocionales
 

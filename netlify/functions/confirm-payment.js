@@ -1,16 +1,22 @@
 import { getDb } from './_shared/mongodb.js'
-import { jsonResponse } from './_shared/auth.js'
+import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { confirmBookingPayment, BookingConfirmationError } from './_shared/bookingConfirmation.js'
 import { logError } from './_shared/errorLog.js'
 
+// Confirmación manual de pagos que no pasan por un webhook automático (Wise,
+// transferencia, efectivo): la admin la dispara desde el panel después de
+// verificar el pago a mano, nunca el propio frontend público sin sesión.
 export const handler = async (event) => {
-  const token = event.queryStringParameters?.token || event.headers['x-admin-token']
-  const bookingId = event.queryStringParameters?.bookingId
-  const paymentMethod = event.queryStringParameters?.paymentMethod
-
-  if (process.env.ADMIN_TOKEN && token !== process.env.ADMIN_TOKEN) {
-    return jsonResponse(401, { error: 'No autorizado' })
+  if (event.httpMethod !== 'POST') {
+    return jsonResponse(405, { error: 'Method not allowed' })
   }
+
+  const { error } = requireAuth(event, ['admin'])
+  if (error) return error
+
+  const body = JSON.parse(event.body || '{}')
+  const bookingId = body.bookingId
+  const paymentMethod = body.paymentMethod
 
   if (!bookingId) {
     return jsonResponse(400, { error: 'Falta bookingId' })

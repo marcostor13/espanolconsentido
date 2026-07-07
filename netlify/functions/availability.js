@@ -63,7 +63,7 @@ async function createAvailability(event, db, col) {
     return {
       date: slot.date,
       time: slot.time,
-      durationMin: Number(slot.durationMin) || 60,
+      durationMin: Number(slot.durationMin) || 55,
       type,
       capacity,
       bookedCount: 0,
@@ -74,8 +74,10 @@ async function createAvailability(event, db, col) {
 
   const results = []
   for (const doc of docs) {
+    // La llave incluye `type`: una franja individual y una grupal a la misma
+    // fecha/hora son slots independientes, no se pisan entre sí.
     const result = await col.updateOne(
-      { date: doc.date, time: doc.time },
+      { date: doc.date, time: doc.time, type: doc.type },
       { $setOnInsert: doc },
       { upsert: true },
     )

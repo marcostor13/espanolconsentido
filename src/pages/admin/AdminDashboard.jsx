@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { DollarSign, CalendarCheck, GraduationCap, Users, AlertCircle, Clock } from 'lucide-react'
+import { DollarSign, CalendarCheck, GraduationCap, Users, AlertCircle, Clock, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
       ) : (
         stats && (
           <>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
               <StatTile icon={DollarSign} label="Ingresos totales" value={currency(stats.revenue.total)} />
               <StatTile
                 icon={CalendarCheck}
@@ -76,6 +76,12 @@ export default function AdminDashboard() {
                 label={`Estudiantes activos (${stats.students.total} total)`}
                 value={stats.students.active}
               />
+              <StatTile
+                icon={RefreshCw}
+                label="Clases reprogramadas"
+                value={stats.bookings.rescheduled}
+                accent="text-amber-700 bg-amber-50"
+              />
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
@@ -84,6 +90,7 @@ export default function AdminDashboard() {
                 <div className="space-y-2">
                   <StatusPill label="Confirmadas" count={stats.bookings.paid} className="bg-green-50 text-green-700" />
                   <StatusPill label="Completadas" count={stats.bookings.completed} className="bg-blue-50 text-blue-700" />
+                  <StatusPill label="Reprogramadas" count={stats.bookings.rescheduled} className="bg-amber-50 text-amber-700" />
                   <StatusPill label="Canceladas" count={stats.bookings.cancelled} className="bg-red-50 text-red-700" />
                 </div>
                 <div className="h-px bg-gray-100 my-4" />

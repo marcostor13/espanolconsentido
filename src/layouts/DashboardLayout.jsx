@@ -55,10 +55,7 @@ export default function DashboardLayout({ title, navItems }) {
       {/* Sidebar - desktop */}
       <aside className="hidden md:flex md:flex-col w-72 shrink-0 bg-white border-r border-gray-100 p-6">
         <Link to="/" className="flex flex-col items-center mb-8">
-          <img src="/logo2_nobg2.png" alt="Español con Sentido" className="h-14 w-auto object-contain" />
-          <span className="-mt-1 text-[9px] font-grotesk font-semibold tracking-[0.3em] text-gray-400 uppercase">
-            Comunica · Expresa · Siente
-          </span>
+          <img src="/logo2_nobg.png" alt="Español con Sentido" className="h-16 w-auto object-contain" />
         </Link>
         <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 px-4">{title}</p>
         <Nav navItems={navItems} onNavigate={closeMenu} />
@@ -68,7 +65,7 @@ export default function DashboardLayout({ title, navItems }) {
       {/* Mobile topbar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <img src="/logo2_nobg2.png" alt="Español con Sentido" className="h-10 w-auto object-contain" />
+          <img src="/logo2_nobg.png" alt="Español con Sentido" className="h-11 w-auto object-contain" />
         </Link>
         <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-secondary">
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
