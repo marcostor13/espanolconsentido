@@ -25,8 +25,8 @@ Configura estas variables en Netlify: Site settings > Environment variables
 ## Conexión con Google (Meet en las reservas)
 
 1. En Google Cloud Console crea credenciales **OAuth 2.0 Client ID** (tipo Web) con redirect URI
-   `https://tu-dominio/.netlify/functions/google-oauth` (exactamente esa URL: https, sin barra final y sin
-   parámetros) y habilita la **Google Calendar API**. El dominio debe ser el mismo configurado en `SITE_URL`.
+   `https://tu-dominio/api/google-oauth` (exactamente esa URL: https, sin barra final y sin parámetros) y
+   habilita la **Google Calendar API**. El dominio debe ser el mismo configurado en `SITE_URL`.
 2. Configura `GOOGLE_OAUTH_CLIENT_ID` y `GOOGLE_OAUTH_CLIENT_SECRET` en Netlify.
 3. En **Panel admin > Configuraciones > Google Calendar y Meet** haz clic en "Conectar con Google" e inicia
    sesión con la cuenta de la profesora.

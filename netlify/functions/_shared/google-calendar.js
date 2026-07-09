@@ -7,13 +7,14 @@ export function getSiteUrl() {
   return (process.env.SITE_URL || 'https://espanolconsentido.com').replace(/\/$/, '')
 }
 
-// URL de retorno del consentimiento de Google: la ruta directa de la MISMA
-// función google-oauth (sin query string). Al ser la función que genera la
-// URL de consentimiento, si el flujo arranca es porque está desplegada, así
-// que el retorno nunca puede caer en un 404. El handler reconoce el callback
-// por el parámetro `code` que añade Google.
+// URL de retorno del consentimiento de Google: EXACTAMENTE la misma ruta
+// /api/google-oauth que usa el panel para iniciar la conexión. Si el flujo
+// arranca es porque esa ruta responde desde el dominio del usuario (aunque
+// haya proxies o DNS peculiares delante), así que el retorno no puede caer en
+// un 404. Sin query string (Google exige coincidencia exacta); el handler
+// reconoce el callback por el parámetro `code` que añade Google.
 export function getOAuthRedirectUri() {
-  return `${getSiteUrl()}/.netlify/functions/google-oauth`
+  return `${getSiteUrl()}/api/google-oauth`
 }
 
 // Cliente OAuth de la cuenta de Google de la profesora (conectada desde
