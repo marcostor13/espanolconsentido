@@ -271,7 +271,16 @@ function GoogleConnectCard({ token, googleConnected, googleAccountEmail, onSaved
       {googleStatus === 'error' && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
-          <span>No se pudo conectar con Google. Intenta de nuevo.</span>
+          <span>
+            {{
+              state: 'La sesión de conexión expiró. Intenta de nuevo.',
+              code: 'Google no devolvió el código de autorización. Intenta de nuevo.',
+              no_refresh_token:
+                'Google no entregó el token de renovación. Revoca el acceso de la app en myaccount.google.com/permissions y vuelve a conectar.',
+              token_exchange:
+                'Google rechazó el intercambio del código. Revisa que GOOGLE_OAUTH_CLIENT_ID y GOOGLE_OAUTH_CLIENT_SECRET sean correctos, y mira el detalle en Admin > Errores.',
+            }[searchParams.get('reason')] || 'No se pudo conectar con Google. Intenta de nuevo.'}
+          </span>
           <button onClick={clearStatus} className="ml-auto font-bold underline">
             Cerrar
           </button>

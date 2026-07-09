@@ -70,7 +70,17 @@ export const handler = async (event) => {
       }
       if (!params.code) return redirectTo(false, 'code')
 
-      const { tokens } = await client.getToken(params.code)
+      // Si Google rechaza el intercambio (Client ID/Secret mal configurados,
+      // código vencido, etc.) se vuelve al panel con el motivo, en vez de
+      // dejar al usuario varado en esta URL con un error crudo.
+      let tokens
+      try {
+        ;({ tokens } = await client.getToken(params.code))
+      } catch (err) {
+        console.error('google-oauth: token exchange failed', err?.response?.data || err)
+        await logError('google-oauth: token exchange', err, { level: 'warning' })
+        return redirectTo(false, 'token_exchange')
+      }
 
       // Si Google no devuelve refresh_token (p. ej. reconexión sin prompt=
       // consent), conservamos el que ya teníamos guardado.
