@@ -140,13 +140,11 @@
   status = 200
   force = true
 
-# Retorno del consentimiento de Google: URL limpia sin query string, porque
-# Google exige que la redirect URI registrada coincida exactamente. La URI
-# registrada apunta a la ruta directa de la función; este alias /api/ se
-# mantiene por compatibilidad.
+# Alias por compatibilidad: el retorno real del consentimiento de Google va
+# directo a /.netlify/functions/google-oauth (sin pasar por redirects).
 [[redirects]]
   from = "/api/google-oauth-callback"
-  to = "/.netlify/functions/google-oauth-callback"
+  to = "/.netlify/functions/google-oauth"
   status = 200
   force = true
 
