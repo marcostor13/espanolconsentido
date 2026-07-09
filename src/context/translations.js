@@ -58,11 +58,7 @@ export const translations = {
       ]
     },
     marquee: [
-      "Comunicación •",
-      "Cultura •",
-      "Conexión •",
-      "Pensamiento •",
-      "Sentimiento •"
+      "Comunica, Expresa y Siente. •"
     ],
     philosophy: {
       title: "Nuestra",
@@ -398,7 +394,7 @@ export const translations = {
         acceptPoliciesLink: "Políticas de clases",
         acceptPoliciesOpenInNewTab: "Abrir en nueva pestaña",
         acceptPoliciesError: "Debes aceptar las políticas de clases para continuar con la reserva.",
-        trialCreditNote: "💡 Si después decides continuar con un paquete de clases, te descontamos los $10 de esta clase de prueba."
+        trialCreditNote: "💡 Si en el futuro compras un paquete de clases, se te descontarán los {price} de esta clase de prueba."
       },
       payment: {
         alertTitle: "Confirmación requerida",
@@ -418,10 +414,18 @@ export const translations = {
         desc: "Tu reserva ha sido guardada. Completa el pago en la ventana que se ha abierto. Te contactaremos por correo en cuanto confirmemos el pago.",
         policy: "Política",
         policyDesc: "Reprogramación gratuita hasta 24h antes.",
+        meetInfo: "Recibirás el enlace de Google Meet por correo al confirmarse el pago, y también 30 minutos antes de tu clase.",
         return: "Volver al Inicio",
         packageTitle: "¡Compra confirmada!",
         packageDesc: "Tu paquete ya está activo. Inicia sesión en tu portal de estudiante para agendar tus clases cuando quieras.",
         goToPortal: "Agendar mis clases"
+      },
+      wise: {
+        proofTitle: "¿Ya pagaste por Wise?",
+        proofDesc: "Pega aquí el enlace o la referencia de tu transferencia de Wise. Avisaremos a tu profesora para que verifique el pago y confirme tu reserva.",
+        proofPlaceholder: "Enlace o referencia de tu pago",
+        proofSubmit: "Enviar comprobante",
+        proofSent: "¡Comprobante recibido! Confirmaremos tu reserva en cuanto verifiquemos el pago."
       }
     }
   },
@@ -484,11 +488,7 @@ export const translations = {
       ]
     },
     marquee: [
-      "Communication •",
-      "Culture •",
-      "Connection •",
-      "Thought •",
-      "Feeling •"
+      "Comunica, Expresa y Siente. •"
     ],
     philosophy: {
       title: "Our",
@@ -824,7 +824,7 @@ export const translations = {
         acceptPoliciesLink: "Class policies",
         acceptPoliciesOpenInNewTab: "Open in new tab",
         acceptPoliciesError: "You must accept the class policies to continue with your booking.",
-        trialCreditNote: "💡 If you decide to continue with a class package afterwards, we'll deduct the $10 of this trial class."
+        trialCreditNote: "💡 If you purchase a class package in the future, the {price} of this trial class will be deducted from the price."
       },
       payment: {
         alertTitle: "Confirmation required",
@@ -844,10 +844,18 @@ export const translations = {
         desc: "Your booking has been saved. Complete the payment in the window that opened. We'll email you as soon as we confirm the payment.",
         policy: "Policy",
         policyDesc: "Free rescheduling up to 24h in advance.",
+        meetInfo: "You'll receive the Google Meet link by email once your payment is confirmed, and again 30 minutes before your class.",
         return: "Back to Home",
         packageTitle: "Purchase confirmed!",
         packageDesc: "Your package is now active. Log into your student portal to schedule your classes whenever you like.",
         goToPortal: "Schedule my classes"
+      },
+      wise: {
+        proofTitle: "Already paid with Wise?",
+        proofDesc: "Paste the link or reference of your Wise transfer here. We'll notify your teacher so she can verify the payment and confirm your booking.",
+        proofPlaceholder: "Payment link or reference",
+        proofSubmit: "Send proof of payment",
+        proofSent: "Proof received! We'll confirm your booking as soon as we verify the payment."
       }
     }
   }

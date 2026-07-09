@@ -1,9 +1,10 @@
-// El valor de la clase de prueba ($10) se descuenta una única vez del primer
+// El valor de la clase de prueba se descuenta una única vez del primer
 // paquete de clases que compre el estudiante, si ya pagó una clase de prueba
-// y todavía no se le aplicó el descuento. Usado tanto cuando el admin crea
-// una matrícula manualmente (enrollments.js) como cuando el propio estudiante
-// compra un paquete desde el landing (bookingConfirmation.js).
-export const TRIAL_CREDIT_AMOUNT = 10
+// y todavía no se le aplicó el descuento. El monto ya no es fijo: equivale al
+// precio configurado de la clase de prueba (getTrialCreditAmount en
+// _shared/settings.js). Usado tanto cuando el admin crea una matrícula
+// manualmente (enrollments.js) como cuando el propio estudiante compra un
+// paquete desde el landing (create-booking.js / bookingConfirmation.js).
 
 function emailMatch(email) {
   const escaped = email.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

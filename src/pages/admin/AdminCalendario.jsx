@@ -4,6 +4,7 @@ import Calendar from '../../components/Calendar'
 import TimeGrid from '../../components/calendar/TimeGrid'
 import SlotDetailModal from '../../components/calendar/SlotDetailModal'
 import BulkAvailabilityModal from '../../components/calendar/BulkAvailabilityModal'
+import QuickAvailabilityModal from '../../components/calendar/QuickAvailabilityModal'
 import { toDateKey, parseDateKey, addDays, addMonths, startOfWeek, formatWeekRangeLabel, formatDayLabel } from '../../lib/date'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
@@ -46,13 +47,15 @@ export default function AdminCalendario() {
   const [error, setError] = useState(null)
 
   const [newTime, setNewTime] = useState('09:00')
-  const [newDuration, setNewDuration] = useState(55)
+  const [newDuration, setNewDuration] = useState(50)
   const [newType, setNewType] = useState('individual')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
 
   const [detailSlot, setDetailSlot] = useState(null)
   const [bulkRange, setBulkRange] = useState(null)
+  // Rango pintado con el mouse en la vista semana/día para creación rápida.
+  const [quickRange, setQuickRange] = useState(null)
 
   const month = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate])
   const weekStart = useMemo(() => startOfWeek(currentDate), [currentDate])
@@ -217,6 +220,11 @@ export default function AdminCalendario() {
     setNewTime(time)
   }
 
+  const handleRangeSelect = (date, startTime, endTime) => {
+    setSelectedDate(date)
+    setQuickRange({ date, startTime, endTime })
+  }
+
   const handleSlotUpdated = () => {
     loadData()
   }
@@ -331,6 +339,7 @@ export default function AdminCalendario() {
             onSelectDay={setSelectedDate}
             onCellClick={handleCellClick}
             onSlotClick={setDetailSlot}
+            onRangeSelect={handleRangeSelect}
           />
         )}
 
@@ -342,6 +351,7 @@ export default function AdminCalendario() {
             onSelectDay={setSelectedDate}
             onCellClick={handleCellClick}
             onSlotClick={setDetailSlot}
+            onRangeSelect={handleRangeSelect}
           />
         )}
 
@@ -398,7 +408,8 @@ export default function AdminCalendario() {
                   onChange={(e) => setNewDuration(e.target.value)}
                   className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
                 >
-                  <option value={30}>30</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
                   <option value={55}>55</option>
                   <option value={60}>60</option>
                   <option value={90}>90</option>
@@ -499,6 +510,18 @@ export default function AdminCalendario() {
           token={token}
           groupCapacity={groupCapacity}
           onClose={() => setBulkRange(null)}
+          onCreated={loadData}
+        />
+      )}
+
+      {quickRange && (
+        <QuickAvailabilityModal
+          date={quickRange.date}
+          startTime={quickRange.startTime}
+          endTime={quickRange.endTime}
+          token={token}
+          groupCapacity={groupCapacity}
+          onClose={() => setQuickRange(null)}
           onCreated={loadData}
         />
       )}

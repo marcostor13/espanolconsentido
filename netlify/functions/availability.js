@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { getSettings } from './_shared/settings.js'
+import { hoursUntilClass } from './_shared/time.js'
 import { logError } from './_shared/errorLog.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -25,7 +26,7 @@ function validateSlotInput(slot) {
   return null
 }
 
-async function getAvailability(event, col) {
+async function getAvailability(event, db, col) {
   const params = event.queryStringParameters || {}
   const isAdmin = tryGetAdmin(event)
 
@@ -39,7 +40,16 @@ async function getAvailability(event, col) {
   if (!isAdmin) filter.status = 'open'
   else if (params.status) filter.status = params.status
 
-  const slots = await col.find(filter).sort({ date: 1, time: 1 }).toArray()
+  let slots = await col.find(filter).sort({ date: 1, time: 1 }).toArray()
+
+  // A los estudiantes/visitantes solo se les muestran franjas que todavía se
+  // pueden reservar según la anticipación mínima configurada; el admin ve todo.
+  if (!isAdmin) {
+    const settings = await getSettings(db)
+    const minNotice = Number(settings.minBookingNoticeHours) || 0
+    slots = slots.filter((s) => hoursUntilClass(s.date, s.time) >= minNotice)
+  }
+
   return jsonResponse(200, { slots })
 }
 
@@ -116,7 +126,7 @@ export const handler = async (event) => {
 
     switch (event.httpMethod) {
       case 'GET':
-        return await getAvailability(event, col)
+        return await getAvailability(event, db, col)
       case 'POST':
         return await createAvailability(event, db, col)
       case 'DELETE':

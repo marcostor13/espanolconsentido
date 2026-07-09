@@ -60,6 +60,50 @@ export const handler = async (event) => {
 
     const recentBookings = await bookingsCol.find({}).sort({ createdAt: -1 }).limit(5).toArray()
 
+    // Reservas por estado CON nombre del estudiante, para que el dashboard
+    // muestre quiénes están detrás de cada número (limitado a las más
+    // recientes de cada estado para no inflar la respuesta).
+    const bookingFields = { projection: { bookingId: 1, userName: 1, name: 1, serviceTitle: 1, date: 1, time: 1, cancelReason: 1 } }
+    const [paidList, completedList, cancelledRaw] = await Promise.all([
+      bookingsCol.find({ status: 'paid' }, bookingFields).sort({ date: 1, time: 1 }).limit(30).toArray(),
+      bookingsCol.find({ status: 'completed' }, bookingFields).sort({ date: -1, time: -1 }).limit(30).toArray(),
+      bookingsCol.find({ status: 'cancelled' }, bookingFields).sort({ date: -1, time: -1 }).limit(60).toArray(),
+    ])
+    const simplify = (b) => ({
+      bookingId: b.bookingId,
+      studentName: b.userName || b.name || 'Sin nombre',
+      serviceTitle: b.serviceTitle,
+      date: b.date,
+      time: b.time,
+    })
+    const bookingsByStatus = {
+      paid: paidList.map(simplify),
+      completed: completedList.map(simplify),
+      cancelled: cancelledRaw.filter((b) => (b.cancelReason || 'cancelled') === 'cancelled').slice(0, 30).map(simplify),
+      rescheduled: cancelledRaw.filter((b) => b.cancelReason === 'reschedule').slice(0, 30).map(simplify),
+    }
+
+    // Lista de estudiantes activos con sus créditos, para verlos de un
+    // vistazo desde el dashboard.
+    const activeStudentDocs = await usersCol
+      .find({ role: 'student', active: { $ne: false } }, { projection: { name: 1, email: 1, createdAt: 1 } })
+      .sort({ name: 1 })
+      .limit(200)
+      .toArray()
+    const activeEnrollments = await enrollmentsCol
+      .find({ status: 'active' }, { projection: { userId: 1, totalClasses: 1, classesUsed: 1 } })
+      .toArray()
+    const creditsByUser = {}
+    for (const e of activeEnrollments) {
+      creditsByUser[e.userId] = (creditsByUser[e.userId] || 0) + Math.max(0, (e.totalClasses || 0) - (e.classesUsed || 0))
+    }
+    const activeStudentsList = activeStudentDocs.map((u) => ({
+      id: String(u._id),
+      name: u.name,
+      email: u.email,
+      remainingClasses: creditsByUser[String(u._id)] || 0,
+    }))
+
     return jsonResponse(200, {
       revenue: {
         total: Math.round(((enrollmentRevenue?.total || 0) + (legacyRevenue?.total || 0)) * 100) / 100,
@@ -74,6 +118,8 @@ export const handler = async (event) => {
         rescheduled: cancelReasonCounts.reschedule || 0,
       },
       students: { total: totalStudents, active: activeStudents },
+      bookingsByStatus,
+      activeStudentsList,
       enrollments: {
         total: (enrollmentStatusCounts.active || 0) + (enrollmentStatusCounts.finished || 0),
         active: enrollmentStatusCounts.active || 0,
