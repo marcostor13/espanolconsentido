@@ -21,7 +21,10 @@ const SCOPES = [
 // que se revoque el acceso desde la cuenta de Google.
 export const handler = async (event) => {
   const params = event.queryStringParameters || {}
-  const action = params.action
+  // El retorno de Google llega a /api/google-oauth-callback (sin ?action=,
+  // porque Google exige una redirect URI sin query string); se reconoce por
+  // el `code` que Google añade a la URL.
+  const action = params.action || (params.code || params.error ? 'callback' : null)
 
   try {
     const client = getOAuthClient()

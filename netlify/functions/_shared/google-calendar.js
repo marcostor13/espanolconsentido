@@ -7,13 +7,20 @@ export function getSiteUrl() {
   return (process.env.SITE_URL || 'https://espanolconsentido.com').replace(/\/$/, '')
 }
 
+// URL de retorno del consentimiento de Google. Sin query string: Google exige
+// que coincida EXACTAMENTE con la URI registrada en Cloud Console y los
+// parámetros extra suelen provocar redirect_uri_mismatch.
+export function getOAuthRedirectUri() {
+  return `${getSiteUrl()}/api/google-oauth-callback`
+}
+
 // Cliente OAuth de la cuenta de Google de la profesora (conectada desde
 // /admin/configuraciones). Requiere GOOGLE_OAUTH_CLIENT_ID/SECRET en el entorno.
 export function getOAuthClient() {
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID
   const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET
   if (!clientId || !clientSecret) return null
-  return new google.auth.OAuth2(clientId, clientSecret, `${getSiteUrl()}/api/google-oauth?action=callback`)
+  return new google.auth.OAuth2(clientId, clientSecret, getOAuthRedirectUri())
 }
 
 // Preferimos la conexión OAuth (única forma de generar links de Google Meet);
