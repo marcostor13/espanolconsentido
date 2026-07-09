@@ -4,6 +4,7 @@ import { sendBookingConfirmation, sendWelcomeCredentials } from './email.js'
 import { findOrCreateStudent } from './auth.js'
 import { logError } from './errorLog.js'
 import { markTrialCreditApplied } from './trialCredit.js'
+import { getSettings, getAdminNotifyEmail } from './settings.js'
 
 // Debe reflejar src/lib/packages.js: ids de paquetes de varias clases que,
 // al confirmarse el pago, generan una matrícula real (enrollment) en vez de
@@ -140,17 +141,28 @@ export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {
     const description = descParts.join('\n')
 
     try {
-      await createCalendarEvent({ summary, description, start: startLocal, end: endLocal })
+      const calEvent = await createCalendarEvent(db, {
+        summary,
+        description,
+        start: startLocal,
+        end: endLocal,
+        attendeeEmail: booking.email,
+      })
+      update.calendarEventId = calEvent.id
+      update.meetLink = calEvent.meetLink
     } catch (err) {
       console.error('confirmBookingPayment: failed to create calendar event', err)
       await logError('confirmBookingPayment: create calendar event', err, { level: 'warning' })
     }
   }
 
+  const settings = await getSettings(db)
+
   try {
     await sendBookingConfirmation({
       toName: booking.name,
       toEmail: booking.email,
+      adminEmail: getAdminNotifyEmail(settings),
       bookingDetails: {
         date: booking.date,
         time: booking.time,
@@ -160,6 +172,7 @@ export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {
         email: booking.email,
         isPackage,
         totalClasses: booking.totalClasses || 1,
+        meetLink: update.meetLink || null,
       },
     })
   } catch (err) {

@@ -30,7 +30,7 @@ export default function BulkAvailabilityModal({ startDate, endDate, token, group
   const weekdaysPresent = useMemo(() => new Set(allDates.map((d) => (d.getDay() + 6) % 7)), [allDates])
 
   const [activeWeekdays, setActiveWeekdays] = useState(() => new Set(weekdaysPresent))
-  const [rows, setRows] = useState(() => [{ id: nextRowId++, time: '09:00', durationMin: 55, type: 'individual' }])
+  const [rows, setRows] = useState(() => [{ id: nextRowId++, time: '09:00', durationMin: 50, type: 'individual' }])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
@@ -55,7 +55,7 @@ export default function BulkAvailabilityModal({ startDate, endDate, token, group
   }
 
   const addRow = () => {
-    setRows((prev) => [...prev, { id: nextRowId++, time: '10:00', durationMin: 55, type: 'individual' }])
+    setRows((prev) => [...prev, { id: nextRowId++, time: '10:00', durationMin: 50, type: 'individual' }])
   }
 
   const removeRow = (id) => {
@@ -182,7 +182,8 @@ export default function BulkAvailabilityModal({ startDate, endDate, token, group
                     onChange={(e) => updateRow(row.id, { durationMin: e.target.value })}
                     className="p-2 bg-white border border-gray-200 rounded-lg text-sm text-secondary outline-none focus:border-primary"
                   >
-                    <option value={30}>30 min</option>
+                    <option value={25}>25 min</option>
+                    <option value={50}>50 min</option>
                     <option value={55}>55 min</option>
                     <option value={60}>60 min</option>
                     <option value={90}>90 min</option>

@@ -129,30 +129,84 @@ function SlotBlock({ layoutEvent, onSlotClick, variant, isSelected }) {
   )
 }
 
-function DayColumn({ date, slots, onCellClick, onSlotClick, isToday, nowMinutes, variant, selectedSlotId }) {
+function DayColumn({ date, slots, onCellClick, onSlotClick, onRangeSelect, isToday, nowMinutes, variant, selectedSlotId }) {
   const colRef = useRef(null)
   const laidOut = useMemo(() => layoutDaySlots(slots), [slots])
+  // Rango que se está "pintando" con el mouse para crear disponibilidad
+  // rápidamente (solo en el calendario del admin, cuando hay onRangeSelect).
+  const [drag, setDrag] = useState(null)
+  const didDragRef = useRef(false)
 
-  const handleClick = (e) => {
-    if (!onCellClick) return
+  const minutesFromEvent = (e) => {
     const rect = colRef.current.getBoundingClientRect()
     const offsetY = e.clientY - rect.top
     let minutes = START_HOUR * 60 + offsetY / PX_PER_MIN
     minutes = Math.round(minutes / 30) * 30
-    minutes = Math.min(Math.max(minutes, START_HOUR * 60), END_HOUR * 60 - 30)
+    return Math.min(Math.max(minutes, START_HOUR * 60), END_HOUR * 60)
+  }
+
+  const handleClick = (e) => {
+    if (!onCellClick || didDragRef.current) return
+    const minutes = Math.min(minutesFromEvent(e), END_HOUR * 60 - 30)
     onCellClick(date, minutesToTime(minutes))
   }
+
+  const handleMouseDown = (e) => {
+    if (!onRangeSelect || e.button !== 0) return
+    const start = minutesFromEvent(e)
+    didDragRef.current = false
+    setDrag({ start, end: start })
+  }
+
+  const handleMouseMove = (e) => {
+    if (!drag) return
+    const end = minutesFromEvent(e)
+    if (end !== drag.end) {
+      didDragRef.current = true
+      setDrag((d) => ({ ...d, end }))
+    }
+  }
+
+  const finishDrag = () => {
+    if (!drag) return
+    const from = Math.min(drag.start, drag.end)
+    const to = Math.max(drag.start, drag.end)
+    setDrag(null)
+    // Un arrastre real necesita al menos 30 min; si no, se trata como click.
+    if (to - from >= 30) {
+      onRangeSelect(date, minutesToTime(from), minutesToTime(to))
+    }
+  }
+
+  const dragTop = drag ? (Math.min(drag.start, drag.end) - START_HOUR * 60) * PX_PER_MIN : 0
+  const dragHeight = drag ? Math.abs(drag.end - drag.start) * PX_PER_MIN : 0
 
   return (
     <div
       ref={colRef}
       onClick={handleClick}
-      className={`relative flex-1 min-w-0 border-l border-gray-100 ${onCellClick ? 'cursor-pointer' : ''}`}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={finishDrag}
+      onMouseLeave={() => drag && finishDrag()}
+      className={`relative flex-1 min-w-0 border-l border-gray-100 ${onCellClick ? 'cursor-pointer' : ''} ${
+        onRangeSelect ? 'select-none' : ''
+      }`}
       style={{ height: `${TOTAL_HEIGHT}px` }}
     >
       {Array.from({ length: END_HOUR - START_HOUR }).map((_, i) => (
         <div key={i} className="absolute left-0 right-0 border-t border-gray-100" style={{ top: `${i * HOUR_HEIGHT}px` }} />
       ))}
+      {drag && dragHeight > 0 && (
+        <div
+          className="absolute left-0.5 right-0.5 rounded-lg bg-primary/20 border-2 border-dashed border-primary z-10 pointer-events-none flex items-start justify-center"
+          style={{ top: `${dragTop}px`, height: `${dragHeight}px` }}
+        >
+          <span className="text-[10px] font-bold text-primary bg-white/90 rounded px-1.5 mt-1">
+            {minutesToTime(Math.min(drag.start, drag.end))} – {minutesToTime(Math.max(drag.start, drag.end))}
+          </span>
+        </div>
+      )}
       {isToday && nowMinutes >= START_HOUR * 60 && nowMinutes <= END_HOUR * 60 && (
         <div
           className="absolute left-0 right-0 border-t-2 border-red-400 z-10 pointer-events-none"
@@ -181,6 +235,7 @@ export default function TimeGrid({
   onSelectDay,
   onCellClick,
   onSlotClick,
+  onRangeSelect = null,
   variant = 'admin',
   selectedSlotId = null,
 }) {
@@ -211,9 +266,16 @@ export default function TimeGrid({
         {variant === 'student' ? (
           <span className="text-gray-400 font-normal normal-case">Toca un horario para seleccionarlo</span>
         ) : (
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm border border-dashed border-gray-300" /> Disponible sin reservas
-          </span>
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm border border-dashed border-gray-300" /> Disponible sin reservas
+            </span>
+            {onRangeSelect && (
+              <span className="text-gray-400 font-normal normal-case">
+                Arrastra con el mouse sobre un día para crear disponibilidad rápida
+              </span>
+            )}
+          </>
         )}
       </div>
 
@@ -267,6 +329,7 @@ export default function TimeGrid({
               slots={slotsByDate[key] || []}
               onCellClick={onCellClick}
               onSlotClick={onSlotClick}
+              onRangeSelect={onRangeSelect}
               isToday={key === todayKey}
               nowMinutes={nowMinutes}
               variant={variant}

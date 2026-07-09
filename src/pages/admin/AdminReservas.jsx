@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle, Clock, Loader2, PlusCircle, Wallet } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
-import { PACKAGES } from '../../lib/packages'
+import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL } from '../../lib/paymentMethods'
 
 // Reservas del landing (prueba/individual/grupal/paquete) que quedaron
@@ -87,10 +87,30 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
                     {b.date} · {b.time}
                   </p>
                 )}
+                {b.wisePaymentProof && (
+                  <p className="text-xs mt-1">
+                    <span className="font-bold text-green-700">Comprobante Wise: </span>
+                    {/^https?:\/\//i.test(b.wisePaymentProof) ? (
+                      <a
+                        href={b.wisePaymentProof}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline break-all"
+                      >
+                        {b.wisePaymentProof}
+                      </a>
+                    ) : (
+                      <span className="text-gray-600 break-all">{b.wisePaymentProof}</span>
+                    )}
+                  </p>
+                )}
+                {b.paymentMethod === 'wise' && !b.wisePaymentProof && (
+                  <p className="text-xs mt-1 text-amber-600 font-bold">Eligió Wise, sin comprobante aún</p>
+                )}
               </div>
               <p className="font-bold text-secondary">${b.finalPrice}</p>
               <select
-                value={paymentMethodById[b.bookingId] || 'wise'}
+                value={paymentMethodById[b.bookingId] || b.paymentMethod || 'wise'}
                 onChange={(e) => setPaymentMethodById((prev) => ({ ...prev, [b.bookingId]: e.target.value }))}
                 className="p-2 bg-white border border-gray-200 rounded-lg text-sm text-secondary outline-none focus:border-primary"
               >
@@ -119,6 +139,9 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
 function EnrollmentForm({ token, onCreated }) {
   const [studentName, setStudentName] = useState('')
   const [studentEmail, setStudentEmail] = useState('')
+  // Paquetes con el precio configurado en /admin/configuraciones (los de
+  // PACKAGES son solo el valor por defecto mientras carga).
+  const [packages, setPackages] = useState(PACKAGES)
   const [packageId, setPackageId] = useState(PACKAGES[1].id)
   const [totalClasses, setTotalClasses] = useState(PACKAGES[1].totalClasses)
   const [price, setPrice] = useState(PACKAGES[1].price)
@@ -128,8 +151,23 @@ function EnrollmentForm({ token, onCreated }) {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
 
+  useEffect(() => {
+    apiFetch('settings', { token })
+      .then((data) => {
+        const updated = withConfiguredPrices(PACKAGES, data.settings?.packagePrices)
+        setPackages(updated)
+        setPrice((prev) => {
+          const current = updated.find((p) => p.id === packageId)
+          return current ? current.price : prev
+        })
+      })
+      .catch(() => {})
+    // Solo al montar: el precio editable no debe pisarse mientras se escribe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
+
   const handlePackageChange = (id) => {
-    const pkg = PACKAGES.find((p) => p.id === id)
+    const pkg = packages.find((p) => p.id === id)
     setPackageId(id)
     setTotalClasses(pkg.totalClasses)
     setPrice(pkg.price)
@@ -141,7 +179,7 @@ function EnrollmentForm({ token, onCreated }) {
     setError(null)
     setSuccess(null)
     try {
-      const pkg = PACKAGES.find((p) => p.id === packageId)
+      const pkg = packages.find((p) => p.id === packageId)
       const result = await apiFetch('enrollments', {
         method: 'POST',
         token,
@@ -227,9 +265,9 @@ function EnrollmentForm({ token, onCreated }) {
             onChange={(e) => handlePackageChange(e.target.value)}
             className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary text-secondary"
           >
-            {PACKAGES.map((p) => (
+            {packages.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.title}
+                {p.title} (${p.price})
               </option>
             ))}
           </select>

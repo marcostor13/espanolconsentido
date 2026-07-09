@@ -2,7 +2,8 @@ import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse, findOrCreateStudent } from './_shared/auth.js'
 import { sendWelcomeCredentials } from './_shared/email.js'
 import { logError } from './_shared/errorLog.js'
-import { TRIAL_CREDIT_AMOUNT, findUnusedTrialCredit, markTrialCreditApplied } from './_shared/trialCredit.js'
+import { findUnusedTrialCredit, markTrialCreditApplied } from './_shared/trialCredit.js'
+import { getSettings, getTrialCreditAmount } from './_shared/settings.js'
 
 async function getPromoDiscount(db, code) {
   if (!code?.trim()) return null
@@ -64,11 +65,12 @@ async function createEnrollment(event, db) {
   }
 
   const studentUserId = String(student._id)
+  const trialCreditAmount = getTrialCreditAmount(await getSettings(db))
   let trialCredit = null
   if (serviceId !== 'trial') {
     trialCredit = await findUnusedTrialCredit(db, { userId: studentUserId })
     if (trialCredit) {
-      finalPrice = Math.max(0, Math.round((finalPrice - TRIAL_CREDIT_AMOUNT) * 100) / 100)
+      finalPrice = Math.max(0, Math.round((finalPrice - trialCreditAmount) * 100) / 100)
     }
   }
 
@@ -84,7 +86,7 @@ async function createEnrollment(event, db) {
     finalPrice,
     appliedPromo,
     trialCreditApplied: Boolean(trialCredit),
-    trialCreditAmount: trialCredit ? TRIAL_CREDIT_AMOUNT : 0,
+    trialCreditAmount: trialCredit ? trialCreditAmount : 0,
     paymentMethod: paymentMethod || 'other',
     status: 'active',
     createdAt: new Date(),

@@ -11,6 +11,7 @@ import {
   XCircle,
   Loader2,
   X,
+  Video,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
@@ -54,6 +55,18 @@ function BookingCard({ booking, onCancel, onReschedule, cancelling }) {
         </div>
         <span className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 ${status.className}`}>{status.label}</span>
       </div>
+
+      {booking.meetLink && booking.status === 'paid' && (
+        <a
+          href={booking.meetLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
+        >
+          <Video size={14} />
+          Unirme por Google Meet
+        </a>
+      )}
 
       {booking.status === 'cancelled' && booking.creditRefunded !== undefined && (
         <p

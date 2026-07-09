@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { X, AlertCircle, CheckCircle, Loader2, Clock, User, Users, Trash2, Mail, Wallet } from 'lucide-react'
+import { X, AlertCircle, CheckCircle, Loader2, Clock, User, Users, Trash2, Mail, Wallet, Video } from 'lucide-react'
 import { apiFetch } from '../../lib/api'
 import { addMinutesToTime, formatDayLabel, parseDateKey } from '../../lib/date'
 
@@ -134,6 +134,17 @@ export default function SlotDetailModal({ slot, token, onClose, onChanged, onDel
                         <Wallet size={10} />
                         {b.paymentMethod}
                       </span>
+                    )}
+                    {b.meetLink && (
+                      <a
+                        href={b.meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition mt-2 ml-1.5"
+                      >
+                        <Video size={10} />
+                        Google Meet
+                      </a>
                     )}
                     {b.status === 'paid' && (
                       <div className="flex gap-2 mt-3">

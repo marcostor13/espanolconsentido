@@ -129,6 +129,23 @@
   force = true
 
 [[redirects]]
+  from = "/api/submit-wise-payment"
+  to = "/.netlify/functions/submit-wise-payment"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/google-oauth"
+  to = "/.netlify/functions/google-oauth"
+  status = 200
+  force = true
+
+# Recordatorios de clase: corre cada 5 minutos y avisa a los estudiantes
+# ~30 minutos antes de su clase (con el link de Google Meet si existe).
+[functions."send-class-reminders"]
+  schedule = "*/5 * * * *"
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

@@ -41,15 +41,19 @@ async function sendEmail({ to, subject, html }) {
   }
 }
 
-export async function sendBookingConfirmation({ toName, toEmail, bookingDetails }) {
-  const notifyEmail = process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
-  const { date, time, serviceTitle, finalPrice, name, email, isPackage, totalClasses } = bookingDetails
+export async function sendBookingConfirmation({ toName, toEmail, adminEmail, bookingDetails }) {
+  const notifyEmail = adminEmail || process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
+  const { date, time, serviceTitle, finalPrice, name, email, isPackage, totalClasses, meetLink } = bookingDetails
   const siteUrl = process.env.SITE_URL || 'https://espanolconsentido.com'
+
+  const meetRow = meetLink
+    ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Google Meet</td><td style="padding: 8px; border-bottom: 1px solid #eee;"><a href="${meetLink}" style="color: #f97316; font-weight: bold;">${meetLink}</a></td></tr>`
+    : ''
 
   const scheduleRowAdmin = isPackage
     ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Clases</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${totalClasses} clase(s), por agendar desde el portal</td></tr>`
     : `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>`
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>${meetRow}`
 
   await sendEmail({
     to: notifyEmail,
@@ -72,7 +76,7 @@ export async function sendBookingConfirmation({ toName, toEmail, bookingDetails 
   const scheduleRowStudent = isPackage
     ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Clases incluidas</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${totalClasses}</td></tr>`
     : `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>`
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>${meetRow}`
 
   await sendEmail({
     to: toEmail,
@@ -122,6 +126,67 @@ export async function sendWelcomeCredentials({ toName, toEmail, tempPassword }) 
   })
 
   return { sent: true }
+}
+
+// Recordatorio automático que se envía ~30 minutos antes de cada clase
+// (función programada send-class-reminders). Incluye el link de Meet si existe.
+export async function sendClassReminder({ toName, toEmail, booking }) {
+  const meetSection = booking.meetLink
+    ? `<p style="margin: 24px 0;">
+         <a href="${booking.meetLink}" style="background: #f97316; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Unirme a la clase (Google Meet)</a>
+       </p>
+       <p style="color: #666; font-size: 13px;">O copia este enlace: <a href="${booking.meetLink}">${booking.meetLink}</a></p>`
+    : `<p style="color: #666; font-size: 14px;">Tu profesora te compartirá el enlace de la videollamada.</p>`
+
+  return sendEmail({
+    to: toEmail,
+    subject: `⏰ Tu clase empieza en 30 minutos - Español conSentido`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #f97316;">¡Hola ${toName}!</h2>
+        <p>Te recordamos que tu clase está por comenzar:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Clase</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.serviceTitle}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.date}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.time}</td></tr>
+        </table>
+        ${meetSection}
+        <p style="color: #666; font-size: 14px; margin-top: 16px;">¡Nos vemos pronto!<br/><strong>Juanita Sánchez</strong><br/>Español conSentido</p>
+      </div>
+    `,
+  })
+}
+
+// Aviso al correo de administración cuando un estudiante reporta que pagó por
+// Wise y adjunta su comprobante/link de pago, para que la admin lo verifique
+// y confirme la reserva desde el panel.
+export async function sendWisePaymentNotification({ adminEmail, booking, proof }) {
+  const notifyEmail = adminEmail || process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
+  const siteUrl = process.env.SITE_URL || 'https://espanolconsentido.com'
+  const proofRow = /^https?:\/\//i.test(proof)
+    ? `<a href="${proof}" style="color: #f97316; font-weight: bold;">${proof}</a>`
+    : proof
+
+  return sendEmail({
+    to: notifyEmail,
+    subject: `💸 Pago por Wise reportado: ${booking.serviceTitle} - ${booking.name}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #f97316;">Pago por Wise reportado</h2>
+        <p>Un estudiante indica que ya realizó el pago por Wise. Verifica que el dinero llegó y confirma la reserva desde el panel de administración.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Estudiante</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.name}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Email</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.email}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Servicio</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.serviceTitle}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Monto</td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #f97316; font-weight: bold;">$${booking.finalPrice}</td></tr>
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Comprobante</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${proofRow || 'No adjuntó comprobante'}</td></tr>
+        </table>
+        <p style="margin-top: 24px;">
+          <a href="${siteUrl}/admin/reservas" style="background: #f97316; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Revisar en el panel</a>
+        </p>
+      </div>
+    `,
+  })
 }
 
 export async function sendPasswordResetEmail({ toName, toEmail, tempPassword }) {

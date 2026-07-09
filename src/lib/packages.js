@@ -1,3 +1,6 @@
+// Los `price` de aquí son solo el valor por defecto: el precio real es
+// configurable desde /admin/configuraciones y viene en settings.packagePrices
+// (GET /api/settings). Usa resolvePrice/withConfiguredPrices para mostrarlo.
 export const PACKAGES = [
   { id: 'trial', title: 'Clase de prueba', totalClasses: 1, price: 10 },
   { id: 'inicio', title: 'Plan Inicio', totalClasses: 4, price: 76 },
@@ -6,6 +9,17 @@ export const PACKAGES = [
   { id: 'individual', title: 'Clase individual', totalClasses: 1, price: 20 },
   { id: 'group', title: 'Clase grupal', totalClasses: 1, price: 10 },
 ]
+
+// Precio vigente de un servicio: el configurado en settings o, si aún no
+// cargó, el precio por defecto que traiga el objeto (translations/PACKAGES).
+export function resolvePrice(packagePrices, serviceId, fallback) {
+  const configured = packagePrices?.[serviceId]
+  return typeof configured === 'number' ? configured : fallback
+}
+
+export function withConfiguredPrices(items, packagePrices) {
+  return items.map((item) => ({ ...item, price: resolvePrice(packagePrices, item.id, item.price) }))
+}
 
 // Ids de servicios que se reservan contra una franja real del calendario (una
 // sola clase, elegida en el momento de la compra) vs. paquetes de varias

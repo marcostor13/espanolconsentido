@@ -31,7 +31,7 @@ import { useLanguage } from "./context/LanguageContext"
 import { useAuth } from "./context/AuthContext"
 import { homePathFor } from "./lib/homePath"
 import { toDateKey, addDays } from "./lib/date"
-import { SLOT_BASED_SERVICE_IDS, SERVICE_SLOT_TYPE } from "./lib/packages"
+import { SLOT_BASED_SERVICE_IDS, SERVICE_SLOT_TYPE, resolvePrice } from "./lib/packages"
 import WhatsAppButton from "./components/WhatsAppButton"
 
 // --- COMPONENTS ---
@@ -459,23 +459,18 @@ const Marquee = () => {
     >
       <div className="whitespace-nowrap animate-marquee flex items-center">
         <div className="flex gap-8 px-4">
-          {[...Array(2)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <React.Fragment key={i}>
-              <span className="text-4xl font-syne font-bold text-white uppercase">
-                {items[0]}
-              </span>
-              <span className="text-4xl font-syne font-bold text-primary uppercase">
-                {items[1]}
-              </span>
-              <span className="text-4xl font-syne font-bold text-primary uppercase">
-                {items[2]}
-              </span>
-              <span className="text-4xl font-syne font-bold text-primary uppercase">
-                {items[3]}
-              </span>
-              <span className="text-4xl font-syne font-bold text-white uppercase">
-                {items[4]}
-              </span>
+              {items.map((item, idx) => (
+                <span
+                  key={idx}
+                  className={`text-4xl font-syne font-bold uppercase ${
+                    idx % 2 === 0 ? "text-white" : "text-primary"
+                  }`}
+                >
+                  {item}
+                </span>
+              ))}
             </React.Fragment>
           ))}
         </div>
@@ -541,9 +536,12 @@ const Philosophy = () => {
   )
 }
 
-const Pricing = ({ onBook }) => {
+const Pricing = ({ onBook, packagePrices }) => {
   const { t } = useLanguage()
-  const services = t("services") || []
+  const services = (t("services") || []).map((s) => ({
+    ...s,
+    price: resolvePrice(packagePrices, s.id, s.price),
+  }))
   return (
     <section id="planes" className="py-24 px-6 bg-light relative font-grotesk">
       <div className="container mx-auto max-w-6xl relative z-10">
@@ -893,10 +891,11 @@ const Footer = () => {
 
 // --- BOOKING SYSTEM ---
 // Kept largely intact logic-wise, just styled to match brutalism (borders, fonts)
-const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
+const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   const { t, language } = useLanguage()
   const services = t("services") || []
   const modal = t("modal") || {}
+  const packagePrices = appSettings?.packagePrices
 
   const [step, setStep] = useState(1)
   const [selectedSlot, setSelectedSlot] = useState(null)
@@ -915,9 +914,12 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
     q4: "",
     q5: "",
   })
-  const [wiseLinks, setWiseLinks] = useState({})
   const [paypalLoading, setPaypalLoading] = useState(false)
   const [bookingId, setBookingId] = useState(null)
+  const [paidVia, setPaidVia] = useState(null)
+  const [wiseProof, setWiseProof] = useState("")
+  const [wiseProofSending, setWiseProofSending] = useState(false)
+  const [wiseProofSent, setWiseProofSent] = useState(false)
   const [finalPrice, setFinalPrice] = useState(null)
   const [appliedPromo, setAppliedPromo] = useState(null)
   const [trialCreditAmount, setTrialCreditAmount] = useState(0)
@@ -943,16 +945,12 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setTrialCreditAmount(0)
       setBookingError(null)
       setAcceptedPolicies(false)
+      setPaidVia(null)
+      setWiseProof("")
+      setWiseProofSending(false)
+      setWiseProofSent(false)
     }
   }, [isOpen, initialServiceId])
-
-  useEffect(() => {
-    if (!isOpen) return
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => setWiseLinks(data.settings?.wiseLinks || {}))
-      .catch(() => {})
-  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen || !isSlotBasedService) return
@@ -968,7 +966,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
   }, [isOpen, serviceId, isSlotBasedService])
 
   const service = services.find((s) => s.id === serviceId) || services[0] || {}
-  const servicePrice = service.price ?? 0
+  const servicePrice = resolvePrice(packagePrices, serviceId, service.price ?? 0)
+  const trialPrice = resolvePrice(packagePrices, "trial", 10)
+  const trialCreditNote = (modal.details?.trialCreditNote || "").replace("{price}", `$${trialPrice}`)
+  const wiseLinks = appSettings?.wiseLinks || {}
 
   const slotDates = useMemo(() => {
     const map = {}
@@ -1029,7 +1030,6 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
           slotId: isSlotBasedService ? selectedSlot?._id : undefined,
           serviceId,
           serviceTitle: service.title,
-          price: servicePrice,
           promoCode: formData.promoCode?.trim() || undefined,
           questions: {
             q1: formData.q1,
@@ -1051,6 +1051,26 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
       setBookingError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSubmitWiseProof = async () => {
+    if (!bookingId) return
+    setWiseProofSending(true)
+    setBookingError(null)
+    try {
+      const res = await fetch("/api/submit-wise-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, proof: wiseProof.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al enviar el comprobante")
+      setWiseProofSent(true)
+    } catch (err) {
+      setBookingError(err.message)
+    } finally {
+      setWiseProofSending(false)
     }
   }
 
@@ -1083,9 +1103,9 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
         <div className="bg-white text-secondary p-6 flex justify-between items-center shrink-0 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <h3 className="font-syne font-bold text-2xl">{service.title}</h3>
-            {service.price > 0 && (
+            {servicePrice > 0 && (
               <span className="bg-orange-50 text-primary border border-primary/30 rounded-full text-xs font-bold px-3 py-1 uppercase tracking-wide">
-                ${service.price}
+                ${servicePrice}
               </span>
             )}
           </div>
@@ -1147,6 +1167,12 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
               <h4 className="text-2xl font-syne font-bold text-secondary mb-6">
                 {modal.time?.title}
               </h4>
+
+              {serviceId === "trial" && (
+                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary">
+                  {trialCreditNote}
+                </div>
+              )}
 
               {slotsLoading ? (
                 <div className="flex items-center justify-center gap-2 text-gray-400 py-16">
@@ -1271,7 +1297,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
 
               {serviceId === "trial" && (
                 <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary">
-                  {modal.details?.trialCreditNote}
+                  {trialCreditNote}
                 </div>
               )}
 
@@ -1549,7 +1575,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                     // Solo abre el link de pago; la reserva se confirma cuando
                     // la profesora verifica la transferencia y la marca como
                     // pagada desde el panel de admin, nunca al hacer clic aquí.
-                    onClick={() => setStep(4)}
+                    onClick={() => {
+                      setPaidVia("wise")
+                      setStep(4)
+                    }}
                     className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-4 font-bold text-lg hover:bg-white transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
                   >
                     <span className="italic">{modal.payment?.payWith}</span>
@@ -1586,6 +1615,47 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                 {isSlotBasedService ? modal.success?.desc : modal.success?.packageDesc}
               </p>
 
+              {paidVia === "wise" && (
+                <div className="bg-white p-6 rounded-none border-2 border-black shadow-hard-sm text-left mb-6">
+                  <h5 className="font-bold text-black text-sm uppercase mb-2">
+                    {modal.wise?.proofTitle}
+                  </h5>
+                  {wiseProofSent ? (
+                    <p className="text-sm text-green-700 flex items-center gap-2">
+                      <CheckCircle size={16} className="shrink-0" />
+                      {modal.wise?.proofSent}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-600 mb-3">{modal.wise?.proofDesc}</p>
+                      {bookingError && (
+                        <div className="p-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                          {bookingError}
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={wiseProof}
+                          onChange={(e) => setWiseProof(e.target.value)}
+                          placeholder={modal.wise?.proofPlaceholder}
+                          className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-primary outline-none text-secondary text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSubmitWiseProof}
+                          disabled={wiseProofSending || !wiseProof.trim()}
+                          className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                        >
+                          {wiseProofSending && <Loader2 size={14} className="animate-spin" />}
+                          {modal.wise?.proofSubmit}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="bg-white p-6 rounded-none border-2 border-black shadow-hard-sm text-left space-y-4">
                 {isSlotBasedService ? (
                   <>
@@ -1597,12 +1667,9 @@ const BookingModal = ({ isOpen, onClose, initialServiceId }) => {
                         <h5 className="font-bold text-black text-sm uppercase">
                           Google Meet
                         </h5>
-                        <a
-                          href="#"
-                          className="text-primary font-bold text-sm hover:underline"
-                        >
-                          meet.google.com/abc-defg-hij
-                        </a>
+                        <p className="text-sm text-gray-500">
+                          {modal.success?.meetInfo}
+                        </p>
                       </div>
                     </div>
 
@@ -1740,6 +1807,16 @@ const PaymentStatusBanner = () => {
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState(null)
+  // Configuración pública (precios, enlaces de Wise, anticipación mínima)
+  // definida por la admin; se carga una sola vez para toda la página.
+  const [appSettings, setAppSettings] = useState(null)
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => setAppSettings(data.settings || null))
+      .catch(() => {})
+  }, [])
 
   const handleBook = (id) => {
     setSelectedServiceId(id)
@@ -1757,7 +1834,7 @@ function App() {
       <Marquee />
       <Philosophy />
       {/* Testimonials added to match request for functionality, styled brutalist */}
-      <Pricing onBook={handleBook} />
+      <Pricing onBook={handleBook} packagePrices={appSettings?.packagePrices} />
       <Testimonials />
       <ReferralProgram />
       <Footer />
@@ -1766,6 +1843,7 @@ function App() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         initialServiceId={selectedServiceId}
+        appSettings={appSettings}
       />
       <WhatsAppButton />
     </div>

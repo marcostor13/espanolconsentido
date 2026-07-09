@@ -3,6 +3,8 @@ import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { createCalendarEvent } from './_shared/google-calendar.js'
 import { sendBookingConfirmation } from './_shared/email.js'
+import { getSettings, getAdminNotifyEmail } from './_shared/settings.js'
+import { hoursUntilClass } from './_shared/time.js'
 import { logError } from './_shared/errorLog.js'
 
 function generateBookingId() {
@@ -14,9 +16,7 @@ function generateBookingId() {
 const CANCELLATION_NOTICE_HOURS = 24
 
 function hasEnoughNotice(booking) {
-  const classDateTime = new Date(`${booking.date}T${booking.time}:00`)
-  const hoursUntilClass = (classDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
-  return hoursUntilClass >= CANCELLATION_NOTICE_HOURS
+  return hoursUntilClass(booking.date, booking.time) >= CANCELLATION_NOTICE_HOURS
 }
 
 function computeEventTimes(date, time, durationMin) {
@@ -112,6 +112,20 @@ async function createBooking(event, db) {
     return jsonResponse(409, { error: 'Ya tiene una reserva en esa franja' })
   }
 
+  // Anticipación mínima configurable: los estudiantes no pueden reservar una
+  // franja que empieza demasiado pronto. El admin sí puede (para arreglos de
+  // último minuto acordados directamente con el estudiante).
+  const settings = await getSettings(db)
+  if (!isAdmin) {
+    const minNotice = Number(settings.minBookingNoticeHours) || 0
+    const slotToCheck = await availabilityCol.findOne({ _id: new ObjectId(slotId) })
+    if (slotToCheck && hoursUntilClass(slotToCheck.date, slotToCheck.time) < minNotice) {
+      return jsonResponse(409, {
+        error: `Las reservas requieren al menos ${minNotice} hora(s) de anticipación. Elige otro horario.`,
+      })
+    }
+  }
+
   // Las matrículas por paquete (inicio/progreso/pro) son siempre de clases
   // individuales; una franja grupal nunca debe poder consumirse con estos
   // créditos, para que la disponibilidad de cada tipo sea independiente.
@@ -151,6 +165,26 @@ async function createBooking(event, db) {
     await enrollmentsCol.updateOne({ _id: enrollment._id }, { $set: { status: 'finished' } })
   }
 
+  // El evento de calendario se crea antes de insertar la reserva para poder
+  // guardar el link de Google Meet en el documento y mostrarlo al estudiante.
+  let calendarEventId = null
+  let meetLink = null
+  try {
+    const { startLocal, endLocal } = computeEventTimes(slot.date, slot.time, slot.durationMin)
+    const calEvent = await createCalendarEvent(db, {
+      summary: `${enrollment.serviceTitle} - ${targetUserName}`,
+      description: `Email: ${targetUserEmail}`,
+      start: startLocal,
+      end: endLocal,
+      attendeeEmail: targetUserEmail,
+    })
+    calendarEventId = calEvent.id
+    meetLink = calEvent.meetLink
+  } catch (err) {
+    console.error('bookings: failed to create calendar event', err)
+    await logError('bookings: create calendar event', err, { event, level: 'warning' })
+  }
+
   const bookingId = generateBookingId()
   const booking = {
     bookingId,
@@ -165,28 +199,18 @@ async function createBooking(event, db) {
     time: slot.time,
     durationMin: slot.durationMin,
     status: 'paid',
+    calendarEventId,
+    meetLink,
     rescheduledFrom: rescheduledFrom && ObjectId.isValid(rescheduledFrom) ? String(rescheduledFrom) : null,
     createdAt: new Date(),
   }
   await bookingsCol.insertOne(booking)
 
   try {
-    const { startLocal, endLocal } = computeEventTimes(slot.date, slot.time, slot.durationMin)
-    await createCalendarEvent({
-      summary: `${enrollment.serviceTitle} - ${targetUserName}`,
-      description: `Email: ${targetUserEmail}`,
-      start: startLocal,
-      end: endLocal,
-    })
-  } catch (err) {
-    console.error('bookings: failed to create calendar event', err)
-    await logError('bookings: create calendar event', err, { event, level: 'warning' })
-  }
-
-  try {
     await sendBookingConfirmation({
       toName: targetUserName,
       toEmail: targetUserEmail,
+      adminEmail: getAdminNotifyEmail(settings),
       bookingDetails: {
         date: slot.date,
         time: slot.time,
@@ -194,6 +218,7 @@ async function createBooking(event, db) {
         finalPrice: enrollment.finalPrice,
         name: targetUserName,
         email: targetUserEmail,
+        meetLink,
       },
     })
   } catch (err) {

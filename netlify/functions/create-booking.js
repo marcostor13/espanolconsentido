@@ -1,7 +1,9 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { logError } from './_shared/errorLog.js'
-import { TRIAL_CREDIT_AMOUNT, findUnusedTrialCredit } from './_shared/trialCredit.js'
+import { findUnusedTrialCredit } from './_shared/trialCredit.js'
+import { getSettings, getServicePrice, getTrialCreditAmount } from './_shared/settings.js'
+import { hoursUntilClass } from './_shared/time.js'
 
 // Debe reflejar src/lib/packages.js (SLOT_BASED_SERVICE_IDS / SERVICE_SLOT_TYPE):
 // servicios de una sola clase que se reservan contra una franja real del
@@ -33,7 +35,7 @@ export const handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || '{}')
-    const { name, email, serviceId, serviceTitle, price, questions, promoCode, slotId } = body
+    const { name, email, serviceId, serviceTitle, questions, promoCode, slotId } = body
 
     if (!name?.trim() || !email?.trim() || !serviceId || !serviceTitle) {
       return {
@@ -44,6 +46,18 @@ export const handler = async (event) => {
     }
 
     const db = await getDb()
+    const settings = await getSettings(db)
+
+    // El precio SIEMPRE sale de la configuración del servidor, nunca de lo que
+    // envíe el cliente, para que no se pueda manipular desde el navegador.
+    const originalPrice = getServicePrice(settings, serviceId)
+    if (originalPrice === null) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Servicio no reconocido' }),
+      }
+    }
 
     // Para clases sueltas (prueba, individual, grupal) la fecha/hora vienen
     // siempre de una franja real del calendario, nunca de lo que envíe el
@@ -77,13 +91,21 @@ export const handler = async (event) => {
           body: JSON.stringify({ error: 'El horario elegido no corresponde a este tipo de clase' }),
         }
       }
+      const minNotice = Number(settings.minBookingNoticeHours) || 0
+      if (hoursUntilClass(slot.date, slot.time) < minNotice) {
+        return {
+          statusCode: 409,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            error: `Las reservas requieren al menos ${minNotice} hora(s) de anticipación. Elige otro horario.`,
+          }),
+        }
+      }
       date = slot.date
       time = slot.time
       durationMin = slot.durationMin
       classType = slot.type
     }
-
-    const originalPrice = Number(price) || 0
 
     let finalPrice = originalPrice
     let appliedPromo = null
@@ -103,14 +125,15 @@ export const handler = async (event) => {
     }
 
     // Si el estudiante ya pagó una clase de prueba y compra un paquete, se le
-    // descuentan los $10 antes de cobrar (no después), para que lo que pague
-    // por PayPal ya sea el monto con el descuento aplicado. Se busca por
-    // email porque a esta altura puede que todavía no exista su cuenta.
+    // descuenta el valor de esa clase antes de cobrar (no después), para que
+    // lo que pague por PayPal ya sea el monto con el descuento aplicado. Se
+    // busca por email porque a esta altura puede que aún no exista su cuenta.
+    const trialCreditAmount = getTrialCreditAmount(settings)
     let trialCredit = null
     if (PACKAGE_SERVICE_IDS.includes(serviceId)) {
       trialCredit = await findUnusedTrialCredit(db, { email: email.trim() })
       if (trialCredit) {
-        finalPrice = Math.max(0, Math.round((finalPrice - TRIAL_CREDIT_AMOUNT) * 100) / 100)
+        finalPrice = Math.max(0, Math.round((finalPrice - trialCreditAmount) * 100) / 100)
       }
     }
 
@@ -133,7 +156,7 @@ export const handler = async (event) => {
       finalPrice,
       appliedPromo,
       trialCreditApplied: Boolean(trialCredit),
-      trialCreditAmount: trialCredit ? TRIAL_CREDIT_AMOUNT : 0,
+      trialCreditAmount: trialCredit ? trialCreditAmount : 0,
       trialCreditSourceCollection: trialCredit ? trialCredit.collection : null,
       trialCreditSourceId: trialCredit ? String(trialCredit.id) : null,
       questions: questions || {},
@@ -152,7 +175,7 @@ export const handler = async (event) => {
         originalPrice,
         appliedPromo,
         trialCreditApplied: Boolean(trialCredit),
-        trialCreditAmount: trialCredit ? TRIAL_CREDIT_AMOUNT : 0,
+        trialCreditAmount: trialCredit ? trialCreditAmount : 0,
         message: 'Reserva registrada. Completa el pago para confirmar.',
       }),
     }
