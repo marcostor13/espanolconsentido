@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { GraduationCap, AlertCircle, CheckCircle, Loader2, ShoppingCart, X } from 'lucide-react'
+import { GraduationCap, AlertCircle, CheckCircle, Loader2, ShoppingCart, X, Tag } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
@@ -17,13 +17,16 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
   const [wiseProof, setWiseProof] = useState('')
   const [wiseProofSending, setWiseProofSending] = useState(false)
   const [wiseChosen, setWiseChosen] = useState(false)
+  const [promoInput, setPromoInput] = useState('')
+  const [applyingPromo, setApplyingPromo] = useState(false)
+  const [promoError, setPromoError] = useState(null)
 
-  // Registra la compra pendiente en cuanto se abre el modal: así el precio
-  // final (con el descuento de la clase de prueba, si aplica) lo calcula el
-  // servidor y se muestra antes de elegir el método de pago.
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/create-booking', {
+  // Registra (o vuelve a registrar) la compra pendiente con el código de
+  // descuento indicado: el precio final —con el promo y/o el crédito de la
+  // clase de prueba— lo calcula siempre el servidor y se muestra antes de
+  // elegir el método de pago. Devuelve el error para poder mostrarlo.
+  const createBooking = async (promoCode) => {
+    const res = await fetch('/api/create-booking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -31,12 +34,19 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
         email: user.email,
         serviceId: pkg.id,
         serviceTitle: pkg.title,
+        promoCode: promoCode?.trim() || undefined,
       }),
     })
-      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
-      .then(({ ok, data }) => {
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Error al iniciar la compra')
+    return data
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    createBooking()
+      .then((data) => {
         if (cancelled) return
-        if (!ok) throw new Error(data.error || 'Error al iniciar la compra')
         setBooking(data)
         setStep('pay')
       })
@@ -44,7 +54,22 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
     return () => {
       cancelled = true
     }
+    // Solo al abrir el modal; los cambios de promo se manejan aparte.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pkg, user])
+
+  const handleApplyPromo = async () => {
+    setApplyingPromo(true)
+    setPromoError(null)
+    try {
+      const data = await createBooking(promoInput)
+      setBooking(data)
+    } catch (err) {
+      setPromoError(err.message)
+    } finally {
+      setApplyingPromo(false)
+    }
+  }
 
   const handlePayPal = async () => {
     setPaypalLoading(true)
@@ -120,6 +145,14 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
                   <span className="text-gray-500">{pkg.title}</span>
                   <span className="font-bold text-secondary">${booking.originalPrice}</span>
                 </div>
+                {booking.appliedPromo && (
+                  <div className="flex justify-between text-green-600 mb-1">
+                    <span>
+                      Descuento ({booking.appliedPromo.code} -{booking.appliedPromo.discountPercent}%)
+                    </span>
+                    <span>-${((booking.originalPrice * booking.appliedPromo.discountPercent) / 100).toFixed(2)}</span>
+                  </div>
+                )}
                 {booking.trialCreditApplied && (
                   <div className="flex justify-between text-green-600 mb-1">
                     <span>Crédito por tu clase de prueba</span>
@@ -131,6 +164,34 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
                   <span className="font-bold text-secondary">Total</span>
                   <span className="font-bold text-primary">${booking.finalPrice?.toFixed?.(2) ?? booking.finalPrice}</span>
                 </div>
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-sm font-bold text-secondary mb-2 flex items-center gap-1.5">
+                  <Tag size={14} className="text-primary" /> Código de descuento
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    placeholder="Escribe tu código"
+                    className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-primary outline-none text-secondary text-sm uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={applyingPromo}
+                    className="px-4 py-3 rounded-xl border border-primary text-primary font-bold text-sm hover:bg-orange-50 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {applyingPromo && <Loader2 size={14} className="animate-spin" />}
+                    Aplicar
+                  </button>
+                </div>
+                {promoError && <p className="text-xs text-red-600 mt-1.5">{promoError}</p>}
+                {booking.appliedPromo && !promoError && (
+                  <p className="text-xs text-green-600 mt-1.5">Código {booking.appliedPromo.code} aplicado.</p>
+                )}
               </div>
 
               <div className="space-y-3">
