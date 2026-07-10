@@ -56,6 +56,16 @@ async function getCalendarAuth(db) {
   throw new Error('Configuración de Google Calendar incompleta')
 }
 
+// El link de Meet puede venir en el campo directo `hangoutLink` o dentro de
+// `conferenceData.entryPoints` (el punto de entrada de tipo vídeo). Miramos
+// ambos porque Google no siempre rellena `hangoutLink` en la respuesta.
+function extractMeetLink(data) {
+  if (!data) return null
+  if (data.hangoutLink) return data.hangoutLink
+  const videoEntry = data.conferenceData?.entryPoints?.find((e) => e.entryPointType === 'video')
+  return videoEntry?.uri || null
+}
+
 /**
  * Crea el evento en el calendario y, si la cuenta de Google está conectada
  * por OAuth, genera también la sala de Google Meet e invita al estudiante.
@@ -92,5 +102,26 @@ export async function createCalendarEvent(db, { summary, description, start, end
     conferenceDataVersion: canCreateMeet ? 1 : 0,
   })
 
-  return { id: res.data?.id || null, meetLink: res.data?.hangoutLink || null }
+  const eventId = res.data?.id || null
+  let meetLink = extractMeetLink(res.data)
+
+  // Cuando se pide una sala de Meet, Google puede devolver el evento antes de
+  // terminar de aprovisionar la conferencia, así que el link llega vacío en la
+  // respuesta del insert. Releemos el evento una vez para recuperarlo y que el
+  // PRIMER correo de confirmación de pago ya incluya el enlace (si no lo
+  // hiciéramos, tampoco lo tendría el recordatorio, que lee el link guardado).
+  if (canCreateMeet && eventId && !meetLink) {
+    try {
+      const refreshed = await calendar.events.get({
+        calendarId,
+        eventId,
+        conferenceDataVersion: 1,
+      })
+      meetLink = extractMeetLink(refreshed.data)
+    } catch (err) {
+      console.error('createCalendarEvent: no se pudo releer el evento para el link de Meet', err)
+    }
+  }
+
+  return { id: eventId, meetLink }
 }
