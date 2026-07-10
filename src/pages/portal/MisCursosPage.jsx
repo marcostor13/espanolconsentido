@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { GraduationCap, AlertCircle, CheckCircle, Loader2, ShoppingCart, X } from 'lucide-react'
+import { GraduationCap, AlertCircle, CheckCircle, CreditCard, Landmark, Loader2, ShoppingCart, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
@@ -9,14 +9,17 @@ import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
 // la franja).
 const PURCHASABLE_IDS = ['inicio', 'progreso', 'pro']
 
-function PurchaseModal({ pkg, wiseLink, user, onClose }) {
+const TRANSFER_PROVIDER_LABEL = { wise: 'Wise', global66: 'Global66' }
+
+function PurchaseModal({ pkg, wiseLink, global66Link, user, onClose }) {
   const [step, setStep] = useState('creating') // creating | pay | wise-sent
   const [booking, setBooking] = useState(null)
   const [error, setError] = useState(null)
   const [paypalLoading, setPaypalLoading] = useState(false)
   const [wiseProof, setWiseProof] = useState('')
   const [wiseProofSending, setWiseProofSending] = useState(false)
-  const [wiseChosen, setWiseChosen] = useState(false)
+  const [transferChosen, setTransferChosen] = useState(null) // null | 'wise' | 'global66'
+  const hasTransferMethod = Boolean(wiseLink || global66Link)
 
   // Registra la compra pendiente en cuanto se abre el modal: así el precio
   // final (con el descuento de la clase de prueba, si aplica) lo calcula el
@@ -71,7 +74,11 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
       const res = await fetch('/api/submit-wise-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId: booking.bookingId, proof: wiseProof.trim() }),
+        body: JSON.stringify({
+          bookingId: booking.bookingId,
+          proof: wiseProof.trim(),
+          paymentMethod: transferChosen || 'wise',
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al enviar el comprobante')
@@ -85,7 +92,7 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/60 backdrop-blur-sm p-4 font-grotesk overflow-y-auto">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden my-8">
+      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden my-8">
         <div className="p-6 pb-0 flex items-start justify-between">
           <div>
             <h2 className="font-syne font-bold text-xl text-secondary">Comprar {pkg.title}</h2>
@@ -133,54 +140,83 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <button
-                  onClick={handlePayPal}
-                  disabled={paypalLoading}
-                  className="w-full bg-[#0070BA] text-white py-3.5 rounded-xl font-bold hover:opacity-90 transition disabled:opacity-60 flex items-center justify-center gap-2"
-                >
-                  {paypalLoading && <Loader2 size={16} className="animate-spin" />}
-                  Pagar con PayPal
-                </button>
-
-                {wiseLink && !wiseChosen && (
-                  <a
-                    href={wiseLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setWiseChosen(true)}
-                    className="w-full bg-[#9FE870] text-secondary py-3.5 rounded-xl font-bold hover:opacity-90 transition flex items-center justify-center"
+              <div className={`grid grid-cols-1 ${hasTransferMethod && !transferChosen ? 'sm:grid-cols-2' : ''} gap-3`}>
+                <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
+                  <div className="flex items-center gap-2 mb-1 text-secondary">
+                    <CreditCard size={15} />
+                    <h5 className="font-bold text-xs uppercase">Tarjeta</h5>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">Pago inmediato con PayPal.</p>
+                  <button
+                    onClick={handlePayPal}
+                    disabled={paypalLoading}
+                    className="mt-auto w-full bg-[#0070BA] text-white py-3.5 rounded-xl font-bold hover:opacity-90 transition disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    Pagar con Wise
-                  </a>
-                )}
+                    {paypalLoading && <Loader2 size={16} className="animate-spin" />}
+                    Pagar con PayPal
+                  </button>
+                </div>
 
-                {wiseChosen && (
-                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200">
-                    <p className="text-sm text-gray-600 mb-3">
-                      Cuando completes la transferencia en Wise, pega aquí el enlace o la referencia de tu pago para
-                      que tu profesora lo verifique y active tu curso.
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      <input
-                        type="text"
-                        value={wiseProof}
-                        onChange={(e) => setWiseProof(e.target.value)}
-                        placeholder="Enlace o referencia de tu pago"
-                        className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:border-primary outline-none text-secondary text-sm"
-                      />
-                      <button
-                        onClick={handleSubmitWiseProof}
-                        disabled={wiseProofSending || !wiseProof.trim()}
-                        className="bg-primary text-white py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
-                      >
-                        {wiseProofSending && <Loader2 size={14} className="animate-spin" />}
-                        Enviar comprobante
-                      </button>
+                {hasTransferMethod && !transferChosen && (
+                  <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
+                    <div className="flex items-center gap-2 mb-1 text-secondary">
+                      <Landmark size={15} />
+                      <h5 className="font-bold text-xs uppercase">Transferencia</h5>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-3">Confirmación manual tras verificar el pago.</p>
+                    <div className="mt-auto space-y-2">
+                      {wiseLink && (
+                        <a
+                          href={wiseLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setTransferChosen('wise')}
+                          className="w-full bg-[#9FE870] text-secondary py-3 rounded-xl font-bold text-sm hover:opacity-90 transition flex items-center justify-center"
+                        >
+                          Pagar con Wise
+                        </a>
+                      )}
+                      {global66Link && (
+                        <a
+                          href={global66Link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setTransferChosen('global66')}
+                          className="w-full bg-secondary text-white py-3 rounded-xl font-bold text-sm hover:opacity-90 transition flex items-center justify-center"
+                        >
+                          Pagar con Global66
+                        </a>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
+
+              {transferChosen && (
+                <div className="mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-200">
+                  <p className="text-sm text-gray-600 mb-3">
+                    Cuando completes la transferencia en {TRANSFER_PROVIDER_LABEL[transferChosen]}, pega aquí el
+                    enlace o la referencia de tu pago para que tu profesora lo verifique y active tu curso.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      value={wiseProof}
+                      onChange={(e) => setWiseProof(e.target.value)}
+                      placeholder="Enlace o referencia de tu pago"
+                      className="w-full p-3 bg-white border border-gray-200 rounded-xl focus:border-primary outline-none text-secondary text-sm"
+                    />
+                    <button
+                      onClick={handleSubmitWiseProof}
+                      disabled={wiseProofSending || !wiseProof.trim()}
+                      className="bg-primary text-white py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                    >
+                      {wiseProofSending && <Loader2 size={14} className="animate-spin" />}
+                      Enviar comprobante
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -209,6 +245,7 @@ function NewPurchaseSection({ user }) {
   const { token } = useAuth()
   const [packages, setPackages] = useState(withConfiguredPrices(PACKAGES, null).filter((p) => PURCHASABLE_IDS.includes(p.id)))
   const [wiseLinks, setWiseLinks] = useState({})
+  const [global66Links, setGlobal66Links] = useState({})
   const [buyingPkg, setBuyingPkg] = useState(null)
 
   useEffect(() => {
@@ -218,6 +255,7 @@ function NewPurchaseSection({ user }) {
           withConfiguredPrices(PACKAGES, data.settings?.packagePrices).filter((p) => PURCHASABLE_IDS.includes(p.id)),
         )
         setWiseLinks(data.settings?.wiseLinks || {})
+        setGlobal66Links(data.settings?.global66Links || {})
       })
       .catch(() => {})
   }, [token])
@@ -250,6 +288,7 @@ function NewPurchaseSection({ user }) {
         <PurchaseModal
           pkg={buyingPkg}
           wiseLink={wiseLinks[buyingPkg.id]}
+          global66Link={global66Links[buyingPkg.id]}
           user={user}
           onClose={() => setBuyingPkg(null)}
         />

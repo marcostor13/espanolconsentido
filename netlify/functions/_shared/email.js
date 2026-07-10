@@ -164,23 +164,26 @@ export async function sendClassReminder({ toName, toEmail, booking }) {
   })
 }
 
+const TRANSFER_PROVIDER_LABEL = { wise: 'Wise', global66: 'Global66' }
+
 // Aviso al correo de administración cuando un estudiante reporta que pagó por
-// Wise y adjunta su comprobante/link de pago, para que la admin lo verifique
-// y confirme la reserva desde el panel.
-export async function sendWisePaymentNotification({ adminEmail, booking, proof }) {
+// transferencia manual (Wise o Global66) y adjunta su comprobante/link de
+// pago, para que la admin lo verifique y confirme la reserva desde el panel.
+export async function sendWisePaymentNotification({ adminEmail, booking, proof, paymentMethod }) {
   const notifyEmail = adminEmail || process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
   const siteUrl = process.env.SITE_URL || 'https://espanolconsentido.com'
+  const providerLabel = TRANSFER_PROVIDER_LABEL[paymentMethod] || 'Wise'
   const proofRow = /^https?:\/\//i.test(proof)
     ? `<a href="${proof}" style="color: #f97316; font-weight: bold;">${proof}</a>`
     : proof
 
   return sendEmail({
     to: notifyEmail,
-    subject: `💸 Pago por Wise reportado: ${booking.serviceTitle} - ${booking.name}`,
+    subject: `💸 Pago por ${providerLabel} reportado: ${booking.serviceTitle} - ${booking.name}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #f97316;">Pago por Wise reportado</h2>
-        <p>Un estudiante indica que ya realizó el pago por Wise. Verifica que el dinero llegó y confirma la reserva desde el panel de administración.</p>
+        <h2 style="color: #f97316;">Pago por ${providerLabel} reportado</h2>
+        <p>Un estudiante indica que ya realizó el pago por ${providerLabel}. Verifica que el dinero llegó y confirma la reserva desde el panel de administración.</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Estudiante</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.name}</td></tr>
           <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Email</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${booking.email}</td></tr>

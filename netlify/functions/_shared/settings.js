@@ -15,6 +15,7 @@ export const DEFAULT_PACKAGE_PRICES = {
 const DEFAULTS = {
   groupClassCapacity: 4,
   wiseLinks: {},
+  global66Links: {},
   packagePrices: DEFAULT_PACKAGE_PRICES,
   // Horas mínimas de anticipación para poder reservar una clase.
   minBookingNoticeHours: 1,
@@ -62,6 +63,7 @@ export function publicSettings(settings) {
   return {
     groupClassCapacity: settings.groupClassCapacity,
     wiseLinks: settings.wiseLinks || {},
+    global66Links: settings.global66Links || {},
     packagePrices: settings.packagePrices,
     minBookingNoticeHours: settings.minBookingNoticeHours,
   }

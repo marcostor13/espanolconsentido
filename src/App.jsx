@@ -24,6 +24,8 @@ import {
   User,
   Users,
   Loader2,
+  CreditCard,
+  Landmark,
 } from "lucide-react"
 
 import { Link } from "react-router-dom"
@@ -870,9 +872,21 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-          <p>{t("footer.rights")}</p>
-          <div className="flex gap-6 mt-4 md:mt-0 font-medium">
+        <div className="border-t border-white/10 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-gray-400">
+          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+            <p>{t("footer.rights")}</p>
+            <div className="bg-white rounded-lg px-3 py-1.5 flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-secondary/60">
+                {t("footer.securePayments")}
+              </span>
+              <img
+                src="/png-transparent-paypal-logo-paypal-logo-paypal-blue-text-trademark.png"
+                alt="PayPal"
+                className="h-4 w-auto object-contain"
+              />
+            </div>
+          </div>
+          <div className="flex gap-6 font-medium">
             <a href="#" className="hover:text-white transition-colors">
               {t("footer.privacy")}
             </a>
@@ -893,6 +907,7 @@ const Footer = () => {
 // Kept largely intact logic-wise, just styled to match brutalism (borders, fonts)
 const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   const { t, language } = useLanguage()
+  const { user } = useAuth()
   const services = t("services") || []
   const modal = t("modal") || {}
   const packagePrices = appSettings?.packagePrices
@@ -949,8 +964,13 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
       setWiseProof("")
       setWiseProofSending(false)
       setWiseProofSent(false)
+      // Si el estudiante ya inició sesión (compra desde su cuenta), no le
+      // pedimos retipear sus datos.
+      if (user) {
+        setFormData((prev) => ({ ...prev, name: user.name || prev.name, email: user.email || prev.email }))
+      }
     }
-  }, [isOpen, initialServiceId])
+  }, [isOpen, initialServiceId, user])
 
   useEffect(() => {
     if (!isOpen || !isSlotBasedService) return
@@ -970,6 +990,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   const trialPrice = resolvePrice(packagePrices, "trial", 10)
   const trialCreditNote = (modal.details?.trialCreditNote || "").replace("{price}", `$${trialPrice}`)
   const wiseLinks = appSettings?.wiseLinks || {}
+  const global66Links = appSettings?.global66Links || {}
 
   const slotDates = useMemo(() => {
     const map = {}
@@ -1062,7 +1083,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
       const res = await fetch("/api/submit-wise-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId, proof: wiseProof.trim() }),
+        body: JSON.stringify({ bookingId, proof: wiseProof.trim(), paymentMethod: paidVia || "wise" }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Error al enviar el comprobante")
@@ -1093,6 +1114,9 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   }
 
   const wiseLink = wiseLinks[serviceId]
+  const global66Link = global66Links[serviceId]
+  const hasTransferMethod = Boolean(wiseLink || global66Link)
+  const paidViaLabel = paidVia === "global66" ? "Global66" : "Wise"
 
   if (!isOpen) return null
 
@@ -1555,38 +1579,84 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={handlePayWithPayPal}
-                  disabled={paypalLoading}
-                  className="w-full bg-[#0070BA] text-white border-2 border-[#0070BA] py-4 font-bold text-lg hover:bg-white hover:text-[#0070BA] transition shadow-hard flex justify-center items-center gap-3 rounded-xl disabled:opacity-60"
-                >
-                  <span className="italic">{modal.payment?.payWith}</span>
-                  <span className="italic font-extrabold text-2xl">
-                    {paypalLoading ? modal.payment?.redirecting : "PayPal"}
-                  </span>
-                </button>
+                <div className={`grid grid-cols-1 ${hasTransferMethod ? "md:grid-cols-2" : ""} gap-4`}>
+                  {/* Tarjeta (PayPal) */}
+                  <div className="border-2 border-black rounded-xl p-4 flex flex-col">
+                    <div className="flex items-center gap-2 mb-1 text-black">
+                      <CreditCard size={16} />
+                      <h5 className="font-syne font-bold text-sm uppercase">
+                        {modal.payment?.cardMethodsTitle}
+                      </h5>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-4">{modal.payment?.cardMethodsDesc}</p>
 
-                {wiseLink && (
-                  <a
-                    href={wiseLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    // Solo abre el link de pago; la reserva se confirma cuando
-                    // la profesora verifica la transferencia y la marca como
-                    // pagada desde el panel de admin, nunca al hacer clic aquí.
-                    onClick={() => {
-                      setPaidVia("wise")
-                      setStep(4)
-                    }}
-                    className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-4 font-bold text-lg hover:bg-white transition shadow-hard flex justify-center items-center gap-3 rounded-xl"
-                  >
-                    <span className="italic">{modal.payment?.payWith}</span>
-                    <span className="italic font-extrabold text-2xl">
-                      Wise
-                    </span>
-                  </a>
-                )}
+                    <button
+                      type="button"
+                      onClick={handlePayWithPayPal}
+                      disabled={paypalLoading}
+                      className="mt-auto w-full bg-white border-2 border-[#0070BA] py-3.5 px-3 font-bold hover:bg-[#0070BA]/5 transition shadow-hard flex justify-center items-center rounded-xl disabled:opacity-60"
+                    >
+                      {paypalLoading ? (
+                        <span className="text-[#0070BA] text-sm italic font-bold">{modal.payment?.redirecting}</span>
+                      ) : (
+                        <img
+                          src="/png-transparent-paypal-logo-paypal-logo-paypal-blue-text-trademark.png"
+                          alt="PayPal"
+                          className="h-6 w-auto object-contain"
+                        />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Transferencia (Wise / Global66) */}
+                  {hasTransferMethod && (
+                    <div className="border-2 border-black rounded-xl p-4 flex flex-col">
+                      <div className="flex items-center gap-2 mb-1 text-black">
+                        <Landmark size={16} />
+                        <h5 className="font-syne font-bold text-sm uppercase">
+                          {modal.payment?.transferMethodsTitle}
+                        </h5>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-4">{modal.payment?.transferMethodsDesc}</p>
+
+                      <div className="mt-auto space-y-2">
+                        {wiseLink && (
+                          <a
+                            href={wiseLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            // Solo abre el link de pago; la reserva se confirma cuando
+                            // la profesora verifica la transferencia y la marca como
+                            // pagada desde el panel de admin, nunca al hacer clic aquí.
+                            onClick={() => {
+                              setPaidVia("wise")
+                              setStep(4)
+                            }}
+                            className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-3.5 font-bold hover:bg-white transition shadow-hard flex justify-center items-center gap-2 rounded-xl"
+                          >
+                            <span className="italic font-extrabold text-lg">Wise</span>
+                          </a>
+                        )}
+                        {global66Link && (
+                          <a
+                            href={global66Link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            // Misma lógica que Wise: solo abre el link, la profesora
+                            // confirma el pago a mano desde el panel de admin.
+                            onClick={() => {
+                              setPaidVia("global66")
+                              setStep(4)
+                            }}
+                            className="w-full bg-[#020410] text-white border-2 border-[#020410] py-3.5 font-bold hover:bg-white hover:text-[#020410] transition shadow-hard flex justify-center items-center gap-2 rounded-xl"
+                          >
+                            <span className="italic font-extrabold text-lg">Global66</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <p className="text-center text-xs text-gray-500 uppercase font-mono">
                   {modal.payment?.secure}
@@ -1615,10 +1685,10 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                 {isSlotBasedService ? modal.success?.desc : modal.success?.packageDesc}
               </p>
 
-              {paidVia === "wise" && (
+              {(paidVia === "wise" || paidVia === "global66") && (
                 <div className="bg-white p-6 rounded-none border-2 border-black shadow-hard-sm text-left mb-6">
                   <h5 className="font-bold text-black text-sm uppercase mb-2">
-                    {modal.wise?.proofTitle}
+                    {(modal.wise?.proofTitle || "").replace("{provider}", paidViaLabel)}
                   </h5>
                   {wiseProofSent ? (
                     <p className="text-sm text-green-700 flex items-center gap-2">
@@ -1627,7 +1697,9 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                     </p>
                   ) : (
                     <>
-                      <p className="text-sm text-gray-600 mb-3">{modal.wise?.proofDesc}</p>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {(modal.wise?.proofDesc || "").replace("{provider}", paidViaLabel)}
+                      </p>
                       {bookingError && (
                         <div className="p-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                           {bookingError}

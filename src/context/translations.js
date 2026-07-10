@@ -344,7 +344,8 @@ export const translations = {
       subtitle: "Comunicar, pensar y sentir.",
       rights: "© 2026 Español Con Sentido. Todos los derechos reservados.",
       privacy: "Privacidad",
-      terms: "Políticas de clases"
+      terms: "Políticas de clases",
+      securePayments: "Pagos seguros con"
     },
     modal: {
       steps: {
@@ -407,7 +408,11 @@ export const translations = {
         paypalInstruction: "Haz clic en el botón para abrir PayPal y completar el pago.",
         choosePaymentMethod: "Elige tu método de pago:",
         redirecting: "Redirigiendo...",
-        packageSummary: "Podrás elegir tus horarios después de completar la compra, desde tu portal de estudiante."
+        packageSummary: "Podrás elegir tus horarios después de completar la compra, desde tu portal de estudiante.",
+        cardMethodsTitle: "Tarjeta",
+        cardMethodsDesc: "Pago inmediato, tu reserva se confirma al instante.",
+        transferMethodsTitle: "Transferencia",
+        transferMethodsDesc: "Te mostramos los datos para transferir. La profesora confirma tu reserva a mano tras verificar el pago."
       },
       success: {
         title: "¡Reserva registrada!",
@@ -421,8 +426,8 @@ export const translations = {
         goToPortal: "Agendar mis clases"
       },
       wise: {
-        proofTitle: "¿Ya pagaste por Wise?",
-        proofDesc: "Pega aquí el enlace o la referencia de tu transferencia de Wise. Avisaremos a tu profesora para que verifique el pago y confirme tu reserva.",
+        proofTitle: "¿Ya pagaste por {provider}?",
+        proofDesc: "Pega aquí el enlace o la referencia de tu transferencia de {provider}. Avisaremos a tu profesora para que verifique el pago y confirme tu reserva.",
         proofPlaceholder: "Enlace o referencia de tu pago",
         proofSubmit: "Enviar comprobante",
         proofSent: "¡Comprobante recibido! Confirmaremos tu reserva en cuanto verifiquemos el pago."
@@ -774,7 +779,8 @@ export const translations = {
       subtitle: "Communicate, think, and feel.",
       rights: "© 2026 Español Con Sentido. All rights reserved.",
       privacy: "Privacy",
-      terms: "Class policies"
+      terms: "Class policies",
+      securePayments: "Secure payments with"
     },
     modal: {
       steps: {
@@ -837,7 +843,11 @@ export const translations = {
         paypalInstruction: "Click the button to open PayPal and complete the payment.",
         choosePaymentMethod: "Choose your payment method:",
         redirecting: "Redirecting...",
-        packageSummary: "You'll be able to pick your class times after checkout, from your student portal."
+        packageSummary: "You'll be able to pick your class times after checkout, from your student portal.",
+        cardMethodsTitle: "Card",
+        cardMethodsDesc: "Instant payment, your booking is confirmed right away.",
+        transferMethodsTitle: "Bank transfer",
+        transferMethodsDesc: "We'll show you the transfer details. Your teacher confirms your booking by hand after verifying the payment."
       },
       success: {
         title: "Booking saved!",
@@ -851,8 +861,8 @@ export const translations = {
         goToPortal: "Schedule my classes"
       },
       wise: {
-        proofTitle: "Already paid with Wise?",
-        proofDesc: "Paste the link or reference of your Wise transfer here. We'll notify your teacher so she can verify the payment and confirm your booking.",
+        proofTitle: "Already paid with {provider}?",
+        proofDesc: "Paste the link or reference of your {provider} transfer here. We'll notify your teacher so she can verify the payment and confirm your booking.",
         proofPlaceholder: "Payment link or reference",
         proofSubmit: "Send proof of payment",
         proofSent: "Proof received! We'll confirm your booking as soon as we verify the payment."

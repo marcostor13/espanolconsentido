@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle, Clock, Loader2, PlusCircle, Wallet } from 'lu
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
-import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL } from '../../lib/paymentMethods'
+import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL, TRANSFER_PAYMENT_METHOD_IDS } from '../../lib/paymentMethods'
 
 // Reservas del landing (prueba/individual/grupal/paquete) que quedaron
 // `pending` porque el estudiante pagó por un medio manual (Wise,
@@ -89,7 +89,9 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
                 )}
                 {b.wisePaymentProof && (
                   <p className="text-xs mt-1">
-                    <span className="font-bold text-green-700">Comprobante Wise: </span>
+                    <span className="font-bold text-green-700">
+                      Comprobante {PAYMENT_METHOD_LABEL[b.paymentMethod] || 'Wise'}:{' '}
+                    </span>
                     {/^https?:\/\//i.test(b.wisePaymentProof) ? (
                       <a
                         href={b.wisePaymentProof}
@@ -104,8 +106,10 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
                     )}
                   </p>
                 )}
-                {b.paymentMethod === 'wise' && !b.wisePaymentProof && (
-                  <p className="text-xs mt-1 text-amber-600 font-bold">Eligió Wise, sin comprobante aún</p>
+                {TRANSFER_PAYMENT_METHOD_IDS.includes(b.paymentMethod) && !b.wisePaymentProof && (
+                  <p className="text-xs mt-1 text-amber-600 font-bold">
+                    Eligió {PAYMENT_METHOD_LABEL[b.paymentMethod]}, sin comprobante aún
+                  </p>
                 )}
               </div>
               <p className="font-bold text-secondary">${b.finalPrice}</p>

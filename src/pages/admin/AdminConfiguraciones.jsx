@@ -389,6 +389,41 @@ function WiseLinksCard({ token, wiseLinks, onSaved }) {
   )
 }
 
+function Global66LinksCard({ token, global66Links, onSaved }) {
+  const [links, setLinks] = useSyncedState(global66Links)
+  const { save, saving, error, success } = useSaveSettings(token, onSaved)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    save({ global66Links: links }, 'Enlaces de Global66 guardados correctamente.')
+  }
+
+  return (
+    <SettingsCard
+      icon={Wallet}
+      title="Enlaces de pago Global66"
+      description="Igual que Wise: pega aquí el enlace/solicitud de pago de Global66 para cada paquete. Déjalo vacío si no quieres ofrecer Global66 para ese paquete."
+    >
+      <Feedback error={error} success={success} />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {PACKAGES.map((pkg) => (
+          <div key={pkg.id}>
+            <label className="block text-sm font-bold text-secondary mb-2">{pkg.title}</label>
+            <input
+              type="url"
+              value={links[pkg.id] || ''}
+              onChange={(e) => setLinks((prev) => ({ ...prev, [pkg.id]: e.target.value }))}
+              placeholder="https://app.global66.com/..."
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary text-secondary text-sm"
+            />
+          </div>
+        ))}
+        <SaveButton saving={saving} label="Guardar enlaces" />
+      </form>
+    </SettingsCard>
+  )
+}
+
 export default function AdminConfiguraciones() {
   const { token } = useAuth()
   const [settings, setSettings] = useState(null)
@@ -436,6 +471,7 @@ export default function AdminConfiguraciones() {
             />
             <AdminEmailCard token={token} adminNotifyEmail={settings.adminNotifyEmail || ''} onSaved={setSettings} />
             <WiseLinksCard token={token} wiseLinks={settings.wiseLinks || {}} onSaved={setSettings} />
+            <Global66LinksCard token={token} global66Links={settings.global66Links || {}} onSaved={setSettings} />
           </div>
         </div>
       )}
