@@ -91,13 +91,28 @@ export async function confirmBookingPayment(db, bookingId, { paymentMethod } = {
     throw new BookingConfirmationError(`La reserva ya está ${booking.status}`, 'ALREADY_PROCESSED')
   }
 
-  const { user: studentUser, isNew: isNewAccount, tempPassword } = await findOrCreateStudent(db, {
-    email: booking.email,
-    name: booking.name,
-  })
+  // La clase de prueba NO crea cuenta: solo se agenda la clase (con su link
+  // de Meet) y se envía el correo de confirmación. La cuenta se creará recién
+  // si compra un paquete. Si ya tenía cuenta, la reserva sí se vincula para
+  // que le aparezca en su portal.
+  const isTrial = booking.serviceId === 'trial'
+  let studentUser = null
+  let isNewAccount = false
+  let tempPassword = null
+  if (isTrial) {
+    studentUser = await db
+      .collection('users')
+      .findOne({ email: booking.email.trim().toLowerCase() })
+  } else {
+    ;({ user: studentUser, isNew: isNewAccount, tempPassword } = await findOrCreateStudent(db, {
+      email: booking.email,
+      name: booking.name,
+    }))
+  }
 
   const isPackage = PACKAGE_SERVICE_IDS.includes(booking.serviceId)
-  const update = { status: 'paid', paidAt: new Date(), userId: String(studentUser._id) }
+  const update = { status: 'paid', paidAt: new Date() }
+  if (studentUser) update.userId = String(studentUser._id)
   if (paymentMethod) update.paymentMethod = paymentMethod
 
   if (isPackage) {
