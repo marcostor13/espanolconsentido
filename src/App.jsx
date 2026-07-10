@@ -958,7 +958,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
     const from = toDateKey(new Date())
     const to = toDateKey(addDays(new Date(), 60))
     const type = SERVICE_SLOT_TYPE[serviceId]
-    fetch(`/api/availability?from=${from}&to=${to}&type=${type}`)
+    fetch(`/api/availability?from=${from}&to=${to}&type=${type}&service=${serviceId}`)
       .then((res) => res.json())
       .then((data) => setAvailableSlots(data.slots || []))
       .catch(() => setAvailableSlots([]))

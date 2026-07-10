@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
-import { getSettings } from './_shared/settings.js'
+import { getSettings, getMinBookingNoticeHours } from './_shared/settings.js'
 import { hoursUntilClass } from './_shared/time.js'
 import { logError } from './_shared/errorLog.js'
 
@@ -44,9 +44,11 @@ async function getAvailability(event, db, col) {
 
   // A los estudiantes/visitantes solo se les muestran franjas que todavía se
   // pueden reservar según la anticipación mínima configurada; el admin ve todo.
+  // La clase de prueba tiene su propia anticipación, así que el checkout público
+  // envía service=trial para que el listado filtre con ese margen.
   if (!isAdmin) {
     const settings = await getSettings(db)
-    const minNotice = Number(settings.minBookingNoticeHours) || 0
+    const minNotice = getMinBookingNoticeHours(settings, params.service)
     slots = slots.filter((s) => hoursUntilClass(s.date, s.time) >= minNotice)
   }
 

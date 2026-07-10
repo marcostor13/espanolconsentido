@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { logError } from './_shared/errorLog.js'
 import { findUnusedTrialCredit } from './_shared/trialCredit.js'
-import { getSettings, getServicePrice, getTrialCreditAmount } from './_shared/settings.js'
+import { getSettings, getServicePrice, getTrialCreditAmount, getMinBookingNoticeHours } from './_shared/settings.js'
 import { hoursUntilClass } from './_shared/time.js'
 
 // Debe reflejar src/lib/packages.js (SLOT_BASED_SERVICE_IDS / SERVICE_SLOT_TYPE):
@@ -91,7 +91,7 @@ export const handler = async (event) => {
           body: JSON.stringify({ error: 'El horario elegido no corresponde a este tipo de clase' }),
         }
       }
-      const minNotice = Number(settings.minBookingNoticeHours) || 0
+      const minNotice = getMinBookingNoticeHours(settings, serviceId)
       if (hoursUntilClass(slot.date, slot.time) < minNotice) {
         return {
           statusCode: 409,

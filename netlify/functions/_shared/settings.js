@@ -16,8 +16,12 @@ const DEFAULTS = {
   groupClassCapacity: 4,
   wiseLinks: {},
   packagePrices: DEFAULT_PACKAGE_PRICES,
-  // Horas mínimas de anticipación para poder reservar una clase.
+  // Horas mínimas de anticipación para poder reservar una clase regular
+  // (individual/grupal y clases de paquete desde el portal).
   minBookingNoticeHours: 1,
+  // Anticipación mínima propia de la clase de prueba, independiente de la de
+  // las clases regulares (la profesora suele querer más margen para prepararla).
+  trialMinBookingNoticeHours: 1,
   // Correo donde llegan todas las notificaciones de administración
   // (nuevas reservas, comprobantes de Wise, etc.). Si está vacío se usa
   // ADMIN_NOTIFY_EMAIL del entorno.
@@ -50,6 +54,14 @@ export function getTrialCreditAmount(settings) {
   return getServicePrice(settings, 'trial') ?? 10
 }
 
+// Anticipación mínima (en horas) según el tipo de clase: la clase de prueba
+// tiene su propio ajuste; el resto de clases usan el ajuste regular.
+export function getMinBookingNoticeHours(settings, serviceId) {
+  const raw = serviceId === 'trial' ? settings.trialMinBookingNoticeHours : settings.minBookingNoticeHours
+  const hours = Number(raw)
+  return Number.isFinite(hours) && hours >= 0 ? hours : 0
+}
+
 // Correo de administración efectivo (configurable, con fallback al entorno).
 export function getAdminNotifyEmail(settings) {
   return settings.adminNotifyEmail?.trim() || process.env.ADMIN_NOTIFY_EMAIL || 'marcostor13@gmail.com'
@@ -64,6 +76,7 @@ export function publicSettings(settings) {
     wiseLinks: settings.wiseLinks || {},
     packagePrices: settings.packagePrices,
     minBookingNoticeHours: settings.minBookingNoticeHours,
+    trialMinBookingNoticeHours: settings.trialMinBookingNoticeHours,
   }
 }
 

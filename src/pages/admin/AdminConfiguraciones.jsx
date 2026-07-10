@@ -151,13 +151,17 @@ function PricesCard({ token, packagePrices, onSaved }) {
   )
 }
 
-function BookingNoticeCard({ token, minBookingNoticeHours, onSaved }) {
+function BookingNoticeCard({ token, minBookingNoticeHours, trialMinBookingNoticeHours, onSaved }) {
   const [hours, setHours] = useSyncedState(minBookingNoticeHours)
+  const [trialHours, setTrialHours] = useSyncedState(trialMinBookingNoticeHours)
   const { save, saving, error, success } = useSaveSettings(token, onSaved)
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    save({ minBookingNoticeHours: Number(hours) }, 'Anticipación mínima guardada.')
+    save(
+      { minBookingNoticeHours: Number(hours), trialMinBookingNoticeHours: Number(trialHours) },
+      'Anticipación mínima guardada.',
+    )
   }
 
   return (
@@ -167,9 +171,12 @@ function BookingNoticeCard({ token, minBookingNoticeHours, onSaved }) {
       description="Horas mínimas antes del inicio de la clase para poder reservarla. Ejemplo: con 1 hora, una clase de las 15:00 se puede reservar hasta las 14:00."
     >
       <Feedback error={error} success={success} />
-      <form onSubmit={handleSubmit} className="flex items-end gap-3">
-        <div className="flex-1">
-          <label className="block text-sm font-bold text-secondary mb-2">Horas de anticipación</label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-bold text-secondary mb-1">Clases regulares</label>
+          <p className="text-xs text-gray-400 mb-2">
+            Clases individuales, grupales y las clases de los paquetes reservadas desde el portal.
+          </p>
           <input
             type="number"
             min={0}
@@ -178,6 +185,22 @@ function BookingNoticeCard({ token, minBookingNoticeHours, onSaved }) {
             required
             value={hours}
             onChange={(e) => setHours(e.target.value)}
+            className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary text-secondary"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-secondary mb-1">Clases de prueba</label>
+          <p className="text-xs text-gray-400 mb-2">
+            Anticipación exclusiva para la clase de prueba del landing.
+          </p>
+          <input
+            type="number"
+            min={0}
+            max={168}
+            step="0.5"
+            required
+            value={trialHours}
+            onChange={(e) => setTrialHours(e.target.value)}
             className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary text-secondary"
           />
         </div>
@@ -423,6 +446,7 @@ export default function AdminConfiguraciones() {
             <BookingNoticeCard
               token={token}
               minBookingNoticeHours={settings.minBookingNoticeHours ?? 1}
+              trialMinBookingNoticeHours={settings.trialMinBookingNoticeHours ?? 1}
               onSaved={setSettings}
             />
             <GroupCapacityCard token={token} capacity={settings.groupClassCapacity} onSaved={setSettings} />

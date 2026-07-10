@@ -83,6 +83,14 @@ export const handler = async (event) => {
         updates.minBookingNoticeHours = hours
       }
 
+      if (body.trialMinBookingNoticeHours !== undefined) {
+        const hours = Number(body.trialMinBookingNoticeHours)
+        if (!Number.isFinite(hours) || hours < 0 || hours > 168) {
+          return jsonResponse(400, { error: 'La anticipación mínima de la clase de prueba debe ser un número de horas entre 0 y 168' })
+        }
+        updates.trialMinBookingNoticeHours = hours
+      }
+
       if (body.adminNotifyEmail !== undefined) {
         const email = String(body.adminNotifyEmail || '').trim()
         if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
