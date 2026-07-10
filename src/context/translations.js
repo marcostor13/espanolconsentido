@@ -58,7 +58,7 @@ export const translations = {
       ]
     },
     marquee: [
-      "Comunica, Expresa y Siente. •"
+      "Comunica - Expresa - Siente •"
     ],
     philosophy: {
       title: "Nuestra",
@@ -488,7 +488,7 @@ export const translations = {
       ]
     },
     marquee: [
-      "Comunica, Expresa y Siente. •"
+      "Comunica - Expresa - Siente •"
     ],
     philosophy: {
       title: "Our",
