@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react'
-import { DollarSign, CalendarCheck, GraduationCap, Users, AlertCircle, Clock, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { DollarSign, CalendarCheck, GraduationCap, Users, AlertCircle, Clock, RefreshCw, ChevronDown, ChevronUp, CalendarRange, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
+import { toDateKey, addDays } from '../../lib/date'
 
 function StatTile({ icon, label, value, accent = 'text-primary bg-orange-100' }) {
   const Icon = icon
@@ -58,18 +59,76 @@ function StatusSection({ label, count, bookings, className, defaultOpen = false 
 
 const currency = (n) => `$${Number(n || 0).toLocaleString('es', { maximumFractionDigits: 2 })}`
 
+// Presets de rango: devuelven { from, to } en formato YYYY-MM-DD (o vacíos para
+// "Todo"), calculados en la zona horaria del navegador de la admin.
+const DATE_PRESETS = [
+  { id: 'all', label: 'Todo', range: () => ({ from: '', to: '' }) },
+  {
+    id: '30d',
+    label: 'Últimos 30 días',
+    range: () => ({ from: toDateKey(addDays(new Date(), -29)), to: toDateKey(new Date()) }),
+  },
+  {
+    id: 'month',
+    label: 'Este mes',
+    range: () => {
+      const now = new Date()
+      return { from: toDateKey(new Date(now.getFullYear(), now.getMonth(), 1)), to: toDateKey(now) }
+    },
+  },
+  {
+    id: 'year',
+    label: 'Este año',
+    range: () => {
+      const now = new Date()
+      return { from: toDateKey(new Date(now.getFullYear(), 0, 1)), to: toDateKey(now) }
+    },
+  },
+]
+
 export default function AdminDashboard() {
   const { user, token } = useAuth()
   const [stats, setStats] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
 
+  const loadStats = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    const qs = new URLSearchParams()
+    if (from) qs.set('from', from)
+    if (to) qs.set('to', to)
+    const query = qs.toString()
+    try {
+      const data = await apiFetch(`admin-stats${query ? `?${query}` : ''}`, { token })
+      setStats(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [token, from, to])
+
+  // El backend consulta con cada cambio de rango (from/to), no filtramos en el
+  // cliente: así los totales e ingresos siempre salen de la base de datos.
   useEffect(() => {
-    apiFetch('admin-stats', { token })
-      .then(setStats)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [token])
+    loadStats()
+  }, [loadStats])
+
+  const applyPreset = (preset) => {
+    const { from: f, to: t } = preset.range()
+    setFrom(f)
+    setTo(t)
+  }
+
+  const clearRange = () => {
+    setFrom('')
+    setTo('')
+  }
+
+  const hasRange = Boolean(from || to)
 
   const byStatus = stats?.bookingsByStatus || {}
   const activeStudentsList = stats?.activeStudentsList || []
@@ -77,7 +136,64 @@ export default function AdminDashboard() {
   return (
     <div>
       <h1 className="font-syne font-bold text-3xl text-secondary mb-1">Hola, {user?.name?.split(' ')[0]} 👋</h1>
-      <p className="text-gray-500 mb-8">Resumen general de la plataforma.</p>
+      <p className="text-gray-500 mb-6">Resumen general de la plataforma.</p>
+
+      <div className="bg-white rounded-3xl shadow-soft border border-gray-100 p-5 mb-8">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex items-center gap-2 text-secondary font-syne font-bold">
+            <CalendarRange size={18} className="text-primary" />
+            <span>Rango de fechas</span>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col text-xs font-bold text-gray-500">
+              Desde
+              <input
+                type="date"
+                value={from}
+                max={to || undefined}
+                onChange={(e) => setFrom(e.target.value)}
+                className="mt-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+              />
+            </label>
+            <label className="flex flex-col text-xs font-bold text-gray-500">
+              Hasta
+              <input
+                type="date"
+                value={to}
+                min={from || undefined}
+                onChange={(e) => setTo(e.target.value)}
+                className="mt-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+              />
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {DATE_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className="text-xs font-bold px-3 py-2 rounded-xl border border-gray-200 text-secondary hover:border-primary hover:text-primary transition"
+              >
+                {preset.label}
+              </button>
+            ))}
+            {hasRange && (
+              <button
+                type="button"
+                onClick={clearRange}
+                className="flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
+              >
+                <X size={13} /> Limpiar
+              </button>
+            )}
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          {hasRange
+            ? 'Ingresos y reservas corresponden al rango seleccionado. Estudiantes y cursos activos muestran siempre el estado actual.'
+            : 'Mostrando los totales históricos. Elige un rango para filtrar ingresos y reservas.'}
+        </p>
+      </div>
 
       {error && (
         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
