@@ -11,16 +11,19 @@ function emailMatch(email) {
   return new RegExp(`^${escaped}$`, 'i')
 }
 
-// Busca por userId cuando ya existe cuenta (matrícula creada por el admin, o
-// confirmación de pago donde findOrCreateStudent ya corrió); si no hay
-// userId todavía (por ejemplo, al calcular el precio antes de pagar) se
-// busca por email.
+// Busca por userId y/o email (combinados con $or si vienen ambos). El email
+// importa incluso cuando existe cuenta: la clase de prueba comprada desde el
+// landing ya no crea cuenta, así que esa reserva solo tiene email y se debe
+// encontrar igual cuando el estudiante (ya con cuenta) compre su paquete.
 export async function findUnusedTrialCredit(db, { userId, email } = {}) {
   const bookingsCol = db.collection('bookings')
   const enrollmentsCol = db.collection('enrollments')
 
-  const identityFilter = userId ? { userId } : email ? { email: emailMatch(email) } : null
-  if (!identityFilter) return null
+  const identities = []
+  if (userId) identities.push({ userId })
+  if (email?.trim()) identities.push({ email: emailMatch(email) })
+  if (identities.length === 0) return null
+  const identityFilter = identities.length === 1 ? identities[0] : { $or: identities }
 
   const trialBooking = await bookingsCol.findOne({
     ...identityFilter,

@@ -68,7 +68,7 @@ async function createEnrollment(event, db) {
   const trialCreditAmount = getTrialCreditAmount(await getSettings(db))
   let trialCredit = null
   if (serviceId !== 'trial') {
-    trialCredit = await findUnusedTrialCredit(db, { userId: studentUserId })
+    trialCredit = await findUnusedTrialCredit(db, { userId: studentUserId, email: student.email })
     if (trialCredit) {
       finalPrice = Math.max(0, Math.round((finalPrice - trialCreditAmount) * 100) / 100)
     }

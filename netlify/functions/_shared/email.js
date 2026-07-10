@@ -73,10 +73,15 @@ export async function sendBookingConfirmation({ toName, toEmail, adminEmail, boo
     `,
   })
 
+  const paidRowStudent =
+    finalPrice !== undefined && finalPrice !== null
+      ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Total pagado</td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #f97316; font-weight: bold;">$${finalPrice}</td></tr>`
+      : ''
+
   const scheduleRowStudent = isPackage
-    ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Clases incluidas</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${totalClasses}</td></tr>`
+    ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Clases incluidas</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${totalClasses}</td></tr>${paidRowStudent}`
     : `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Fecha</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${date}</td></tr>
-          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>${meetRow}`
+          <tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Hora</td><td style="padding: 8px; border-bottom: 1px solid #eee;">${time}</td></tr>${paidRowStudent}${meetRow}`
 
   await sendEmail({
     to: toEmail,
@@ -93,7 +98,9 @@ export async function sendBookingConfirmation({ toName, toEmail, adminEmail, boo
           isPackage
             ? `<p style="color: #666; font-size: 14px;">Ya puedes agendar tus clases cuando quieras desde tu portal de estudiante.</p>
                <p style="margin-top: 16px;"><a href="${siteUrl}/portal/reservar" style="background: #f97316; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Agendar mis clases</a></p>`
-            : `<p style="color: #666; font-size: 14px;">Te contactaremos pronto con los detalles de la sesión.</p>`
+            : meetLink
+              ? `<p style="color: #666; font-size: 14px;">Únete a tu clase con el enlace de Google Meet de arriba. Te lo recordaremos también por correo 30 minutos antes de empezar.</p>`
+              : `<p style="color: #666; font-size: 14px;">Te contactaremos pronto con los detalles de la sesión.</p>`
         }
         <p style="color: #666; font-size: 14px; margin-top: 16px;">¡Hasta pronto!<br/><strong>Juanita Sánchez</strong><br/>Español conSentido</p>
       </div>
