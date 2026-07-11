@@ -151,13 +151,17 @@ function PricesCard({ token, packagePrices, onSaved }) {
   )
 }
 
-function BookingNoticeCard({ token, minBookingNoticeHours, onSaved }) {
+function BookingNoticeCard({ token, minBookingNoticeHours, studentMinBookingNoticeHours, onSaved }) {
   const [hours, setHours] = useSyncedState(minBookingNoticeHours)
+  const [studentHours, setStudentHours] = useSyncedState(studentMinBookingNoticeHours)
   const { save, saving, error, success } = useSaveSettings(token, onSaved)
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    save({ minBookingNoticeHours: Number(hours) }, 'Anticipación mínima guardada.')
+    save(
+      { minBookingNoticeHours: Number(hours), studentMinBookingNoticeHours: Number(studentHours) },
+      'Anticipación mínima guardada.',
+    )
   }
 
   return (
@@ -167,9 +171,11 @@ function BookingNoticeCard({ token, minBookingNoticeHours, onSaved }) {
       description="Horas mínimas antes del inicio de la clase para poder reservarla. Ejemplo: con 1 hora, una clase de las 15:00 se puede reservar hasta las 14:00."
     >
       <Feedback error={error} success={success} />
-      <form onSubmit={handleSubmit} className="flex items-end gap-3">
-        <div className="flex-1">
-          <label className="block text-sm font-bold text-secondary mb-2">Horas de anticipación</label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-bold text-secondary mb-2">
+            Compra pública (web, sin sesión)
+          </label>
           <input
             type="number"
             min={0}
@@ -178,6 +184,21 @@ function BookingNoticeCard({ token, minBookingNoticeHours, onSaved }) {
             required
             value={hours}
             onChange={(e) => setHours(e.target.value)}
+            className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary text-secondary"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-bold text-secondary mb-2">
+            Alumnos matriculados (agendan desde su portal con créditos ya comprados)
+          </label>
+          <input
+            type="number"
+            min={0}
+            max={168}
+            step="0.5"
+            required
+            value={studentHours}
+            onChange={(e) => setStudentHours(e.target.value)}
             className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary text-secondary"
           />
         </div>
@@ -423,6 +444,7 @@ export default function AdminConfiguraciones() {
             <BookingNoticeCard
               token={token}
               minBookingNoticeHours={settings.minBookingNoticeHours ?? 1}
+              studentMinBookingNoticeHours={settings.studentMinBookingNoticeHours ?? 1}
               onSaved={setSettings}
             />
             <GroupCapacityCard token={token} capacity={settings.groupClassCapacity} onSaved={setSettings} />

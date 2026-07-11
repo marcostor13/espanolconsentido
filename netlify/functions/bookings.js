@@ -112,12 +112,14 @@ async function createBooking(event, db) {
     return jsonResponse(409, { error: 'Ya tiene una reserva en esa franja' })
   }
 
-  // Anticipación mínima configurable: los estudiantes no pueden reservar una
-  // franja que empieza demasiado pronto. El admin sí puede (para arreglos de
-  // último minuto acordados directamente con el estudiante).
+  // Anticipación mínima configurable (independiente de la que aplica a la
+  // compra pública desde la web): los alumnos ya matriculados no pueden
+  // reservar con sus créditos una franja que empieza demasiado pronto. El
+  // admin sí puede (para arreglos de último minuto acordados directamente
+  // con el estudiante).
   const settings = await getSettings(db)
   if (!isAdmin) {
-    const minNotice = Number(settings.minBookingNoticeHours) || 0
+    const minNotice = Number(settings.studentMinBookingNoticeHours) || 0
     const slotToCheck = await availabilityCol.findOne({ _id: new ObjectId(slotId) })
     if (slotToCheck && hoursUntilClass(slotToCheck.date, slotToCheck.time) < minNotice) {
       return jsonResponse(409, {

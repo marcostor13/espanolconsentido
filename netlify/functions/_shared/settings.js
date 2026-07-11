@@ -16,8 +16,14 @@ const DEFAULTS = {
   groupClassCapacity: 4,
   wiseLinks: {},
   packagePrices: DEFAULT_PACKAGE_PRICES,
-  // Horas mínimas de anticipación para poder reservar una clase.
+  // Horas mínimas de anticipación para reservar: minBookingNoticeHours rige
+  // la compra pública desde la web (sin sesión, create-booking.js y el
+  // listado de disponibilidad que ve un visitante anónimo);
+  // studentMinBookingNoticeHours rige cuando un alumno YA matriculado agenda
+  // una clase con sus créditos desde el portal (bookings.js), que suele
+  // permitir una anticipación menor porque ya es un alumno de confianza.
   minBookingNoticeHours: 1,
+  studentMinBookingNoticeHours: 1,
   // Correo donde llegan todas las notificaciones de administración
   // (nuevas reservas, comprobantes de Wise, etc.). Si está vacío se usa
   // ADMIN_NOTIFY_EMAIL del entorno.
@@ -70,6 +76,7 @@ export function publicSettings(settings) {
 export function adminSettings(settings) {
   return {
     ...publicSettings(settings),
+    studentMinBookingNoticeHours: settings.studentMinBookingNoticeHours,
     adminNotifyEmail: settings.adminNotifyEmail || '',
     googleConnected: Boolean(settings.googleTokens?.refresh_token),
     googleAccountEmail: settings.googleTokens?.accountEmail || null,

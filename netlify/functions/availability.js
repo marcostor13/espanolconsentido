@@ -9,11 +9,15 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const TIME_RE = /^\d{2}:\d{2}$/
 const SLOT_TYPES = ['individual', 'group']
 
-function tryGetAdmin(event) {
+// Devuelve el usuario autenticado (cualquier rol) o null si no hay sesión o
+// el token no es válido; se usa para distinguir visitante anónimo (compra
+// pública) de alumno logueado (agenda con créditos ya comprados), cada uno
+// con su propia anticipación mínima configurable.
+function tryGetUser(event) {
   const header = event.headers?.authorization || event.headers?.Authorization
-  if (!header) return false
-  const { user } = requireAuth(event, ['admin'])
-  return Boolean(user)
+  if (!header) return null
+  const { user } = requireAuth(event)
+  return user || null
 }
 
 function validateSlotInput(slot) {
@@ -28,7 +32,8 @@ function validateSlotInput(slot) {
 
 async function getAvailability(event, db, col) {
   const params = event.queryStringParameters || {}
-  const isAdmin = tryGetAdmin(event)
+  const user = tryGetUser(event)
+  const isAdmin = user?.role === 'admin'
 
   const filter = {}
   if (params.from || params.to) {
@@ -43,10 +48,15 @@ async function getAvailability(event, db, col) {
   let slots = await col.find(filter).sort({ date: 1, time: 1 }).toArray()
 
   // A los estudiantes/visitantes solo se les muestran franjas que todavía se
-  // pueden reservar según la anticipación mínima configurada; el admin ve todo.
+  // pueden reservar según la anticipación mínima configurada; el admin ve
+  // todo. Un alumno logueado (agenda con créditos ya comprados) usa su
+  // propia anticipación mínima, distinta de la del visitante anónimo que
+  // compra desde la web pública.
   if (!isAdmin) {
     const settings = await getSettings(db)
-    const minNotice = Number(settings.minBookingNoticeHours) || 0
+    const minNotice = user
+      ? Number(settings.studentMinBookingNoticeHours) || 0
+      : Number(settings.minBookingNoticeHours) || 0
     slots = slots.filter((s) => hoursUntilClass(s.date, s.time) >= minNotice)
   }
 
