@@ -39,38 +39,22 @@ export const handler = async (event) => {
         updates.groupClassCapacity = groupClassCapacity
       }
 
-      const parseTransferLinks = (raw, providerLabel) => {
-        if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-          throw new Error(`Los enlaces de ${providerLabel} deben ser un objeto { paqueteId: url }`)
+      if (body.wiseLinks !== undefined) {
+        if (typeof body.wiseLinks !== 'object' || body.wiseLinks === null || Array.isArray(body.wiseLinks)) {
+          return jsonResponse(400, { error: 'wiseLinks debe ser un objeto { paqueteId: url }' })
         }
-        const links = {}
-        for (const [key, value] of Object.entries(raw)) {
+        const wiseLinks = {}
+        for (const [key, value] of Object.entries(body.wiseLinks)) {
           if (!VALID_PACKAGE_IDS.has(key)) {
-            throw new Error(`Paquete no reconocido: ${key}`)
+            return jsonResponse(400, { error: `Paquete no reconocido: ${key}` })
           }
           const url = String(value || '').trim()
           if (url && !/^https?:\/\//i.test(url)) {
-            throw new Error(`El enlace de ${providerLabel} para "${key}" debe ser una URL válida (http/https)`)
+            return jsonResponse(400, { error: `El enlace de Wise para "${key}" debe ser una URL válida (http/https)` })
           }
-          links[key] = url
+          wiseLinks[key] = url
         }
-        return links
-      }
-
-      if (body.wiseLinks !== undefined) {
-        try {
-          updates.wiseLinks = parseTransferLinks(body.wiseLinks, 'Wise')
-        } catch (err) {
-          return jsonResponse(400, { error: err.message })
-        }
-      }
-
-      if (body.global66Links !== undefined) {
-        try {
-          updates.global66Links = parseTransferLinks(body.global66Links, 'Global66')
-        } catch (err) {
-          return jsonResponse(400, { error: err.message })
-        }
+        updates.wiseLinks = wiseLinks
       }
 
       if (body.packagePrices !== undefined) {

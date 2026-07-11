@@ -35,6 +35,7 @@ import { homePathFor } from "./lib/homePath"
 import { toDateKey, addDays } from "./lib/date"
 import { SLOT_BASED_SERVICE_IDS, SERVICE_SLOT_TYPE, resolvePrice } from "./lib/packages"
 import WhatsAppButton from "./components/WhatsAppButton"
+import Global66BankDetails from "./components/Global66BankDetails"
 
 // --- COMPONENTS ---
 
@@ -990,7 +991,6 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   const trialPrice = resolvePrice(packagePrices, "trial", 10)
   const trialCreditNote = (modal.details?.trialCreditNote || "").replace("{price}", `$${trialPrice}`)
   const wiseLinks = appSettings?.wiseLinks || {}
-  const global66Links = appSettings?.global66Links || {}
 
   const slotDates = useMemo(() => {
     const map = {}
@@ -1114,8 +1114,6 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   }
 
   const wiseLink = wiseLinks[serviceId]
-  const global66Link = global66Links[serviceId]
-  const hasTransferMethod = Boolean(wiseLink || global66Link)
   const paidViaLabel = paidVia === "global66" ? "Global66" : "Wise"
 
   if (!isOpen) return null
@@ -1579,7 +1577,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                   </div>
                 )}
 
-                <div className={`grid grid-cols-1 ${hasTransferMethod ? "md:grid-cols-2" : ""} gap-4`}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Tarjeta (PayPal) */}
                   <div className="border-2 border-black rounded-xl p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-1 text-black">
@@ -1609,53 +1607,53 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                   </div>
 
                   {/* Transferencia (Wise / Global66) */}
-                  {hasTransferMethod && (
-                    <div className="border-2 border-black rounded-xl p-4 flex flex-col">
-                      <div className="flex items-center gap-2 mb-1 text-black">
-                        <Landmark size={16} />
-                        <h5 className="font-syne font-bold text-sm uppercase">
-                          {modal.payment?.transferMethodsTitle}
-                        </h5>
-                      </div>
-                      <p className="text-xs text-gray-500 mb-4">{modal.payment?.transferMethodsDesc}</p>
-
-                      <div className="mt-auto space-y-2">
-                        {wiseLink && (
-                          <a
-                            href={wiseLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            // Solo abre el link de pago; la reserva se confirma cuando
-                            // la profesora verifica la transferencia y la marca como
-                            // pagada desde el panel de admin, nunca al hacer clic aquí.
-                            onClick={() => {
-                              setPaidVia("wise")
-                              setStep(4)
-                            }}
-                            className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-3.5 font-bold hover:bg-white transition shadow-hard flex justify-center items-center gap-2 rounded-xl"
-                          >
-                            <span className="italic font-extrabold text-lg">Wise</span>
-                          </a>
-                        )}
-                        {global66Link && (
-                          <a
-                            href={global66Link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            // Misma lógica que Wise: solo abre el link, la profesora
-                            // confirma el pago a mano desde el panel de admin.
-                            onClick={() => {
-                              setPaidVia("global66")
-                              setStep(4)
-                            }}
-                            className="w-full bg-[#020410] text-white border-2 border-[#020410] py-3.5 font-bold hover:bg-white hover:text-[#020410] transition shadow-hard flex justify-center items-center gap-2 rounded-xl"
-                          >
-                            <span className="italic font-extrabold text-lg">Global66</span>
-                          </a>
-                        )}
-                      </div>
+                  <div className="border-2 border-black rounded-xl p-4 flex flex-col">
+                    <div className="flex items-center gap-2 mb-1 text-black">
+                      <Landmark size={16} />
+                      <h5 className="font-syne font-bold text-sm uppercase">
+                        {modal.payment?.transferMethodsTitle}
+                      </h5>
                     </div>
-                  )}
+                    <p className="text-xs text-gray-500 mb-4">{modal.payment?.transferMethodsDesc}</p>
+
+                    <div className="mt-auto space-y-2">
+                      {wiseLink && (
+                        <a
+                          href={wiseLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          // Solo abre el link de pago; la reserva se confirma cuando
+                          // la profesora verifica la transferencia y la marca como
+                          // pagada desde el panel de admin, nunca al hacer clic aquí.
+                          onClick={() => {
+                            setPaidVia("wise")
+                            setStep(4)
+                          }}
+                          className="w-full bg-[#9FE870] text-secondary border-2 border-[#9FE870] py-3.5 font-bold hover:bg-white transition shadow-hard flex justify-center items-center gap-2 rounded-xl"
+                        >
+                          <span className="italic font-extrabold text-lg">Wise</span>
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        // A diferencia de Wise, Global66 no tiene un checkout/link
+                        // propio: mostramos los datos de la cuenta bancaria en el
+                        // siguiente paso para que el estudiante transfiera y luego
+                        // adjunte su comprobante.
+                        onClick={() => {
+                          setPaidVia("global66")
+                          setStep(4)
+                        }}
+                        className="w-full bg-white border-2 border-gray-200 py-2.5 font-bold hover:border-black transition shadow-hard flex justify-center items-center rounded-xl"
+                      >
+                        <img
+                          src="/global66-logo.jpg"
+                          alt="Global66"
+                          className="h-7 w-auto object-contain rounded-md"
+                        />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <p className="text-center text-xs text-gray-500 uppercase font-mono">
@@ -1697,6 +1695,11 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                     </p>
                   ) : (
                     <>
+                      {paidVia === "global66" && (
+                        <div className="mb-4">
+                          <Global66BankDetails />
+                        </div>
+                      )}
                       <p className="text-sm text-gray-600 mb-3">
                         {(modal.wise?.proofDesc || "").replace("{provider}", paidViaLabel)}
                       </p>

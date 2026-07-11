@@ -3,6 +3,7 @@ import { GraduationCap, AlertCircle, CheckCircle, CreditCard, Landmark, Loader2,
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
+import Global66BankDetails from '../../components/Global66BankDetails'
 
 // Paquetes que el estudiante puede comprar desde el portal (los servicios de
 // una sola clase con horario se compran desde la web pública, donde se elige
@@ -11,7 +12,7 @@ const PURCHASABLE_IDS = ['inicio', 'progreso', 'pro']
 
 const TRANSFER_PROVIDER_LABEL = { wise: 'Wise', global66: 'Global66' }
 
-function PurchaseModal({ pkg, wiseLink, global66Link, user, onClose }) {
+function PurchaseModal({ pkg, wiseLink, user, onClose }) {
   const [step, setStep] = useState('creating') // creating | pay | wise-sent
   const [booking, setBooking] = useState(null)
   const [error, setError] = useState(null)
@@ -19,7 +20,6 @@ function PurchaseModal({ pkg, wiseLink, global66Link, user, onClose }) {
   const [wiseProof, setWiseProof] = useState('')
   const [wiseProofSending, setWiseProofSending] = useState(false)
   const [transferChosen, setTransferChosen] = useState(null) // null | 'wise' | 'global66'
-  const hasTransferMethod = Boolean(wiseLink || global66Link)
 
   // Registra la compra pendiente en cuanto se abre el modal: así el precio
   // final (con el descuento de la clase de prueba, si aplica) lo calcula el
@@ -140,7 +140,7 @@ function PurchaseModal({ pkg, wiseLink, global66Link, user, onClose }) {
                 </div>
               </div>
 
-              <div className={`grid grid-cols-1 ${hasTransferMethod && !transferChosen ? 'sm:grid-cols-2' : ''} gap-3`}>
+              <div className={`grid grid-cols-1 ${!transferChosen ? 'sm:grid-cols-2' : ''} gap-3`}>
                 <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
                   <div className="flex items-center gap-2 mb-1 text-secondary">
                     <CreditCard size={15} />
@@ -157,7 +157,7 @@ function PurchaseModal({ pkg, wiseLink, global66Link, user, onClose }) {
                   </button>
                 </div>
 
-                {hasTransferMethod && !transferChosen && (
+                {!transferChosen && (
                   <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-1 text-secondary">
                       <Landmark size={15} />
@@ -176,17 +176,13 @@ function PurchaseModal({ pkg, wiseLink, global66Link, user, onClose }) {
                           Pagar con Wise
                         </a>
                       )}
-                      {global66Link && (
-                        <a
-                          href={global66Link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setTransferChosen('global66')}
-                          className="w-full bg-secondary text-white py-3 rounded-xl font-bold text-sm hover:opacity-90 transition flex items-center justify-center"
-                        >
-                          Pagar con Global66
-                        </a>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setTransferChosen('global66')}
+                        className="w-full bg-white border border-gray-200 py-2 rounded-xl hover:border-secondary transition flex items-center justify-center"
+                      >
+                        <img src="/global66-logo.jpg" alt="Global66" className="h-6 w-auto object-contain rounded" />
+                      </button>
                     </div>
                   </div>
                 )}
@@ -194,6 +190,11 @@ function PurchaseModal({ pkg, wiseLink, global66Link, user, onClose }) {
 
               {transferChosen && (
                 <div className="mt-3 p-4 rounded-2xl bg-gray-50 border border-gray-200">
+                  {transferChosen === 'global66' && (
+                    <div className="mb-4">
+                      <Global66BankDetails />
+                    </div>
+                  )}
                   <p className="text-sm text-gray-600 mb-3">
                     Cuando completes la transferencia en {TRANSFER_PROVIDER_LABEL[transferChosen]}, pega aquí el
                     enlace o la referencia de tu pago para que tu profesora lo verifique y active tu curso.
@@ -245,7 +246,6 @@ function NewPurchaseSection({ user }) {
   const { token } = useAuth()
   const [packages, setPackages] = useState(withConfiguredPrices(PACKAGES, null).filter((p) => PURCHASABLE_IDS.includes(p.id)))
   const [wiseLinks, setWiseLinks] = useState({})
-  const [global66Links, setGlobal66Links] = useState({})
   const [buyingPkg, setBuyingPkg] = useState(null)
 
   useEffect(() => {
@@ -255,7 +255,6 @@ function NewPurchaseSection({ user }) {
           withConfiguredPrices(PACKAGES, data.settings?.packagePrices).filter((p) => PURCHASABLE_IDS.includes(p.id)),
         )
         setWiseLinks(data.settings?.wiseLinks || {})
-        setGlobal66Links(data.settings?.global66Links || {})
       })
       .catch(() => {})
   }, [token])
@@ -288,7 +287,6 @@ function NewPurchaseSection({ user }) {
         <PurchaseModal
           pkg={buyingPkg}
           wiseLink={wiseLinks[buyingPkg.id]}
-          global66Link={global66Links[buyingPkg.id]}
           user={user}
           onClose={() => setBuyingPkg(null)}
         />
