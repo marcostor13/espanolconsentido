@@ -20,8 +20,20 @@ export const handler = async (event) => {
     const enrollmentsCol = db.collection('enrollments')
     const usersCol = db.collection('users')
 
+    // Filtro de rango de fechas (opcional) que se aplica a TODOS los cuadros
+    // del dashboard. Se filtra por createdAt, el único campo de fecha presente
+    // en todas las colecciones (bookings, enrollments, users). Sin parámetros
+    // from/to, se muestran todos los datos históricos como antes.
+    const params = event.queryStringParameters || {}
+    const fromDate = params.from ? new Date(params.from) : null
+    const toDate = params.to ? new Date(params.to) : null
+    const createdRange = {}
+    if (fromDate && !Number.isNaN(fromDate.getTime())) createdRange.$gte = fromDate
+    if (toDate && !Number.isNaN(toDate.getTime())) createdRange.$lte = toDate
+    const dateMatch = Object.keys(createdRange).length ? { createdAt: createdRange } : {}
+
     const [enrollmentRevenue] = await enrollmentsCol
-      .aggregate([{ $group: { _id: null, total: { $sum: '$finalPrice' } } }])
+      .aggregate([{ $match: dateMatch }, { $group: { _id: null, total: { $sum: '$finalPrice' } } }])
       .toArray()
 
     // Las reservas hechas contra un curso comprado (enrollmentId) ya cuentan su ingreso
@@ -29,13 +41,13 @@ export const handler = async (event) => {
     // deben sumarse aquí para no contar el mismo ingreso dos veces.
     const [legacyRevenue] = await bookingsCol
       .aggregate([
-        { $match: { enrollmentId: { $exists: false }, status: { $in: ['paid', 'completed'] } } },
+        { $match: { enrollmentId: { $exists: false }, status: { $in: ['paid', 'completed'] }, ...dateMatch } },
         { $group: { _id: null, total: { $sum: '$finalPrice' } } },
       ])
       .toArray()
 
     const bookingStatusCounts = toCountMap(
-      await bookingsCol.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]).toArray(),
+      await bookingsCol.aggregate([{ $match: dateMatch }, { $group: { _id: '$status', count: { $sum: 1 } } }]).toArray(),
     )
 
     // Reprogramar cancela la reserva vieja y crea una nueva (RescheduleModal),
@@ -45,29 +57,29 @@ export const handler = async (event) => {
     const cancelReasonCounts = toCountMap(
       await bookingsCol
         .aggregate([
-          { $match: { status: 'cancelled' } },
+          { $match: { status: 'cancelled', ...dateMatch } },
           { $group: { _id: { $ifNull: ['$cancelReason', 'cancelled'] }, count: { $sum: 1 } } },
         ])
         .toArray(),
     )
 
     const enrollmentStatusCounts = toCountMap(
-      await enrollmentsCol.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]).toArray(),
+      await enrollmentsCol.aggregate([{ $match: dateMatch }, { $group: { _id: '$status', count: { $sum: 1 } } }]).toArray(),
     )
 
-    const totalStudents = await usersCol.countDocuments({ role: 'student' })
-    const activeStudents = await usersCol.countDocuments({ role: 'student', active: { $ne: false } })
+    const totalStudents = await usersCol.countDocuments({ role: 'student', ...dateMatch })
+    const activeStudents = await usersCol.countDocuments({ role: 'student', active: { $ne: false }, ...dateMatch })
 
-    const recentBookings = await bookingsCol.find({}).sort({ createdAt: -1 }).limit(5).toArray()
+    const recentBookings = await bookingsCol.find({ ...dateMatch }).sort({ createdAt: -1 }).limit(5).toArray()
 
     // Reservas por estado CON nombre del estudiante, para que el dashboard
     // muestre quiénes están detrás de cada número (limitado a las más
     // recientes de cada estado para no inflar la respuesta).
     const bookingFields = { projection: { bookingId: 1, userName: 1, name: 1, serviceTitle: 1, date: 1, time: 1, cancelReason: 1 } }
     const [paidList, completedList, cancelledRaw] = await Promise.all([
-      bookingsCol.find({ status: 'paid' }, bookingFields).sort({ date: 1, time: 1 }).limit(30).toArray(),
-      bookingsCol.find({ status: 'completed' }, bookingFields).sort({ date: -1, time: -1 }).limit(30).toArray(),
-      bookingsCol.find({ status: 'cancelled' }, bookingFields).sort({ date: -1, time: -1 }).limit(60).toArray(),
+      bookingsCol.find({ status: 'paid', ...dateMatch }, bookingFields).sort({ date: 1, time: 1 }).limit(30).toArray(),
+      bookingsCol.find({ status: 'completed', ...dateMatch }, bookingFields).sort({ date: -1, time: -1 }).limit(30).toArray(),
+      bookingsCol.find({ status: 'cancelled', ...dateMatch }, bookingFields).sort({ date: -1, time: -1 }).limit(60).toArray(),
     ])
     const simplify = (b) => ({
       bookingId: b.bookingId,
@@ -86,7 +98,7 @@ export const handler = async (event) => {
     // Lista de estudiantes activos con sus créditos, para verlos de un
     // vistazo desde el dashboard.
     const activeStudentDocs = await usersCol
-      .find({ role: 'student', active: { $ne: false } }, { projection: { name: 1, email: 1, createdAt: 1 } })
+      .find({ role: 'student', active: { $ne: false }, ...dateMatch }, { projection: { name: 1, email: 1, createdAt: 1 } })
       .sort({ name: 1 })
       .limit(200)
       .toArray()

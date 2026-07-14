@@ -1,8 +1,87 @@
-import React, { useEffect, useState } from 'react'
-import { DollarSign, CalendarCheck, GraduationCap, Users, AlertCircle, Clock, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { DollarSign, CalendarCheck, GraduationCap, Users, AlertCircle, Clock, RefreshCw, ChevronDown, ChevronUp, CalendarRange } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
+
+// Accesos directos: calculan el rango [desde, hasta] para cada preset. El
+// "hasta" siempre es ahora; "todo" no aplica filtro (rango vacío).
+function presetRange(preset) {
+  const to = new Date()
+  const from = new Date()
+  if (preset === 'day') from.setDate(from.getDate() - 1)
+  else if (preset === 'week') from.setDate(from.getDate() - 7)
+  else if (preset === 'month') from.setMonth(from.getMonth() - 1)
+  else return { from: null, to: null }
+  return { from, to }
+}
+
+const PRESETS = [
+  { key: 'all', label: 'Todo' },
+  { key: 'day', label: 'Último día' },
+  { key: 'week', label: 'Última semana' },
+  { key: 'month', label: 'Último mes' },
+]
+
+// Barra de filtro por rango de fechas que aplica a todos los cuadros del
+// dashboard: botones de acceso rápido + rango personalizado con dos fechas.
+function DateFilterBar({ preset, setPreset, customFrom, customTo, setCustomFrom, setCustomTo }) {
+  return (
+    <div className="bg-white rounded-3xl shadow-soft border border-gray-100 p-4 mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
+        <div className="flex items-center gap-2 text-secondary shrink-0">
+          <CalendarRange size={18} className="text-primary" />
+          <span className="font-syne font-bold text-sm">Filtrar por fecha</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PRESETS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => {
+                setPreset(p.key)
+                setCustomFrom('')
+                setCustomTo('')
+              }}
+              className={`text-sm font-bold px-3.5 py-1.5 rounded-full transition border ${
+                preset === p.key
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-primary/40'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 lg:ml-auto">
+          <input
+            type="date"
+            value={customFrom}
+            max={customTo || undefined}
+            onChange={(e) => {
+              setCustomFrom(e.target.value)
+              setPreset('custom')
+            }}
+            className="text-sm border border-gray-200 rounded-xl px-3 py-1.5 focus:border-primary outline-none"
+            aria-label="Fecha desde"
+          />
+          <span className="text-gray-400 text-sm">→</span>
+          <input
+            type="date"
+            value={customTo}
+            min={customFrom || undefined}
+            onChange={(e) => {
+              setCustomTo(e.target.value)
+              setPreset('custom')
+            }}
+            className="text-sm border border-gray-200 rounded-xl px-3 py-1.5 focus:border-primary outline-none"
+            aria-label="Fecha hasta"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function StatTile({ icon, label, value, accent = 'text-primary bg-orange-100' }) {
   const Icon = icon
@@ -64,12 +143,36 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const [preset, setPreset] = useState('all')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+
+  // Rango efectivo como ISO (o null) según el preset o el rango personalizado.
+  // En "custom" se toma el inicio del día "desde" y el fin del día "hasta".
+  const { fromISO, toISO } = useMemo(() => {
+    let from = null
+    let to = null
+    if (preset === 'custom') {
+      from = customFrom ? new Date(`${customFrom}T00:00:00`) : null
+      to = customTo ? new Date(`${customTo}T23:59:59.999`) : null
+    } else {
+      ;({ from, to } = presetRange(preset))
+    }
+    return { fromISO: from ? from.toISOString() : null, toISO: to ? to.toISOString() : null }
+  }, [preset, customFrom, customTo])
+
   useEffect(() => {
-    apiFetch('admin-stats', { token })
+    const qs = new URLSearchParams()
+    if (fromISO) qs.set('from', fromISO)
+    if (toISO) qs.set('to', toISO)
+    const query = qs.toString()
+    setLoading(true)
+    setError(null)
+    apiFetch(query ? `admin-stats?${query}` : 'admin-stats', { token })
       .then(setStats)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [token])
+  }, [token, fromISO, toISO])
 
   const byStatus = stats?.bookingsByStatus || {}
   const activeStudentsList = stats?.activeStudentsList || []
@@ -77,7 +180,16 @@ export default function AdminDashboard() {
   return (
     <div>
       <h1 className="font-syne font-bold text-3xl text-secondary mb-1">Hola, {user?.name?.split(' ')[0]} 👋</h1>
-      <p className="text-gray-500 mb-8">Resumen general de la plataforma.</p>
+      <p className="text-gray-500 mb-6">Resumen general de la plataforma.</p>
+
+      <DateFilterBar
+        preset={preset}
+        setPreset={setPreset}
+        customFrom={customFrom}
+        customTo={customTo}
+        setCustomFrom={setCustomFrom}
+        setCustomTo={setCustomTo}
+      />
 
       {error && (
         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
