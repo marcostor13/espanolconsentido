@@ -1,5 +1,6 @@
 import { getDb } from './_shared/mongodb.js'
 import { sendClassReminder } from './_shared/email.js'
+import { getEventMeetLink } from './_shared/google-calendar.js'
 import { minutesUntilClass, todayDateKey } from './_shared/time.js'
 import { logError } from './_shared/errorLog.js'
 
@@ -38,6 +39,23 @@ export const handler = async () => {
         { $set: { reminderSent: true, reminderSentAt: new Date() } },
       )
       if (claim.modifiedCount !== 1) continue
+
+      // Respaldo: si la reserva no guardó el link de Meet en su momento (la
+      // sala se crea de forma asíncrona y a veces no llega al confirmar el
+      // pago), lo recuperamos desde el evento del calendario y lo guardamos,
+      // para que el recordatorio sí lo incluya.
+      if (!booking.meetLink && booking.calendarEventId) {
+        try {
+          const meetLink = await getEventMeetLink(db, booking.calendarEventId)
+          if (meetLink) {
+            booking.meetLink = meetLink
+            await bookingsCol.updateOne({ _id: booking._id }, { $set: { meetLink } })
+          }
+        } catch (err) {
+          console.error('send-class-reminders: failed to recover meet link', booking.bookingId, err)
+          await logError('send-class-reminders: recover meet link', err, { level: 'warning' })
+        }
+      }
 
       try {
         await sendClassReminder({

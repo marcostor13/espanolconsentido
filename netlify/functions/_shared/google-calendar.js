@@ -56,6 +56,35 @@ async function getCalendarAuth(db) {
   throw new Error('Configuración de Google Calendar incompleta')
 }
 
+// Extrae el enlace de Google Meet de la respuesta de la API de Calendar.
+// Preferimos `hangoutLink`, pero cuando la sala se acaba de crear ese campo
+// puede venir vacío aunque el punto de entrada de vídeo ya exista dentro de
+// `conferenceData.entryPoints`, así que lo usamos como respaldo.
+export function extractMeetLink(data) {
+  if (!data) return null
+  if (data.hangoutLink) return data.hangoutLink
+  const entryPoints = data.conferenceData?.entryPoints || []
+  const video = entryPoints.find((e) => e.entryPointType === 'video')
+  return video?.uri || null
+}
+
+/**
+ * Lee un evento ya creado y devuelve su enlace de Google Meet (o null).
+ * Se usa como respaldo cuando la reserva no guardó el link en su momento
+ * (p. ej. porque la sala aún se estaba creando al confirmar el pago).
+ */
+export async function getEventMeetLink(db, eventId) {
+  if (!eventId) return null
+  const { auth, calendarId } = await getCalendarAuth(db)
+  const calendar = google.calendar({ version: 'v3', auth })
+  const res = await calendar.events.get({
+    calendarId,
+    eventId,
+    conferenceDataVersion: 1,
+  })
+  return extractMeetLink(res.data)
+}
+
 /**
  * Crea el evento en el calendario y, si la cuenta de Google está conectada
  * por OAuth, genera también la sala de Google Meet e invita al estudiante.
@@ -92,5 +121,30 @@ export async function createCalendarEvent(db, { summary, description, start, end
     conferenceDataVersion: canCreateMeet ? 1 : 0,
   })
 
-  return { id: res.data?.id || null, meetLink: res.data?.hangoutLink || null }
+  const eventId = res.data?.id || null
+  let meetLink = extractMeetLink(res.data)
+
+  // La sala de Meet se aprovisiona de forma asíncrona: es habitual que el
+  // `insert` responda con el `createRequest` todavía en estado "pending" y sin
+  // `hangoutLink`. Si pedimos una sala pero no llegó el enlace, releemos el
+  // evento un par de veces hasta que Google lo resuelva; de lo contrario el
+  // link nunca llegaría a los correos de confirmación ni al recordatorio.
+  if (canCreateMeet && !meetLink && eventId) {
+    for (let attempt = 0; attempt < 3 && !meetLink; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+      try {
+        const got = await calendar.events.get({
+          calendarId,
+          eventId,
+          conferenceDataVersion: 1,
+        })
+        meetLink = extractMeetLink(got.data)
+      } catch (err) {
+        console.error('createCalendarEvent: retry events.get failed', err)
+        break
+      }
+    }
+  }
+
+  return { id: eventId, meetLink }
 }
