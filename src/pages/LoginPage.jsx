@@ -36,15 +36,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light font-grotesk px-6 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-secondary font-grotesk px-6 py-12">
       <div className="w-full max-w-md">
         <Link to="/" className="flex flex-col items-center mb-8">
           <img
-            src="/logo2_nobg.png"
+            src="/logo2_nobg2.png"
             alt="Español con Sentido"
-            className="h-16 w-auto object-contain"
+            className="h-16 md:h-20 w-auto object-contain"
           />
-          <span className="-mt-1 text-[10px] font-grotesk font-semibold tracking-[0.35em] text-gray-400 uppercase">
+          <span className="-mt-1 text-[10px] font-grotesk font-semibold tracking-[0.35em] text-white/60 uppercase">
             Comunica · Expresa · Siente
           </span>
         </Link>
@@ -161,7 +161,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-white/60 mt-6">
           <Link to="/" className="hover:text-primary transition-colors">
             ← Volver al sitio
           </Link>
