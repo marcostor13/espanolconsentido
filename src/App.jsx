@@ -1243,7 +1243,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
               </h4>
 
               {serviceId === "trial" && (
-                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary animate-trial-glow">
+                <div className="mb-6 p-4 bg-orange-100 border-2 border-primary/50 rounded-xl text-sm font-semibold text-secondary animate-trial-glow">
                   {trialCreditNote}
                 </div>
               )}
@@ -1370,7 +1370,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
               <p className="text-gray-500 mb-8">{modal.details?.subtitle}</p>
 
               {serviceId === "trial" && (
-                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary animate-trial-glow">
+                <div className="mb-6 p-4 bg-orange-100 border-2 border-primary/50 rounded-xl text-sm font-semibold text-secondary animate-trial-glow">
                   {trialCreditNote}
                 </div>
               )}

@@ -180,70 +180,95 @@ export async function getBusyEvents(db, { timeMin, timeMax }) {
     return { connected: false, events: [], reason: 'not_configured' }
   }
 
-  const { auth, calendarId, canCreateMeet } = authInfo
+  const { auth, canCreateMeet } = authInfo
   // Solo la conexión OAuth da acceso a leer la agenda personal de la profesora;
   // la cuenta de servicio no puede, así que en ese caso no hay nada que bloquear.
   if (!canCreateMeet) return { connected: false, events: [], reason: 'not_connected' }
 
   const calendar = google.calendar({ version: 'v3', auth })
-  let res
+
+  // Leemos TODOS los calendarios propios de la profesora (principal +
+  // secundarios), no solo 'primary', para captar también los eventos que otros
+  // agendan en cualquiera de sus calendarios. Enumerar calendarios requiere el
+  // permiso calendar.readonly; si el token todavía no lo tiene (conexión
+  // anterior a este cambio), calendarList falla y se usa solo 'primary'. En ese
+  // caso conviene reconectar Google para conceder el nuevo permiso.
+  let calendarIds = ['primary']
   try {
-    res = await calendar.events.list({
-      calendarId,
-      timeMin,
-      timeMax,
-      singleEvents: true,
-      orderBy: 'startTime',
-      maxResults: 2500,
-      // Incluir las invitaciones que otros usuarios agendan en el calendario y
-      // que aún no se han respondido. Sin esto, si el calendario está en modo
-      // "mostrar solo invitaciones que he respondido", esos eventos quedan
-      // ocultos y la API no los devuelve, por lo que no bloqueaban horarios.
-      showHiddenInvitations: true,
-    })
-  } catch (err) {
-    const error =
-      err?.response?.data?.error_description ||
-      err?.response?.data?.error?.message ||
-      err?.errors?.[0]?.message ||
-      err?.message ||
-      'Error desconocido al leer Google Calendar'
-    console.error('getBusyEvents: events.list failed', error)
-    return { connected: false, events: [], reason: 'error', error }
+    const listRes = await calendar.calendarList.list({ maxResults: 250, minAccessRole: 'owner' })
+    const owned = (listRes.data?.items || []).map((c) => c.id).filter(Boolean)
+    if (owned.length) calendarIds = owned
+  } catch {
+    // Sin permiso para listar calendarios: seguimos con 'primary'.
   }
 
-  const items = res.data?.items || []
   const events = []
-  for (const ev of items) {
-    if (ev.status === 'cancelled') continue
-    if (ev.extendedProperties?.private?.app === APP_EVENT_TAG) continue
-    // Si la profesora rechazó la invitación, no asistirá: esa hora queda libre.
-    // Las invitaciones pendientes o aceptadas de otros usuarios sí bloquean.
-    const selfAttendee = (ev.attendees || []).find((a) => a.self)
-    if (selfAttendee?.responseStatus === 'declined') continue
-
-    let startMs
-    let endMs
-    let allDay = false
-    if (ev.start?.dateTime && ev.end?.dateTime) {
-      startMs = new Date(ev.start.dateTime).getTime()
-      endMs = new Date(ev.end.dateTime).getTime()
-    } else if (ev.start?.date && ev.end?.date) {
-      // Evento de día completo: start.date es inclusivo y end.date exclusivo.
-      // Se interpreta en la zona de las clases y bloquea el/los día(s) enteros.
-      allDay = true
-      startMs = classDateTimeMs(ev.start.date, '00:00')
-      endMs = classDateTimeMs(ev.end.date, '00:00')
-    } else {
+  let rawCount = 0
+  let lastError = null
+  for (const calId of calendarIds) {
+    let res
+    try {
+      res = await calendar.events.list({
+        calendarId: calId,
+        timeMin,
+        timeMax,
+        singleEvents: true,
+        orderBy: 'startTime',
+        maxResults: 2500,
+        // Incluir las invitaciones que otros usuarios agendan y que aún no se
+        // han respondido. Sin esto, si el calendario está en modo "mostrar solo
+        // invitaciones que he respondido", esos eventos quedan ocultos.
+        showHiddenInvitations: true,
+      })
+    } catch (err) {
+      lastError =
+        err?.response?.data?.error_description ||
+        err?.response?.data?.error?.message ||
+        err?.errors?.[0]?.message ||
+        err?.message ||
+        'Error desconocido al leer Google Calendar'
+      console.error(`getBusyEvents: events.list failed for ${calId}`, lastError)
       continue
     }
-    if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) continue
-    events.push({ id: ev.id, title: ev.summary || 'Ocupado', startMs, endMs, allDay })
+
+    const items = res.data?.items || []
+    rawCount += items.length
+    for (const ev of items) {
+      if (ev.status === 'cancelled') continue
+      if (ev.extendedProperties?.private?.app === APP_EVENT_TAG) continue
+      // Si la profesora rechazó la invitación, no asistirá: esa hora queda libre.
+      // Las invitaciones pendientes o aceptadas de otros usuarios sí bloquean.
+      const selfAttendee = (ev.attendees || []).find((a) => a.self)
+      if (selfAttendee?.responseStatus === 'declined') continue
+
+      let startMs
+      let endMs
+      let allDay = false
+      if (ev.start?.dateTime && ev.end?.dateTime) {
+        startMs = new Date(ev.start.dateTime).getTime()
+        endMs = new Date(ev.end.dateTime).getTime()
+      } else if (ev.start?.date && ev.end?.date) {
+        // Evento de día completo: start.date es inclusivo y end.date exclusivo.
+        allDay = true
+        startMs = classDateTimeMs(ev.start.date, '00:00')
+        endMs = classDateTimeMs(ev.end.date, '00:00')
+      } else {
+        continue
+      }
+      if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) continue
+      events.push({ id: ev.id, title: ev.summary || 'Ocupado', startMs, endMs, allDay })
+    }
   }
-  // rawCount = eventos leídos del calendario (antes de filtrar los de la app),
-  // útil para el diagnóstico: distingue "no llegan eventos" de "todos eran de
-  // la app".
-  return { connected: true, events, reason: 'ok', rawCount: items.length }
+
+  // Si no se leyó ningún evento y hubo un error real (API deshabilitada, token
+  // caducado, etc.), se reporta para el diagnóstico del botón "Sincronizar".
+  if (rawCount === 0 && lastError) {
+    return { connected: false, events: [], reason: 'error', error: lastError }
+  }
+
+  // rawCount = eventos leídos (antes de filtrar los de la app), útil para el
+  // diagnóstico: distingue "no llegan eventos" de "todos eran de la app".
+  return { connected: true, events, reason: 'ok', rawCount, calendarsRead: calendarIds.length }
 }
 
 /**

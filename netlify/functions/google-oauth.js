@@ -8,6 +8,9 @@ import { logError } from './_shared/errorLog.js'
 
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',
+  // Lectura de todos los calendarios de la profesora (principal + secundarios)
+  // para bloquear también los eventos que otros agendan en cualquiera de ellos.
+  'https://www.googleapis.com/auth/calendar.readonly',
   'https://www.googleapis.com/auth/userinfo.email',
 ]
 
