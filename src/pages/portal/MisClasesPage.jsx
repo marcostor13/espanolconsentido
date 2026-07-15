@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -186,6 +186,9 @@ export default function MisClasesPage() {
   const [cancellingId, setCancellingId] = useState(null)
   const [cancelingBooking, setCancelingBooking] = useState(null)
   const [reschedulingBooking, setReschedulingBooking] = useState(null)
+  // bookingIds a los que ya intentamos recuperarles el enlace de Meet, para no
+  // reintentar en cada render.
+  const meetAttemptedRef = useRef(new Set())
 
   const loadBookings = useCallback(async () => {
     try {
@@ -201,6 +204,34 @@ export default function MisClasesPage() {
   useEffect(() => {
     loadBookings()
   }, [loadBookings])
+
+  // Respaldo: recupera el enlace de Meet de las clases confirmadas que no lo
+  // tengan guardado (sala creada de forma asíncrona o reservas anteriores al
+  // arreglo), para que el alumno siempre pueda unirse desde aquí.
+  useEffect(() => {
+    const missing = bookings.filter(
+      (b) => !b.meetLink && b.calendarEventId && b.status === 'paid' && !meetAttemptedRef.current.has(b.bookingId),
+    )
+    if (!missing.length) return
+    let cancelled = false
+    ;(async () => {
+      for (const b of missing) {
+        meetAttemptedRef.current.add(b.bookingId)
+        try {
+          const data = await apiFetch(`booking-meet-link?bookingId=${encodeURIComponent(b.bookingId)}`, { token })
+          if (!cancelled && data.meetLink) {
+            setBookings((prev) => prev.map((x) => (x._id === b._id ? { ...x, meetLink: data.meetLink } : x)))
+          }
+        } catch {
+          // Silencioso.
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings])
 
   const handleConfirmCancel = async () => {
     const booking = cancelingBooking

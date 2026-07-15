@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { X, AlertCircle, CheckCircle, Loader2, Clock, User, Users, Trash2, Mail, Wallet, Video } from 'lucide-react'
 import { apiFetch } from '../../lib/api'
 import { addMinutesToTime, formatDayLabel, parseDateKey } from '../../lib/date'
@@ -20,6 +20,33 @@ export default function SlotDetailModal({ slot, token, onClose, onChanged, onDel
   const isGroup = slot.type === 'group'
   const bookedCount = students.filter((b) => b.status !== 'cancelled').length
   const canDelete = bookedCount === 0
+
+  // Si una reserva confirmada no tiene guardado el enlace de Meet (la sala se
+  // crea de forma asíncrona y a veces no llegó al confirmar, o es anterior al
+  // arreglo), lo recuperamos del evento del calendario al abrir el modal.
+  useEffect(() => {
+    const missing = students.filter(
+      (b) => !b.meetLink && b.calendarEventId && ['paid', 'completed'].includes(b.status),
+    )
+    if (!missing.length) return
+    let cancelled = false
+    ;(async () => {
+      for (const b of missing) {
+        try {
+          const data = await apiFetch(`booking-meet-link?bookingId=${encodeURIComponent(b.bookingId)}`, { token })
+          if (!cancelled && data.meetLink) {
+            setStudents((prev) => prev.map((s) => (s._id === b._id ? { ...s, meetLink: data.meetLink } : s)))
+          }
+        } catch {
+          // Silencioso: si no se puede recuperar, simplemente no se muestra.
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleStatusChange = async (booking, status) => {
     setUpdatingId(booking._id)
@@ -135,16 +162,22 @@ export default function SlotDetailModal({ slot, token, onClose, onChanged, onDel
                         {b.paymentMethod}
                       </span>
                     )}
-                    {b.meetLink && (
+                    {b.meetLink ? (
                       <a
                         href={b.meetLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition mt-2 ml-1.5"
+                        className="mt-2 flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition break-all"
                       >
-                        <Video size={10} />
-                        Google Meet
+                        <Video size={14} className="shrink-0" />
+                        Unirse a Google Meet
                       </a>
+                    ) : (
+                      ['paid', 'completed'].includes(b.status) && (
+                        <p className="mt-2 text-[11px] text-gray-400 flex items-center gap-1">
+                          <Video size={11} className="shrink-0" /> Enlace de Meet no disponible
+                        </p>
+                      )
                     )}
                     {b.status === 'paid' && (
                       <div className="flex gap-2 mt-3">

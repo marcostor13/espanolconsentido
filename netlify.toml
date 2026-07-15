@@ -69,6 +69,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/booking-meet-link"
+  to = "/.netlify/functions/booking-meet-link"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/enrollments"
   to = "/.netlify/functions/enrollments"
   status = 200
