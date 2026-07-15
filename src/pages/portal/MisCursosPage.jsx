@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { GraduationCap, AlertCircle, CheckCircle, CreditCard, Landmark, Loader2, ShoppingCart, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
@@ -15,6 +15,8 @@ const TRANSFER_PROVIDER_LABEL = { wise: 'Wise', global66: 'Global66' }
 
 function PurchaseModal({ pkg, wiseLink, user, onClose }) {
   const [step, setStep] = useState('creating') // creating | pay | wise-sent
+  // Lleva el modal al inicio de su scroll al abrir o cambiar de paso.
+  const overlayRef = useRef(null)
   const [booking, setBooking] = useState(null)
   const [error, setError] = useState(null)
   const [paypalLoading, setPaypalLoading] = useState(false)
@@ -24,6 +26,10 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
   const [promoInput, setPromoInput] = useState('')
   const [applyingPromo, setApplyingPromo] = useState(false)
   const [promoError, setPromoError] = useState(null)
+
+  useEffect(() => {
+    if (overlayRef.current) overlayRef.current.scrollTop = 0
+  }, [step])
 
   // Registra la compra pendiente en cuanto se abre el modal: así el precio
   // final (con el descuento de la clase de prueba, si aplica) lo calcula el
@@ -115,7 +121,10 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-secondary/60 backdrop-blur-sm p-4 font-grotesk overflow-y-auto">
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-start justify-center bg-secondary/60 backdrop-blur-sm p-4 font-grotesk overflow-y-auto"
+    >
       <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden my-8">
         <div className="p-6 pb-0 flex items-start justify-between">
           <div>

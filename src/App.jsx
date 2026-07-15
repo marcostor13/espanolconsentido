@@ -915,6 +915,12 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   const packagePrices = appSettings?.packagePrices
 
   const [step, setStep] = useState(1)
+  // Vuelve el modal al inicio de su scroll al abrirlo o al cambiar de paso,
+  // para que siempre se vea desde arriba (sobre todo en los pasos de pago).
+  const scrollBodyRef = useRef(null)
+  useEffect(() => {
+    if (isOpen && scrollBodyRef.current) scrollBodyRef.current.scrollTop = 0
+  }, [isOpen, step])
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [availableSlots, setAvailableSlots] = useState([])
   const [slotsLoading, setSlotsLoading] = useState(false)
@@ -1186,7 +1192,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
         </div>
 
         {/* Content Body */}
-        <div className="p-8 overflow-y-auto bg-white">
+        <div ref={scrollBodyRef} className="p-8 overflow-y-auto bg-white">
           {/* Progress Bar */}
           {step < 4 && (
             <div className="flex items-center justify-center mb-10 text-xs font-bold uppercase tracking-widest">
@@ -1237,7 +1243,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
               </h4>
 
               {serviceId === "trial" && (
-                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary">
+                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary animate-trial-glow">
                   {trialCreditNote}
                 </div>
               )}
@@ -1364,7 +1370,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
               <p className="text-gray-500 mb-8">{modal.details?.subtitle}</p>
 
               {serviceId === "trial" && (
-                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary">
+                <div className="mb-6 p-4 bg-orange-50 border border-primary/20 rounded-xl text-sm text-secondary animate-trial-glow">
                   {trialCreditNote}
                 </div>
               )}

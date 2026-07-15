@@ -23,11 +23,24 @@ export default {
         fadeIn: 'fadeIn 0.5s ease-in-out',
         marquee: 'marquee 20s linear infinite',
         blob: 'blob 7s infinite',
+        // Brillo/latido sutil e infinito para resaltar el aviso del descuento
+        // de la clase de prueba.
+        'trial-glow': 'trialGlow 2.6s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        trialGlow: {
+          '0%, 100%': {
+            boxShadow: '0 0 0 0 rgba(243, 139, 42, 0)',
+            transform: 'scale(1)',
+          },
+          '50%': {
+            boxShadow: '0 0 0 4px rgba(243, 139, 42, 0.18)',
+            transform: 'scale(1.015)',
+          },
         },
         marquee: {
           '0%': { transform: 'translateX(0)' },
