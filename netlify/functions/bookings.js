@@ -269,7 +269,10 @@ async function updateBooking(event, db) {
 
   let creditRefunded = false
 
-  if (status === 'cancelled' && booking.status !== 'cancelled') {
+  // Una reserva `pending` (pago manual sin confirmar) todavía no reservó la
+  // franja ni consumió crédito (eso ocurre al confirmar el pago), así que al
+  // cancelarla no hay que liberar cupo ni devolver crédito.
+  if (status === 'cancelled' && booking.status !== 'cancelled' && booking.status !== 'pending') {
     // El admin siempre puede reembolsar (p. ej. si canceló la profesora); el
     // estudiante solo conserva el crédito si avisó con 24h de anticipación.
     creditRefunded = isAdmin || hasEnoughNotice(booking)
@@ -299,6 +302,32 @@ async function updateBooking(event, db) {
   return jsonResponse(200, { success: true, creditRefunded })
 }
 
+// Elimina una reserva por completo (solo admin). Para no dejar huérfanos, solo
+// se permite borrar reservas `pending` o `cancelled`: las que no reservaron una
+// franja real ni agendaron nada. Una reserva `paid`/`completed` debe cancelarse
+// primero (así se libera su cupo y su crédito) antes de poder eliminarse.
+async function deleteBooking(event, db) {
+  const { error } = requireAuth(event, ['admin'])
+  if (error) return error
+
+  const params = event.queryStringParameters || {}
+  const body = event.body ? JSON.parse(event.body) : {}
+  const id = params.id || body.id
+  if (!id || !ObjectId.isValid(id)) {
+    return jsonResponse(400, { error: 'Falta id de la reserva' })
+  }
+
+  const bookingsCol = db.collection('bookings')
+  const booking = await bookingsCol.findOne({ _id: new ObjectId(id) })
+  if (!booking) return jsonResponse(404, { error: 'Reserva no encontrada' })
+  if (!['pending', 'cancelled'].includes(booking.status)) {
+    return jsonResponse(409, { error: 'Solo se pueden eliminar reservas pendientes o canceladas. Cancélala primero.' })
+  }
+
+  await bookingsCol.deleteOne({ _id: new ObjectId(id) })
+  return jsonResponse(200, { success: true })
+}
+
 export const handler = async (event) => {
   try {
     const db = await getDb()
@@ -309,6 +338,8 @@ export const handler = async (event) => {
         return await createBooking(event, db)
       case 'PATCH':
         return await updateBooking(event, db)
+      case 'DELETE':
+        return await deleteBooking(event, db)
       default:
         return jsonResponse(405, { error: 'Method not allowed' })
     }

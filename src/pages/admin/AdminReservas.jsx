@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { AlertCircle, CheckCircle, Clock, Loader2, PlusCircle, Wallet } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, Loader2, PlusCircle, Wallet, XCircle, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
@@ -14,6 +14,7 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [confirmingId, setConfirmingId] = useState(null)
+  const [actioningId, setActioningId] = useState(null)
   const [paymentMethodById, setPaymentMethodById] = useState({})
 
   const load = useCallback(async () => {
@@ -50,6 +51,44 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
       setError(err.message)
     } finally {
       setConfirmingId(null)
+    }
+  }
+
+  // Cancelar: marca la reserva como cancelada (queda en el historial). Como
+  // aún está pendiente, no reservó franja ni consumió crédito, así que no se
+  // libera nada.
+  const handleCancel = async (booking) => {
+    if (!window.confirm(`¿Cancelar la reserva de ${booking.name}? No se confirmará el pago.`)) return
+    setActioningId(booking.bookingId)
+    setError(null)
+    try {
+      await apiFetch('bookings', {
+        method: 'PATCH',
+        token,
+        body: { id: booking._id, status: 'cancelled' },
+      })
+      setBookings((prev) => prev.filter((b) => b.bookingId !== booking.bookingId))
+      onConfirmed?.()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setActioningId(null)
+    }
+  }
+
+  // Eliminar: borra la reserva por completo (irreversible).
+  const handleDelete = async (booking) => {
+    if (!window.confirm(`¿Eliminar definitivamente la reserva de ${booking.name}? Esta acción no se puede deshacer.`)) return
+    setActioningId(booking.bookingId)
+    setError(null)
+    try {
+      await apiFetch(`bookings?id=${booking._id}`, { method: 'DELETE', token })
+      setBookings((prev) => prev.filter((b) => b.bookingId !== booking.bookingId))
+      onConfirmed?.()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setActioningId(null)
     }
   }
 
@@ -138,14 +177,34 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
                   </option>
                 ))}
               </select>
-              <button
-                onClick={() => handleConfirm(b)}
-                disabled={confirmingId === b.bookingId}
-                className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2.5 rounded-xl bg-primary text-white hover:bg-orange-500 transition disabled:opacity-50"
-              >
-                {confirmingId === b.bookingId ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                Confirmar pago
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleConfirm(b)}
+                  disabled={confirmingId === b.bookingId || actioningId === b.bookingId}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2.5 rounded-xl bg-primary text-white hover:bg-orange-500 transition disabled:opacity-50"
+                >
+                  {confirmingId === b.bookingId ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                  Confirmar pago
+                </button>
+                <button
+                  onClick={() => handleCancel(b)}
+                  disabled={confirmingId === b.bookingId || actioningId === b.bookingId}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:border-amber-300 hover:text-amber-700 transition disabled:opacity-50"
+                  title="Cancelar la reserva sin confirmar el pago"
+                >
+                  {actioningId === b.bookingId ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleDelete(b)}
+                  disabled={confirmingId === b.bookingId || actioningId === b.bookingId}
+                  className="flex items-center justify-center p-2.5 rounded-xl border border-gray-200 text-gray-400 hover:border-red-300 hover:text-red-600 transition disabled:opacity-50"
+                  title="Eliminar la reserva definitivamente"
+                  aria-label="Eliminar reserva"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
