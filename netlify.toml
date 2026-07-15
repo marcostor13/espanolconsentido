@@ -147,6 +147,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/apply-promo"
+  to = "/.netlify/functions/apply-promo"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/payment-proof-upload-url"
   to = "/.netlify/functions/payment-proof-upload-url"
   status = 200

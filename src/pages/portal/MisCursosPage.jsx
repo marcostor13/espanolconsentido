@@ -20,6 +20,9 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
   const [wiseProof, setWiseProof] = useState('')
   const [wiseProofSending, setWiseProofSending] = useState(false)
   const [transferChosen, setTransferChosen] = useState(null) // null | 'wise' | 'global66'
+  const [promoInput, setPromoInput] = useState('')
+  const [applyingPromo, setApplyingPromo] = useState(false)
+  const [promoError, setPromoError] = useState(null)
 
   // Registra la compra pendiente en cuanto se abre el modal: así el precio
   // final (con el descuento de la clase de prueba, si aplica) lo calcula el
@@ -48,6 +51,26 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
       cancelled = true
     }
   }, [pkg, user])
+
+  const handleApplyPromo = async () => {
+    if (!booking?.bookingId) return
+    setApplyingPromo(true)
+    setPromoError(null)
+    try {
+      const res = await fetch('/api/apply-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: booking.bookingId, promoCode: promoInput.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Código no válido')
+      setBooking((prev) => ({ ...prev, finalPrice: data.finalPrice, appliedPromo: data.appliedPromo }))
+    } catch (err) {
+      setPromoError(err.message)
+    } finally {
+      setApplyingPromo(false)
+    }
+  }
 
   const handlePayPal = async () => {
     setPaypalLoading(true)
@@ -127,6 +150,16 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
                   <span className="text-gray-500">{pkg.title}</span>
                   <span className="font-bold text-secondary">${booking.originalPrice}</span>
                 </div>
+                {booking.appliedPromo && (
+                  <div className="flex justify-between text-green-600 mb-1">
+                    <span>
+                      Código {booking.appliedPromo.code} (-{booking.appliedPromo.discountPercent}%)
+                    </span>
+                    <span>
+                      -${((booking.originalPrice * booking.appliedPromo.discountPercent) / 100).toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 {booking.trialCreditApplied && (
                   <div className="flex justify-between text-green-600 mb-1">
                     <span>Crédito por tu clase de prueba</span>
@@ -139,6 +172,41 @@ function PurchaseModal({ pkg, wiseLink, user, onClose }) {
                   <span className="font-bold text-primary">${booking.finalPrice?.toFixed?.(2) ?? booking.finalPrice}</span>
                 </div>
               </div>
+
+              {/* Código de descuento: solo mientras no se haya elegido método de
+                  transferencia (para no saturar el paso de comprobante). */}
+              {!transferChosen && (
+                <div className="mb-5">
+                  <label className="block text-xs font-bold text-secondary mb-1.5">¿Tienes un código de descuento?</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoInput}
+                      onChange={(e) => {
+                        setPromoInput(e.target.value.toUpperCase())
+                        setPromoError(null)
+                      }}
+                      placeholder="Ingresa tu código"
+                      className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-primary outline-none text-secondary text-sm uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyPromo}
+                      disabled={applyingPromo || !promoInput.trim()}
+                      className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-secondary hover:border-primary hover:text-primary transition disabled:opacity-40 flex items-center gap-1.5"
+                    >
+                      {applyingPromo && <Loader2 size={14} className="animate-spin" />}
+                      Aplicar
+                    </button>
+                  </div>
+                  {promoError && <p className="text-xs text-red-600 mt-1.5">{promoError}</p>}
+                  {booking.appliedPromo && !promoError && (
+                    <p className="text-xs text-green-600 mt-1.5 flex items-center gap-1">
+                      <CheckCircle size={12} /> Código {booking.appliedPromo.code} aplicado.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className={`grid grid-cols-1 ${!transferChosen ? 'sm:grid-cols-2' : ''} gap-3`}>
                 <div className="border border-gray-200 rounded-2xl p-4 flex flex-col">
