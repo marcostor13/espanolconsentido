@@ -42,6 +42,7 @@ export default function AdminCalendario() {
 
   const [slots, setSlots] = useState([])
   const [bookings, setBookings] = useState([])
+  const [busyByDate, setBusyByDate] = useState({})
   const [groupCapacity, setGroupCapacity] = useState(4)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -70,12 +71,21 @@ export default function AdminCalendario() {
     setLoading(true)
     setError(null)
     try {
-      const [availData, bookingsData] = await Promise.all([
+      const [availData, bookingsData, busyData] = await Promise.all([
         apiFetch(`availability?from=${rangeFrom}&to=${rangeTo}`, { token }),
         apiFetch(`bookings?from=${rangeFrom}&to=${rangeTo}&all=true`, { token }),
+        // Horas ocupadas en el Google Calendar de la profesora. Si el endpoint
+        // aún no está desplegado o Google falla, se ignora sin romper la vista.
+        apiFetch(`calendar-busy?from=${rangeFrom}&to=${rangeTo}`, { token }).catch(() => ({ busy: [] })),
       ])
       setSlots(availData.slots || [])
       setBookings(bookingsData.bookings || [])
+      const busyMap = {}
+      for (const seg of busyData.busy || []) {
+        if (!busyMap[seg.date]) busyMap[seg.date] = []
+        busyMap[seg.date].push(seg)
+      }
+      setBusyByDate(busyMap)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -119,6 +129,7 @@ export default function AdminCalendario() {
 
   const selectedKey = toDateKey(selectedDate)
   const daySlots = [...(slotsByDate[selectedKey] || [])].sort((a, b) => a.time.localeCompare(b.time))
+  const dayBusy = [...(busyByDate[selectedKey] || [])].sort((a, b) => a.startTime.localeCompare(b.startTime))
 
   const dayContent = (date, isSelected) => {
     const daySlotsForDot = slotsByDate[toDateKey(date)]
@@ -335,6 +346,7 @@ export default function AdminCalendario() {
           <TimeGrid
             days={weekDays}
             slotsByDate={slotsByDate}
+            busyByDate={busyByDate}
             selectedDate={selectedDate}
             onSelectDay={setSelectedDate}
             onCellClick={handleCellClick}
@@ -347,6 +359,7 @@ export default function AdminCalendario() {
           <TimeGrid
             days={[currentDate]}
             slotsByDate={slotsByDate}
+            busyByDate={busyByDate}
             selectedDate={selectedDate}
             onSelectDay={setSelectedDate}
             onCellClick={handleCellClick}
@@ -490,6 +503,26 @@ export default function AdminCalendario() {
               )
             })}
           </div>
+
+          {dayBusy.length > 0 && (
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                🔒 Ocupado en Google Calendar
+              </h4>
+              <p className="text-xs text-gray-400 mb-3">Estas horas no se pueden reservar.</p>
+              <div className="space-y-2">
+                {dayBusy.map((b, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm p-2.5 rounded-xl bg-gray-100 border border-gray-200">
+                    <Clock size={14} className="text-gray-400 shrink-0" />
+                    <span className="font-bold text-secondary tabular-nums">
+                      {b.startTime}–{b.endTime === '24:00' ? '00:00' : b.endTime}
+                    </span>
+                    <span className="text-gray-500 truncate">{b.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

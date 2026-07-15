@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
-import { createCalendarEvent } from './_shared/google-calendar.js'
+import { createCalendarEvent, isSlotBlockedByCalendar } from './_shared/google-calendar.js'
 import { sendBookingConfirmation } from './_shared/email.js'
 import { getSettings, getAdminNotifyEmail } from './_shared/settings.js'
 import { hoursUntilClass } from './_shared/time.js'
@@ -110,6 +110,14 @@ async function createBooking(event, db) {
   })
   if (alreadyBooked) {
     return jsonResponse(409, { error: 'Ya tiene una reserva en esa franja' })
+  }
+
+  // No permitir reservar sobre una hora ocupada en el calendario de Google de
+  // la profesora (evento personal o creado a mano). Se comprueba antes de
+  // descontar el cupo, así no hay que revertir nada si está bloqueada.
+  const slotForCalendar = await availabilityCol.findOne({ _id: new ObjectId(slotId) })
+  if (slotForCalendar && (await isSlotBlockedByCalendar(db, slotForCalendar))) {
+    return jsonResponse(409, { error: 'Ese horario está ocupado en el calendario. Elige otro.' })
   }
 
   // Anticipación mínima configurable (independiente de la que aplica a la

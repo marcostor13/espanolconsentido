@@ -1,7 +1,15 @@
 import { google } from 'googleapis'
 import { getSettings } from './settings.js'
+import { classDateTimeMs, nextDateKey } from './time.js'
 
 const CLASS_TIMEZONE = process.env.CLASS_TIMEZONE || 'America/Lima'
+
+// Marca los eventos creados por la app en el calendario de la profesora, para
+// poder distinguirlos de sus eventos personales al leer su agenda: los eventos
+// propios corresponden a reservas que ya se controlan con la disponibilidad y
+// no deben bloquearse a sí mismos (sobre todo las clases grupales, que generan
+// varios eventos a la misma hora).
+const APP_EVENT_TAG = 'espanolconsentido'
 
 export function getSiteUrl() {
   return (process.env.SITE_URL || 'https://espanolconsentido.com').replace(/\/$/, '')
@@ -100,6 +108,7 @@ export async function createCalendarEvent(db, { summary, description, start, end
     start: { dateTime: start, timeZone: CLASS_TIMEZONE },
     end: { dateTime: end, timeZone: CLASS_TIMEZONE },
     eventType: 'default',
+    extendedProperties: { private: { app: APP_EVENT_TAG } },
   }
 
   // Las cuentas de servicio no pueden invitar asistentes ni crear salas de
@@ -147,4 +156,69 @@ export async function createCalendarEvent(db, { summary, description, start, end
   }
 
   return { id: eventId, meetLink }
+}
+
+/**
+ * Lee la agenda de la profesora (calendario conectado por OAuth) entre
+ * timeMin/timeMax y devuelve los eventos que "ocupan" horas concretas, para
+ * poder mostrarlos en el calendario de administración y evitar que se reserve
+ * encima de ellos. Se excluyen:
+ *  - los eventos creados por la propia app (ya se controlan con la disponibilidad),
+ *  - los marcados como "libre" (transparency: transparent),
+ *  - los eventos de día completo (sin hora concreta), que no bloquean una hora.
+ * Devuelve { connected, events:[{ id, title, startMs, endMs }] }. Si la cuenta
+ * no está conectada por OAuth, connected=false y events=[] (sin bloquear nada).
+ */
+export async function getBusyEvents(db, { timeMin, timeMax }) {
+  const { auth, calendarId, canCreateMeet } = await getCalendarAuth(db)
+  // Solo la conexión OAuth da acceso a leer la agenda personal de la profesora;
+  // la cuenta de servicio no puede, así que en ese caso no hay nada que bloquear.
+  if (!canCreateMeet) return { connected: false, events: [] }
+
+  const calendar = google.calendar({ version: 'v3', auth })
+  const res = await calendar.events.list({
+    calendarId,
+    timeMin,
+    timeMax,
+    singleEvents: true,
+    orderBy: 'startTime',
+    maxResults: 2500,
+  })
+
+  const events = []
+  for (const ev of res.data?.items || []) {
+    if (ev.status === 'cancelled') continue
+    if (ev.transparency === 'transparent') continue
+    if (ev.extendedProperties?.private?.app === APP_EVENT_TAG) continue
+    const startISO = ev.start?.dateTime
+    const endISO = ev.end?.dateTime
+    if (!startISO || !endISO) continue // evento de día completo: no bloquea una hora puntual
+    const startMs = new Date(startISO).getTime()
+    const endMs = new Date(endISO).getTime()
+    if (Number.isNaN(startMs) || Number.isNaN(endMs)) continue
+    events.push({ id: ev.id, title: ev.summary || 'Ocupado', startMs, endMs })
+  }
+  return { connected: true, events }
+}
+
+/**
+ * Indica si una franja (date/time/durationMin en la zona de las clases) choca
+ * con algún evento del calendario de Google. Falla "abierto" (devuelve false)
+ * si la consulta a Google falla, para no bloquear reservas por una caída de la
+ * API; la visibilidad en el panel de administración sigue avisando al admin.
+ */
+export async function isSlotBlockedByCalendar(db, { date, time, durationMin }) {
+  try {
+    const startMs = classDateTimeMs(date, time)
+    const endMs = startMs + (Number(durationMin) || 55) * 60000
+    const { connected, events } = await getBusyEvents(db, {
+      timeMin: new Date(classDateTimeMs(date, '00:00')).toISOString(),
+      timeMax: new Date(classDateTimeMs(nextDateKey(date), '00:00')).toISOString(),
+    })
+    if (!connected) return false
+    return events.some((e) => e.startMs < endMs && e.endMs > startMs)
+  } catch (err) {
+    console.error('isSlotBlockedByCalendar error:', err)
+    return false
+  }
 }

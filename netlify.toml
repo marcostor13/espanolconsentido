@@ -63,6 +63,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/calendar-busy"
+  to = "/.netlify/functions/calendar-busy"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/enrollments"
   to = "/.netlify/functions/enrollments"
   status = 200

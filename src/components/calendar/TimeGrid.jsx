@@ -51,6 +51,33 @@ function layoutDaySlots(slots) {
   return laidOut
 }
 
+// Bloque gris rayado que marca una hora ocupada en el calendario de Google de
+// la profesora (evento personal). Es solo visual: no se puede reservar encima.
+function BusyBlock({ segment }) {
+  const startMin = timeToMinutes(segment.startTime)
+  const endMin = segment.endTime === '24:00' ? END_HOUR * 60 : timeToMinutes(segment.endTime)
+  if (endMin <= START_HOUR * 60 || startMin >= END_HOUR * 60) return null
+
+  const top = Math.max(0, (startMin - START_HOUR * 60) * PX_PER_MIN)
+  const bottomMin = Math.min((END_HOUR - START_HOUR) * 60, endMin - START_HOUR * 60)
+  const height = Math.max(bottomMin * PX_PER_MIN - top, 8)
+
+  return (
+    <div
+      className="absolute left-0.5 right-0.5 z-0 rounded-md border border-gray-300 pointer-events-none overflow-hidden"
+      style={{
+        top: `${top}px`,
+        height: `${height}px`,
+        backgroundImage:
+          'repeating-linear-gradient(45deg, rgba(148,163,184,0.35), rgba(148,163,184,0.35) 5px, rgba(203,213,225,0.35) 5px, rgba(203,213,225,0.35) 10px)',
+      }}
+      title={`Ocupado en Google Calendar: ${segment.title}`}
+    >
+      <div className="text-[9px] font-bold text-gray-500 leading-tight px-1 pt-0.5 truncate">🔒 {segment.title}</div>
+    </div>
+  )
+}
+
 function SlotBlock({ layoutEvent, onSlotClick, variant, isSelected }) {
   const { slot, start, end, col, colCount } = layoutEvent
   const isGroup = slot.type === 'group'
@@ -129,7 +156,7 @@ function SlotBlock({ layoutEvent, onSlotClick, variant, isSelected }) {
   )
 }
 
-function DayColumn({ date, slots, onCellClick, onSlotClick, onRangeSelect, isToday, nowMinutes, variant, selectedSlotId }) {
+function DayColumn({ date, slots, busySegments = [], onCellClick, onSlotClick, onRangeSelect, isToday, nowMinutes, variant, selectedSlotId }) {
   const colRef = useRef(null)
   const laidOut = useMemo(() => layoutDaySlots(slots), [slots])
   // Rango que se está "pintando" con el mouse para crear disponibilidad
@@ -197,6 +224,9 @@ function DayColumn({ date, slots, onCellClick, onSlotClick, onRangeSelect, isTod
       {Array.from({ length: END_HOUR - START_HOUR }).map((_, i) => (
         <div key={i} className="absolute left-0 right-0 border-t border-gray-100" style={{ top: `${i * HOUR_HEIGHT}px` }} />
       ))}
+      {busySegments.map((seg, i) => (
+        <BusyBlock key={`busy-${i}`} segment={seg} />
+      ))}
       {drag && dragHeight > 0 && (
         <div
           className="absolute left-0.5 right-0.5 rounded-lg bg-primary/20 border-2 border-dashed border-primary z-10 pointer-events-none flex items-start justify-center"
@@ -231,6 +261,7 @@ function DayColumn({ date, slots, onCellClick, onSlotClick, onRangeSelect, isTod
 export default function TimeGrid({
   days,
   slotsByDate,
+  busyByDate = {},
   selectedDate,
   onSelectDay,
   onCellClick,
@@ -269,6 +300,16 @@ export default function TimeGrid({
           <>
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm border border-dashed border-gray-300" /> Disponible sin reservas
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span
+                className="w-2.5 h-2.5 rounded-sm border border-gray-300"
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(45deg, rgba(148,163,184,0.5), rgba(148,163,184,0.5) 3px, rgba(203,213,225,0.5) 3px, rgba(203,213,225,0.5) 6px)',
+                }}
+              />{' '}
+              Ocupado (Google Calendar)
             </span>
             {onRangeSelect && (
               <span className="text-gray-400 font-normal normal-case">
@@ -327,6 +368,7 @@ export default function TimeGrid({
               key={key}
               date={date}
               slots={slotsByDate[key] || []}
+              busySegments={busyByDate[key] || []}
               onCellClick={onCellClick}
               onSlotClick={onSlotClick}
               onRangeSelect={onRangeSelect}

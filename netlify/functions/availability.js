@@ -2,7 +2,8 @@ import { ObjectId } from 'mongodb'
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { getSettings } from './_shared/settings.js'
-import { hoursUntilClass } from './_shared/time.js'
+import { hoursUntilClass, classDateTimeMs, nextDateKey } from './_shared/time.js'
+import { getBusyEvents } from './_shared/google-calendar.js'
 import { logError } from './_shared/errorLog.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
@@ -28,6 +29,32 @@ function validateSlotInput(slot) {
     return 'type debe ser "individual" o "group"'
   }
   return null
+}
+
+// Quita de la lista las franjas cuya hora choca con un evento del calendario
+// de Google de la profesora. Hace una sola consulta a Google por el rango
+// completo de fechas presentes en las franjas. Ante cualquier error, devuelve
+// las franjas sin filtrar para no dejar sin disponibilidad a los estudiantes.
+async function filterSlotsBlockedByCalendar(db, slots) {
+  if (!slots.length) return slots
+  try {
+    const dates = slots.map((s) => s.date)
+    const minDate = dates.reduce((a, b) => (a < b ? a : b))
+    const maxDate = dates.reduce((a, b) => (a > b ? a : b))
+    const { connected, events } = await getBusyEvents(db, {
+      timeMin: new Date(classDateTimeMs(minDate, '00:00')).toISOString(),
+      timeMax: new Date(classDateTimeMs(nextDateKey(maxDate), '00:00')).toISOString(),
+    })
+    if (!connected || !events.length) return slots
+    return slots.filter((s) => {
+      const startMs = classDateTimeMs(s.date, s.time)
+      const endMs = startMs + (Number(s.durationMin) || 55) * 60000
+      return !events.some((e) => e.startMs < endMs && e.endMs > startMs)
+    })
+  } catch (err) {
+    console.error('availability: calendar filter failed', err)
+    return slots
+  }
 }
 
 async function getAvailability(event, db, col) {
@@ -58,6 +85,11 @@ async function getAvailability(event, db, col) {
       ? Number(settings.studentMinBookingNoticeHours) || 0
       : Number(settings.minBookingNoticeHours) || 0
     slots = slots.filter((s) => hoursUntilClass(s.date, s.time) >= minNotice)
+
+    // Ocultar las franjas que chocan con un evento del calendario de Google de
+    // la profesora, para que el estudiante no pueda elegir una hora ocupada.
+    // Si la consulta a Google falla, se dejan pasar (no romper la reserva).
+    slots = await filterSlotsBlockedByCalendar(db, slots)
   }
 
   return jsonResponse(200, { slots })

@@ -4,6 +4,7 @@ import { logError } from './_shared/errorLog.js'
 import { findUnusedTrialCredit } from './_shared/trialCredit.js'
 import { getSettings, getServicePrice, getTrialCreditAmount } from './_shared/settings.js'
 import { hoursUntilClass } from './_shared/time.js'
+import { isSlotBlockedByCalendar } from './_shared/google-calendar.js'
 
 // Debe reflejar src/lib/packages.js (SLOT_BASED_SERVICE_IDS / SERVICE_SLOT_TYPE):
 // servicios de una sola clase que se reservan contra una franja real del
@@ -99,6 +100,15 @@ export const handler = async (event) => {
           body: JSON.stringify({
             error: `Las reservas requieren al menos ${minNotice} hora(s) de anticipación. Elige otro horario.`,
           }),
+        }
+      }
+      // No permitir reservar sobre una hora que ya está ocupada en el
+      // calendario de Google de la profesora (evento personal o creado a mano).
+      if (await isSlotBlockedByCalendar(db, slot)) {
+        return {
+          statusCode: 409,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: 'Ese horario ya no está disponible. Elige otro.' }),
         }
       }
       date = slot.date
