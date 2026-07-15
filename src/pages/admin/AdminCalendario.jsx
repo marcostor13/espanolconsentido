@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, Loader2, Clock, AlertCircle, Users, User, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import Calendar from '../../components/Calendar'
 import TimeGrid, { reservedCategory } from '../../components/calendar/TimeGrid'
 import SlotDetailModal from '../../components/calendar/SlotDetailModal'
@@ -43,6 +44,7 @@ export default function AdminCalendario() {
   const [slots, setSlots] = useState([])
   const [bookings, setBookings] = useState([])
   const [busyByDate, setBusyByDate] = useState({})
+  const [calendarConnected, setCalendarConnected] = useState(true)
   const [groupCapacity, setGroupCapacity] = useState(4)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -76,7 +78,7 @@ export default function AdminCalendario() {
         apiFetch(`bookings?from=${rangeFrom}&to=${rangeTo}&all=true`, { token }),
         // Horas ocupadas en el Google Calendar de la profesora. Si el endpoint
         // aún no está desplegado o Google falla, se ignora sin romper la vista.
-        apiFetch(`calendar-busy?from=${rangeFrom}&to=${rangeTo}`, { token }).catch(() => ({ busy: [] })),
+        apiFetch(`calendar-busy?from=${rangeFrom}&to=${rangeTo}`, { token }).catch(() => ({ busy: [], connected: null })),
       ])
       setSlots(availData.slots || [])
       setBookings(bookingsData.bookings || [])
@@ -86,6 +88,11 @@ export default function AdminCalendario() {
         busyMap[seg.date].push(seg)
       }
       setBusyByDate(busyMap)
+      // `connected: false` = la app no pudo leer el Google Calendar (conexión
+      // no hecha o caducada). `null` = el endpoint falló/no respondió; no
+      // afirmamos nada para no mostrar un aviso en falso.
+      if (busyData.connected === false) setCalendarConnected(false)
+      else if (busyData.connected === true) setCalendarConnected(true)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -306,6 +313,19 @@ export default function AdminCalendario() {
         <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-2">
           <AlertCircle size={18} className="shrink-0 mt-0.5" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {!calendarConnected && (
+        <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm flex items-start gap-2">
+          <AlertCircle size={18} className="shrink-0 mt-0.5" />
+          <span>
+            No se están leyendo las horas ocupadas de tu Google Calendar. La conexión no está activa o caducó.{' '}
+            <Link to="/admin/configuraciones" className="font-bold underline">
+              Vuelve a conectar Google
+            </Link>{' '}
+            para que se bloqueen automáticamente los horarios con eventos en tu calendario.
+          </span>
         </div>
       )}
 
