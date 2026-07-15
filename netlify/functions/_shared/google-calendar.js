@@ -159,15 +159,16 @@ export async function createCalendarEvent(db, { summary, description, start, end
 }
 
 /**
- * Lee la agenda de la profesora (calendario conectado por OAuth) entre
- * timeMin/timeMax y devuelve los eventos que "ocupan" horas concretas, para
- * poder mostrarlos en el calendario de administración y evitar que se reserve
- * encima de ellos. Se excluyen:
- *  - los eventos creados por la propia app (ya se controlan con la disponibilidad),
- *  - los marcados como "libre" (transparency: transparent),
- *  - los eventos de día completo (sin hora concreta), que no bloquean una hora.
- * Devuelve { connected, events:[{ id, title, startMs, endMs }] }. Si la cuenta
- * no está conectada por OAuth, connected=false y events=[] (sin bloquear nada).
+ * Lee la agenda de la profesora (calendario principal conectado por OAuth)
+ * entre timeMin/timeMax y devuelve TODOS sus eventos como "ocupados", para
+ * mostrarlos en el calendario de administración y evitar que se reserve encima.
+ * Se incluyen los eventos con hora y los de día completo (que bloquean el día
+ * entero), estén marcados como "ocupado" o "libre". Solo se excluyen:
+ *  - los eventos creados por la propia app (ya se ven como reservas en el
+ *    calendario; incluirlos los duplicaría y haría que se bloqueen a sí mismos),
+ *  - los eventos cancelados.
+ * Devuelve { connected, events:[{ id, title, startMs, endMs, allDay }] }. Si la
+ * cuenta no está conectada por OAuth, connected=false y events=[] (sin bloquear).
  */
 export async function getBusyEvents(db, { timeMin, timeMax }) {
   const { auth, calendarId, canCreateMeet } = await getCalendarAuth(db)
@@ -188,15 +189,25 @@ export async function getBusyEvents(db, { timeMin, timeMax }) {
   const events = []
   for (const ev of res.data?.items || []) {
     if (ev.status === 'cancelled') continue
-    if (ev.transparency === 'transparent') continue
     if (ev.extendedProperties?.private?.app === APP_EVENT_TAG) continue
-    const startISO = ev.start?.dateTime
-    const endISO = ev.end?.dateTime
-    if (!startISO || !endISO) continue // evento de día completo: no bloquea una hora puntual
-    const startMs = new Date(startISO).getTime()
-    const endMs = new Date(endISO).getTime()
-    if (Number.isNaN(startMs) || Number.isNaN(endMs)) continue
-    events.push({ id: ev.id, title: ev.summary || 'Ocupado', startMs, endMs })
+
+    let startMs
+    let endMs
+    let allDay = false
+    if (ev.start?.dateTime && ev.end?.dateTime) {
+      startMs = new Date(ev.start.dateTime).getTime()
+      endMs = new Date(ev.end.dateTime).getTime()
+    } else if (ev.start?.date && ev.end?.date) {
+      // Evento de día completo: start.date es inclusivo y end.date exclusivo.
+      // Se interpreta en la zona de las clases y bloquea el/los día(s) enteros.
+      allDay = true
+      startMs = classDateTimeMs(ev.start.date, '00:00')
+      endMs = classDateTimeMs(ev.end.date, '00:00')
+    } else {
+      continue
+    }
+    if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) continue
+    events.push({ id: ev.id, title: ev.summary || 'Ocupado', startMs, endMs, allDay })
   }
   return { connected: true, events }
 }
