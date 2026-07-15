@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle, Check, Clock, Loader2, User, Users, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { AlertCircle, CheckCircle, Check, Clock, Loader2, User, Users, ChevronLeft, ChevronRight, CalendarDays, Video, X } from 'lucide-react'
 import Calendar from '../../components/Calendar'
 import TimeGrid from '../../components/calendar/TimeGrid'
 import {
@@ -42,6 +42,8 @@ export default function ReservarPage() {
   const [booking, setBooking] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  // Clase reservada que el alumno abrió desde el calendario para ver su enlace.
+  const [viewingBooking, setViewingBooking] = useState(null)
 
   const availableEnrollments = useMemo(
     () => enrollments.filter((e) => e.status === 'active' && e.classesUsed < e.totalClasses),
@@ -136,6 +138,20 @@ export default function ReservarPage() {
     () => new Set(myBookings.filter((b) => b.status === 'paid').map((b) => b.date)),
     [myBookings],
   )
+
+  // Clases ya reservadas (confirmadas) agrupadas por día, para pintarlas en el
+  // calendario del alumno y poder abrir su enlace de Meet.
+  const myBookingsByDate = useMemo(() => {
+    const map = {}
+    for (const b of myBookings) {
+      if (b.status !== 'paid' || !b.date || !b.time) continue
+      if (!map[b.date]) map[b.date] = []
+      map[b.date].push(b)
+    }
+    return map
+  }, [myBookings])
+
+  const dayReservedClasses = [...(myBookingsByDate[selectedKey] || [])].sort((a, b) => a.time.localeCompare(b.time))
 
   const dayContent = (date, isSelected) => {
     const key = toDateKey(date)
@@ -370,6 +386,8 @@ export default function ReservarPage() {
           <TimeGrid
             days={weekDays}
             slotsByDate={slotsByDate}
+            bookingsByDate={myBookingsByDate}
+            onBookingClick={setViewingBooking}
             selectedDate={selectedDate}
             onSelectDay={(d) => {
               setSelectedDate(d)
@@ -385,6 +403,8 @@ export default function ReservarPage() {
           <TimeGrid
             days={[currentDate]}
             slotsByDate={slotsByDate}
+            bookingsByDate={myBookingsByDate}
+            onBookingClick={setViewingBooking}
             selectedDate={selectedDate}
             onSelectDay={(d) => {
               setSelectedDate(d)
@@ -401,6 +421,34 @@ export default function ReservarPage() {
             {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
           </h3>
           <p className="text-sm text-gray-400 mb-5">{loading ? 'Cargando...' : `${daySlots.length} horario(s) disponible(s)`}</p>
+
+          {dayReservedClasses.length > 0 && (
+            <div className="mb-6">
+              <p className="text-xs font-bold uppercase tracking-wide text-emerald-700 mb-2 flex items-center gap-1.5">
+                <CheckCircle size={13} /> Tus clases reservadas
+              </p>
+              <div className="space-y-2">
+                {dayReservedClasses.map((b) => (
+                  <button
+                    key={b._id || b.bookingId}
+                    type="button"
+                    onClick={() => setViewingBooking(b)}
+                    className="w-full flex items-center justify-between gap-2 p-3 rounded-xl border border-emerald-200 bg-emerald-50 hover:border-emerald-400 transition text-left"
+                  >
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-1.5 text-sm font-bold text-secondary">
+                        <Clock size={13} /> {b.time}
+                      </span>
+                      <span className="text-xs text-gray-500 truncate block">{b.serviceTitle}</span>
+                    </span>
+                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 shrink-0">
+                      <Video size={13} /> Ver enlace
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2 mb-6">
             {daySlots.map((slot) => {
@@ -446,6 +494,56 @@ export default function ReservarPage() {
           </button>
         </div>
       </div>
+
+      {viewingBooking && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-secondary/60 backdrop-blur-sm p-4 font-grotesk overflow-y-auto"
+          onClick={() => setViewingBooking(null)}
+        >
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden my-8" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 pb-0 flex items-start justify-between">
+              <div>
+                <h2 className="font-syne font-bold text-xl text-secondary">Tu clase reservada</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  {viewingBooking.date} · {viewingBooking.time}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingBooking(null)}
+                className="text-gray-400 hover:text-primary transition-colors bg-gray-50 hover:bg-orange-50 rounded-full p-2"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="font-bold text-secondary">{viewingBooking.serviceTitle}</span>
+                {viewingBooking.classType && (
+                  <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                    {viewingBooking.classType === 'group' ? <Users size={10} /> : <User size={10} />}
+                    {viewingBooking.classType === 'group' ? 'Grupal' : 'Individual'}
+                  </span>
+                )}
+              </div>
+              {viewingBooking.meetLink ? (
+                <a
+                  href={viewingBooking.meetLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-bold shadow-soft hover:shadow-soft-lg transition-all"
+                >
+                  <Video size={18} />
+                  Unirme por Google Meet
+                </a>
+              ) : (
+                <p className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4 text-center">
+                  El enlace de Google Meet estará disponible pronto. También te lo enviaremos por correo antes de tu clase.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

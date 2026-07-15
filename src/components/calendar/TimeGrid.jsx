@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { User, Users } from 'lucide-react'
+import { User, Users, Video } from 'lucide-react'
 import { toDateKey, timeToMinutes, minutesToTime, isSameDay } from '../../lib/date'
 
 const START_HOUR = 6
@@ -178,7 +178,38 @@ function SlotBlock({ layoutEvent, onSlotClick, variant, isSelected }) {
   )
 }
 
-function DayColumn({ date, slots, busySegments = [], onCellClick, onSlotClick, onRangeSelect, isToday, nowMinutes, variant, selectedSlotId }) {
+// Bloque de una clase YA reservada por el alumno (verde), clicable para ver su
+// enlace de Meet. Se pinta por encima de las franjas disponibles.
+function BookingBlock({ booking, onClick }) {
+  const start = timeToMinutes(booking.time)
+  const end = start + (booking.durationMin || 55)
+  if (end <= START_HOUR * 60 || start >= END_HOUR * 60) return null
+
+  const top = Math.max(0, (start - START_HOUR * 60) * PX_PER_MIN)
+  const bottomMin = Math.min((END_HOUR - START_HOUR) * 60, end - START_HOUR * 60)
+  const height = Math.max(bottomMin * PX_PER_MIN - top, 18)
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.(booking)
+      }}
+      className="absolute left-0.5 right-0.5 z-10 rounded-lg border-2 bg-emerald-500 border-emerald-600 text-white px-1.5 py-0.5 text-left overflow-hidden shadow-sm hover:shadow-md hover:z-20 transition-shadow"
+      style={{ top: `${top}px`, height: `${height}px` }}
+      title={`${booking.time} · ${booking.serviceTitle} · Tu clase reservada`}
+    >
+      <div className="flex items-center gap-1 text-[10px] font-bold leading-tight whitespace-nowrap">
+        <Video size={10} className="shrink-0" />
+        <span>{booking.time}</span>
+      </div>
+      {height > 26 && <div className="text-[10px] leading-tight truncate opacity-95">{booking.serviceTitle}</div>}
+    </button>
+  )
+}
+
+function DayColumn({ date, slots, busySegments = [], bookings = [], onBookingClick, onCellClick, onSlotClick, onRangeSelect, isToday, nowMinutes, variant, selectedSlotId }) {
   const colRef = useRef(null)
   const laidOut = useMemo(() => layoutDaySlots(slots), [slots])
   // Rango que se está "pintando" con el mouse para crear disponibilidad
@@ -276,6 +307,9 @@ function DayColumn({ date, slots, busySegments = [], onCellClick, onSlotClick, o
           isSelected={ev.slot._id === selectedSlotId}
         />
       ))}
+      {bookings.map((b) => (
+        <BookingBlock key={b._id || b.bookingId} booking={b} onClick={onBookingClick} />
+      ))}
     </div>
   )
 }
@@ -284,6 +318,8 @@ export default function TimeGrid({
   days,
   slotsByDate,
   busyByDate = {},
+  bookingsByDate = {},
+  onBookingClick = null,
   selectedDate,
   onSelectDay,
   onCellClick,
@@ -397,6 +433,8 @@ export default function TimeGrid({
               date={date}
               slots={slotsByDate[key] || []}
               busySegments={busyByDate[key] || []}
+              bookings={bookingsByDate[key] || []}
+              onBookingClick={onBookingClick}
               onCellClick={onCellClick}
               onSlotClick={onSlotClick}
               onRangeSelect={onRangeSelect}
