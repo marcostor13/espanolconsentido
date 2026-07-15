@@ -195,6 +195,11 @@ export async function getBusyEvents(db, { timeMin, timeMax }) {
       singleEvents: true,
       orderBy: 'startTime',
       maxResults: 2500,
+      // Incluir las invitaciones que otros usuarios agendan en el calendario y
+      // que aún no se han respondido. Sin esto, si el calendario está en modo
+      // "mostrar solo invitaciones que he respondido", esos eventos quedan
+      // ocultos y la API no los devuelve, por lo que no bloqueaban horarios.
+      showHiddenInvitations: true,
     })
   } catch (err) {
     const error =
@@ -212,6 +217,10 @@ export async function getBusyEvents(db, { timeMin, timeMax }) {
   for (const ev of items) {
     if (ev.status === 'cancelled') continue
     if (ev.extendedProperties?.private?.app === APP_EVENT_TAG) continue
+    // Si la profesora rechazó la invitación, no asistirá: esa hora queda libre.
+    // Las invitaciones pendientes o aceptadas de otros usuarios sí bloquean.
+    const selfAttendee = (ev.attendees || []).find((a) => a.self)
+    if (selfAttendee?.responseStatus === 'declined') continue
 
     let startMs
     let endMs
