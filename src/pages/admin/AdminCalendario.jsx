@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, Loader2, Clock, AlertCircle, Users, User, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import Calendar from '../../components/Calendar'
-import TimeGrid from '../../components/calendar/TimeGrid'
+import TimeGrid, { reservedCategory } from '../../components/calendar/TimeGrid'
 import SlotDetailModal from '../../components/calendar/SlotDetailModal'
 import BulkAvailabilityModal from '../../components/calendar/BulkAvailabilityModal'
 import QuickAvailabilityModal from '../../components/calendar/QuickAvailabilityModal'
@@ -455,6 +455,15 @@ export default function AdminCalendario() {
               const isGroup = slot.type === 'group'
               const isFull = slot.status === 'full'
               const activeStudents = (slot.students || []).filter((s) => s.status !== 'cancelled')
+              const category = reservedCategory(slot)
+              const categoryBadge =
+                category === 'trial'
+                  ? { label: 'Prueba', className: 'bg-violet-100 text-violet-700' }
+                  : category === 'package'
+                    ? { label: 'Paquete', className: 'bg-emerald-100 text-emerald-700' }
+                    : category === 'single'
+                      ? { label: 'Suelta', className: 'bg-orange-100 text-primary' }
+                      : null
               return (
                 <div
                   key={slot._id}
@@ -479,6 +488,11 @@ export default function AdminCalendario() {
                       <span className={`text-xs font-bold ${isFull ? 'text-primary' : 'text-green-600'}`}>
                         {slot.bookedCount || 0}/{slot.capacity} {isFull ? 'completo' : 'reservado(s)'}
                       </span>
+                      {categoryBadge && (
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${categoryBadge.className}`}>
+                          {categoryBadge.label}
+                        </span>
+                      )}
                     </div>
                     {(slot.bookedCount || 0) === 0 && (
                       <button

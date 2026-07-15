@@ -78,6 +78,19 @@ function BusyBlock({ segment }) {
   )
 }
 
+// Categoría de una franja reservada según el origen de sus reservas:
+//  - 'trial'   → clase de prueba (booking con serviceId 'trial')
+//  - 'package' → alumno que agendó con un paquete comprado (tiene enrollmentId)
+//  - 'single'  → clase individual/grupal suelta comprada en el sitio
+// Devuelve null si la franja no tiene reservas activas.
+export function reservedCategory(slot) {
+  const active = (slot.students || []).filter((s) => s.status !== 'cancelled')
+  if (!active.length) return null
+  if (active.some((s) => s.serviceId === 'trial')) return 'trial'
+  if (active.some((s) => s.enrollmentId)) return 'package'
+  return 'single'
+}
+
 function SlotBlock({ layoutEvent, onSlotClick, variant, isSelected }) {
   const { slot, start, end, col, colCount } = layoutEvent
   const isGroup = slot.type === 'group'
@@ -92,9 +105,20 @@ function SlotBlock({ layoutEvent, onSlotClick, variant, isSelected }) {
   const widthPct = 100 / colCount
   const leftPct = col * widthPct
 
-  // Modo "admin": el color indica si ya tiene reservas. Modo "student" (elegir
-  // horario para reservar): todo lo que llega aquí ya está disponible, así
+  // Modo "admin": el color de una franja reservada distingue el origen de la
+  // reserva (prueba vs alumno con paquete vs clase suelta); las franjas sin
+  // reservas conservan el color por tipo (individual/grupal) en punteado.
+  // Modo "student" (elegir horario): todo lo que llega ya está disponible, así
   // que el color solo resalta si el estudiante lo tiene seleccionado.
+  const category = reservedCategory(slot)
+  const bookedPalette =
+    category === 'trial'
+      ? 'bg-violet-500 border-violet-600 text-white'
+      : category === 'package'
+        ? 'bg-emerald-500 border-emerald-600 text-white'
+        : isGroup
+          ? 'bg-blue-500 border-blue-600 text-white'
+          : 'bg-primary border-primary text-white'
   const palette =
     variant === 'student'
       ? isSelected
@@ -104,12 +128,10 @@ function SlotBlock({ layoutEvent, onSlotClick, variant, isSelected }) {
         : isGroup
           ? 'bg-blue-50 border-blue-300 text-blue-700 hover:border-blue-400'
           : 'bg-orange-50 border-primary/40 text-primary hover:border-primary'
-      : isGroup
-        ? hasBookings
-          ? 'bg-blue-500 border-blue-600 text-white'
-          : 'bg-blue-50 border-blue-300 text-blue-700 border-dashed'
-        : hasBookings
-          ? 'bg-primary border-primary text-white'
+      : hasBookings
+        ? bookedPalette
+        : isGroup
+          ? 'bg-blue-50 border-blue-300 text-blue-700 border-dashed'
           : 'bg-orange-50 border-primary/40 text-primary border-dashed'
 
   const detailLine =
@@ -298,6 +320,12 @@ export default function TimeGrid({
           <span className="text-gray-400 font-normal normal-case">Toca un horario para seleccionarlo</span>
         ) : (
           <>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-violet-500" /> Prueba reservada
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Alumno con paquete
+            </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm border border-dashed border-gray-300" /> Disponible sin reservas
             </span>
