@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { X, AlertCircle, CheckCircle, Loader2, Clock, User, Users, Trash2, Mail, Wallet, Video } from 'lucide-react'
+import { X, AlertCircle, CheckCircle, Loader2, Clock, User, Users, Trash2, Mail, Wallet, Video, UserPlus } from 'lucide-react'
 import { apiFetch } from '../../lib/api'
 import { addMinutesToTime, formatDayLabel, parseDateKey } from '../../lib/date'
 
@@ -17,9 +17,53 @@ export default function SlotDetailModal({ slot, token, onClose, onChanged, onDel
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
 
+  const [enrollments, setEnrollments] = useState([])
+  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState('')
+  const [reserving, setReserving] = useState(false)
+
   const isGroup = slot.type === 'group'
   const bookedCount = students.filter((b) => b.status !== 'cancelled').length
   const canDelete = bookedCount === 0
+  // Reservar para un alumno usa un crédito de su paquete (matrícula), que son
+  // clases individuales; por eso solo se ofrece en franjas individuales con cupo.
+  const canReserveForStudent = !isGroup && bookedCount < (slot.capacity || 1)
+
+  // Matrículas activas con clases disponibles, para reservarle la franja a un
+  // alumno registrado desde el calendario.
+  const availableEnrollments = enrollments.filter(
+    (e) => e.status === 'active' && (e.totalClasses || 0) - (e.classesUsed || 0) > 0,
+  )
+
+  useEffect(() => {
+    if (!canReserveForStudent) return
+    apiFetch('enrollments', { token })
+      .then((data) => setEnrollments(data.enrollments || []))
+      .catch(() => {})
+    // Solo al abrir el modal para esta franja.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleReserveForStudent = async () => {
+    if (!selectedEnrollmentId) return
+    setReserving(true)
+    setError(null)
+    setSuccess(null)
+    try {
+      const data = await apiFetch('bookings', {
+        method: 'POST',
+        token,
+        body: { enrollmentId: selectedEnrollmentId, slotId: slot._id },
+      })
+      if (data.booking) setStudents((prev) => [...prev, data.booking])
+      setSelectedEnrollmentId('')
+      setSuccess('Clase reservada para el alumno. Se le agendó y se le envió el enlace de Meet.')
+      onChanged?.()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setReserving(false)
+    }
+  }
 
   // Si una reserva confirmada no tiene guardado el enlace de Meet (la sala se
   // crea de forma asíncrona y a veces no llegó al confirmar, o es anterior al
@@ -201,6 +245,45 @@ export default function SlotDetailModal({ slot, token, onClose, onChanged, onDel
                   </div>
                 )
               })}
+            </div>
+          )}
+
+          {canReserveForStudent && (
+            <div className="mt-5 pt-5 border-t border-gray-100">
+              <h3 className="font-syne font-bold text-sm text-secondary mb-1 flex items-center gap-1.5">
+                <UserPlus size={15} className="text-primary" /> Reservar para un alumno
+              </h3>
+              <p className="text-xs text-gray-400 mb-3">
+                Usa un crédito del paquete del alumno y le agenda la clase con su enlace de Meet.
+              </p>
+              {availableEnrollments.length === 0 ? (
+                <p className="text-xs text-gray-400 bg-gray-50 rounded-xl p-3">
+                  No hay alumnos con clases disponibles en un paquete. Regístrale una compra en Reservas primero.
+                </p>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select
+                    value={selectedEnrollmentId}
+                    onChange={(e) => setSelectedEnrollmentId(e.target.value)}
+                    className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+                  >
+                    <option value="">Selecciona un alumno...</option>
+                    {availableEnrollments.map((e) => (
+                      <option key={e._id} value={e._id}>
+                        {e.studentName} — {e.serviceTitle} ({(e.totalClasses || 0) - (e.classesUsed || 0)} restantes)
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleReserveForStudent}
+                    disabled={reserving || !selectedEnrollmentId}
+                    className="flex items-center justify-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-orange-500 transition disabled:opacity-50"
+                  >
+                    {reserving ? <Loader2 size={15} className="animate-spin" /> : <UserPlus size={15} />}
+                    Reservar
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
