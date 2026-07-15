@@ -41,7 +41,10 @@ async function createEnrollment(event, db) {
   if (Number(totalClasses) <= 0) {
     return jsonResponse(400, { error: 'totalClasses debe ser mayor que 0' })
   }
-  const VALID_PAYMENT_METHODS = ['paypal', 'wise', 'cash', 'other']
+  // Debe reflejar los ids de src/lib/paymentMethods.js (PAYMENT_METHODS): el
+  // desplegable del formulario ofrece todos estos, así que el backend debe
+  // aceptarlos (faltaba 'global66', que hacía fallar el registro).
+  const VALID_PAYMENT_METHODS = ['paypal', 'wise', 'global66', 'cash', 'other']
   if (paymentMethod && !VALID_PAYMENT_METHODS.includes(paymentMethod)) {
     return jsonResponse(400, { error: `paymentMethod debe ser uno de: ${VALID_PAYMENT_METHODS.join(', ')}` })
   }
