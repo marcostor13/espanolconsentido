@@ -1408,6 +1408,9 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                   </div>
                 </div>
 
+                {/* En clases grupales no se piden estas preguntas de perfil. */}
+                {serviceId !== "group" && (
+                <>
                 <div>
                   <label className="block text-sm font-bold text-secondary mb-2">
                     {modal.details?.q1}
@@ -1469,6 +1472,8 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                     placeholder={modal.details?.q4Placeholder}
                   />
                 </div>
+                </>
+                )}
 
                 <div>
                   <label className="block text-sm font-bold text-secondary mb-2">
@@ -1486,6 +1491,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                   />
                 </div>
 
+                {serviceId !== "group" && (
                 <div>
                   <label className="block text-sm font-bold text-secondary mb-2">
                     {modal.details?.q5}{" "}
@@ -1501,6 +1507,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                     placeholder={modal.details?.q5Placeholder}
                   ></textarea>
                 </div>
+                )}
 
                 <div className="rounded-xl border border-gray-200 bg-gray-50/90 p-4 flex gap-3 items-start">
                   <input
