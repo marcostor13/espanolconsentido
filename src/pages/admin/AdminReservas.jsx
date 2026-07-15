@@ -25,6 +25,8 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
   const [confirmingId, setConfirmingId] = useState(null)
   const [actioningId, setActioningId] = useState(null)
   const [paymentMethodById, setPaymentMethodById] = useState({})
+  const [search, setSearch] = useState('')
+  const [methodFilter, setMethodFilter] = useState('all')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -33,7 +35,11 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
       // Las reservas de PayPal no se confirman a mano: se confirman solas tras
       // el pago (captura/webhook). Si el pago se abandona, la reserva queda
       // `pending` pero no hay nada que confirmar, así que no debe aparecer aquí.
-      setBookings((data.bookings || []).filter((b) => b.paymentMethod !== 'paypal'))
+      // Se ordenan de la más reciente a la más antigua (por fecha de creación).
+      const pending = (data.bookings || [])
+        .filter((b) => b.paymentMethod !== 'paypal')
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      setBookings(pending)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -104,6 +110,14 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
   if (loading) return null
   if (bookings.length === 0) return null
 
+  const q = search.trim().toLowerCase()
+  const methodsInData = Array.from(new Set(bookings.map((b) => b.paymentMethod || 'none')))
+  const filteredBookings = bookings.filter((b) => {
+    if (methodFilter !== 'all' && (b.paymentMethod || 'none') !== methodFilter) return false
+    if (!q) return true
+    return [b.name, b.email, b.serviceTitle].some((v) => (v || '').toLowerCase().includes(q))
+  })
+
   return (
     <div className="bg-white rounded-3xl shadow-soft border border-amber-200 overflow-hidden mb-8">
       <div className="p-6 pb-0 flex items-center gap-2">
@@ -121,8 +135,32 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
             <span>{error}</span>
           </div>
         )}
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nombre, email o servicio..."
+            className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+          />
+          <select
+            value={methodFilter}
+            onChange={(e) => setMethodFilter(e.target.value)}
+            className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+          >
+            <option value="all">Todos los métodos</option>
+            {methodsInData.map((m) => (
+              <option key={m} value={m}>
+                {m === 'none' ? 'Sin método aún' : PAYMENT_METHOD_LABEL[m] || m}
+              </option>
+            ))}
+          </select>
+        </div>
+        {filteredBookings.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">Ningún pago pendiente coincide con el filtro.</p>
+        ) : (
         <div className="space-y-3">
-          {bookings.map((b) => (
+          {filteredBookings.map((b) => (
             <div
               key={b.bookingId}
               className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-amber-100 bg-amber-50/40"
@@ -217,6 +255,7 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   )
@@ -430,6 +469,9 @@ export default function AdminReservas() {
 
   const [classBookings, setClassBookings] = useState([])
   const [classBookingsLoading, setClassBookingsLoading] = useState(true)
+  const [classSearch, setClassSearch] = useState('')
+  const [classTypeFilter, setClassTypeFilter] = useState('all')
+  const [classStatusFilter, setClassStatusFilter] = useState('all')
 
   const loadEnrollments = useCallback(async () => {
     setEnrollmentsLoading(true)
@@ -450,9 +492,10 @@ export default function AdminReservas() {
     setClassBookingsLoading(true)
     try {
       const data = await apiFetch('bookings?all=true', { token })
+      // Ordenadas de la más reciente a la más antigua (por fecha de creación).
       const list = (data.bookings || [])
         .filter((b) => !b.enrollmentId && ['paid', 'completed'].includes(b.status))
-        .sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`))
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
       setClassBookings(list)
     } catch (err) {
       setError(err.message)
@@ -470,6 +513,16 @@ export default function AdminReservas() {
     loadEnrollments()
     loadClassBookings()
   }, [loadEnrollments, loadClassBookings])
+
+  const classQuery = classSearch.trim().toLowerCase()
+  const filteredClassBookings = classBookings.filter((b) => {
+    if (classTypeFilter !== 'all' && (b.serviceId || b.classType) !== classTypeFilter) return false
+    if (classStatusFilter !== 'all' && b.status !== classStatusFilter) return false
+    if (!classQuery) return true
+    return [b.name, b.userName, b.email, b.userEmail, b.serviceTitle].some((v) =>
+      (v || '').toLowerCase().includes(classQuery),
+    )
+  })
 
   return (
     <div>
@@ -505,8 +558,40 @@ export default function AdminReservas() {
           ) : classBookings.length === 0 ? (
             <p className="text-gray-400 text-center py-6">Aún no hay clases sueltas reservadas.</p>
           ) : (
-            <div className="space-y-3">
-              {classBookings.map((b) => (
+            <>
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <input
+                  type="text"
+                  value={classSearch}
+                  onChange={(e) => setClassSearch(e.target.value)}
+                  placeholder="Buscar por nombre, email o servicio..."
+                  className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+                />
+                <select
+                  value={classTypeFilter}
+                  onChange={(e) => setClassTypeFilter(e.target.value)}
+                  className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+                >
+                  <option value="all">Todos los tipos</option>
+                  <option value="trial">Prueba</option>
+                  <option value="individual">Individual</option>
+                  <option value="group">Grupal</option>
+                </select>
+                <select
+                  value={classStatusFilter}
+                  onChange={(e) => setClassStatusFilter(e.target.value)}
+                  className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
+                >
+                  <option value="all">Todos los estados</option>
+                  <option value="paid">Confirmada</option>
+                  <option value="completed">Impartida</option>
+                </select>
+              </div>
+              {filteredClassBookings.length === 0 ? (
+                <p className="text-gray-400 text-center py-6">Ninguna clase coincide con el filtro.</p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredClassBookings.map((b) => (
                 <div
                   key={b._id}
                   className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50/60"
@@ -551,8 +636,10 @@ export default function AdminReservas() {
                     {b.status === 'paid' ? 'Confirmada' : 'Impartida'}
                   </span>
                 </div>
-              ))}
-            </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
