@@ -8,6 +8,12 @@ import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL, TRANSFER_PAYMENT_METHOD_IDS } fr
 // Etiqueta legible del tipo de clase suelta (compra directa del sitio público).
 const SLOT_SERVICE_LABEL = { trial: 'Prueba', individual: 'Individual', group: 'Grupal' }
 
+// Productos que el admin puede asignar como matrícula (crédito). Se excluye
+// 'group' —la clase grupal de compra pública que elige franja en el momento—
+// porque el crédito grupal para matrícula es 'grupal'; si no, "Clase grupal"
+// aparecería duplicada en la lista.
+const ENROLLMENT_PACKAGES = PACKAGES.filter((p) => p.id !== 'group')
+
 // Reservas del landing (prueba/individual/grupal/paquete) que quedaron
 // `pending` porque el estudiante pagó por un medio manual (Wise,
 // transferencia, efectivo): no hay webhook que las confirme solo, así que la
@@ -221,10 +227,10 @@ function EnrollmentForm({ token, onCreated }) {
   const [studentEmail, setStudentEmail] = useState('')
   // Paquetes con el precio configurado en /admin/configuraciones (los de
   // PACKAGES son solo el valor por defecto mientras carga).
-  const [packages, setPackages] = useState(PACKAGES)
-  const [packageId, setPackageId] = useState(PACKAGES[1].id)
-  const [totalClasses, setTotalClasses] = useState(PACKAGES[1].totalClasses)
-  const [price, setPrice] = useState(PACKAGES[1].price)
+  const [packages, setPackages] = useState(ENROLLMENT_PACKAGES)
+  const [packageId, setPackageId] = useState(ENROLLMENT_PACKAGES[1].id)
+  const [totalClasses, setTotalClasses] = useState(ENROLLMENT_PACKAGES[1].totalClasses)
+  const [price, setPrice] = useState(ENROLLMENT_PACKAGES[1].price)
   const [promoCode, setPromoCode] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('other')
   const [saving, setSaving] = useState(false)
@@ -234,7 +240,7 @@ function EnrollmentForm({ token, onCreated }) {
   useEffect(() => {
     apiFetch('settings', { token })
       .then((data) => {
-        const updated = withConfiguredPrices(PACKAGES, data.settings?.packagePrices)
+        const updated = withConfiguredPrices(ENROLLMENT_PACKAGES, data.settings?.packagePrices)
         setPackages(updated)
         setPrice((prev) => {
           const current = updated.find((p) => p.id === packageId)
