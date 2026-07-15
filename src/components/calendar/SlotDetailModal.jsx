@@ -272,11 +272,15 @@ export default function SlotDetailModal({ slot, token, onClose, onChanged, onDel
                     className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-secondary outline-none focus:border-primary"
                   >
                     <option value="">Selecciona un alumno...</option>
-                    {availableEnrollments.map((e) => (
-                      <option key={e._id} value={e._id}>
-                        {e.studentName} — {e.serviceTitle} ({(e.totalClasses || 0) - (e.classesUsed || 0)} restantes)
-                      </option>
-                    ))}
+                    {availableEnrollments.map((e) => {
+                      const studentLabel = e.studentName || e.studentEmail || 'Alumno'
+                      const remaining = (e.totalClasses || 0) - (e.classesUsed || 0)
+                      return (
+                        <option key={e._id} value={e._id}>
+                          {studentLabel} — {e.serviceTitle} ({remaining} restantes)
+                        </option>
+                      )
+                    })}
                   </select>
                   <button
                     onClick={handleReserveForStudent}
