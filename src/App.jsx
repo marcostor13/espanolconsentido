@@ -1165,7 +1165,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020410]/80 backdrop-blur-sm p-4 overflow-y-auto font-grotesk">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-[#020410]/80 backdrop-blur-sm p-4 overflow-y-auto font-grotesk">
       <div className="bg-white w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] rounded-3xl shadow-2xl relative">
         {/* Header */}
         <div className="bg-white text-secondary p-6 flex justify-between items-center shrink-0 border-b border-gray-100">
@@ -1735,10 +1735,19 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                     {(modal.wise?.proofTitle || "").replace("{provider}", paidViaLabel)}
                   </h5>
                   {wiseProofSent ? (
-                    <p className="text-sm text-green-700 flex items-center gap-2">
-                      <CheckCircle size={16} className="shrink-0" />
-                      {modal.wise?.proofSent}
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-sm text-green-700 flex items-center gap-2">
+                        <CheckCircle size={16} className="shrink-0" />
+                        {modal.wise?.proofSent}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-full bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle size={16} /> Completado
+                      </button>
+                    </div>
                   ) : (
                     <>
                       {paidVia === "global66" && (

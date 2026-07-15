@@ -120,7 +120,7 @@ function CancelBookingModal({ booking, onClose, onConfirm }) {
   const notice = hasEnoughNotice(booking)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/60 backdrop-blur-sm p-4 font-grotesk overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-secondary/60 backdrop-blur-sm p-4 font-grotesk overflow-y-auto">
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden my-8">
         <div className="p-6 pb-0 flex items-start justify-between">
           <div>
