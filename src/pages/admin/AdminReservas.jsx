@@ -5,6 +5,9 @@ import { apiFetch } from '../../lib/api'
 import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
 import { PAYMENT_METHODS, PAYMENT_METHOD_LABEL, TRANSFER_PAYMENT_METHOD_IDS } from '../../lib/paymentMethods'
 
+// Etiqueta legible del tipo de clase suelta (compra directa del sitio público).
+const SLOT_SERVICE_LABEL = { trial: 'Prueba', individual: 'Individual', group: 'Grupal' }
+
 // Reservas del landing (prueba/individual/grupal/paquete) que quedaron
 // `pending` porque el estudiante pagó por un medio manual (Wise,
 // transferencia, efectivo): no hay webhook que las confirme solo, así que la
@@ -419,6 +422,9 @@ export default function AdminReservas() {
   const [enrollments, setEnrollments] = useState([])
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true)
 
+  const [classBookings, setClassBookings] = useState([])
+  const [classBookingsLoading, setClassBookingsLoading] = useState(true)
+
   const loadEnrollments = useCallback(async () => {
     setEnrollmentsLoading(true)
     try {
@@ -431,16 +437,40 @@ export default function AdminReservas() {
     }
   }, [token])
 
+  // Clases sueltas compradas directamente en el sitio (prueba, individual y
+  // grupal): son reservas sin enrollmentId. Se muestran las ya pagadas o
+  // impartidas, para ver también los pagos y clases de prueba reservadas.
+  const loadClassBookings = useCallback(async () => {
+    setClassBookingsLoading(true)
+    try {
+      const data = await apiFetch('bookings?all=true', { token })
+      const list = (data.bookings || [])
+        .filter((b) => !b.enrollmentId && ['paid', 'completed'].includes(b.status))
+        .sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`))
+      setClassBookings(list)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setClassBookingsLoading(false)
+    }
+  }, [token])
+
+  const refreshAll = useCallback(() => {
+    loadEnrollments()
+    loadClassBookings()
+  }, [loadEnrollments, loadClassBookings])
+
   useEffect(() => {
     loadEnrollments()
-  }, [loadEnrollments])
+    loadClassBookings()
+  }, [loadEnrollments, loadClassBookings])
 
   return (
     <div>
       <h1 className="font-syne font-bold text-3xl text-secondary mb-1">Reservas</h1>
       <p className="text-gray-500 mb-8">Registra compras de cursos y gestiona las reservas de tus estudiantes.</p>
 
-      <PendingPaymentsPanel token={token} onConfirmed={loadEnrollments} />
+      <PendingPaymentsPanel token={token} onConfirmed={refreshAll} />
 
       <EnrollmentForm token={token} onCreated={loadEnrollments} />
 
@@ -450,6 +480,76 @@ export default function AdminReservas() {
           <span>{error}</span>
         </div>
       )}
+
+      <div className="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden mb-8">
+        <div className="p-6 pb-0 flex items-center justify-between gap-2">
+          <h2 className="font-syne font-bold text-xl text-secondary">Clases y pruebas reservadas</h2>
+          {!classBookingsLoading && classBookings.length > 0 && (
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-orange-50 text-primary">
+              {classBookings.length}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-gray-500 px-6 pt-1">
+          Clases sueltas pagadas desde el sitio (prueba, individual y grupal), con su pago y horario.
+        </p>
+        <div className="p-6">
+          {classBookingsLoading ? (
+            <p className="text-gray-400">Cargando...</p>
+          ) : classBookings.length === 0 ? (
+            <p className="text-gray-400 text-center py-6">Aún no hay clases sueltas reservadas.</p>
+          ) : (
+            <div className="space-y-3">
+              {classBookings.map((b) => (
+                <div
+                  key={b._id}
+                  className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50/60"
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold text-secondary">{b.name || b.userName}</p>
+                    <p className="text-sm text-gray-500">{b.email || b.userEmail}</p>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold">{b.serviceTitle}</p>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                        {SLOT_SERVICE_LABEL[b.serviceId] || SLOT_SERVICE_LABEL[b.classType] || 'Clase'}
+                      </span>
+                    </div>
+                    {b.date && (
+                      <p className="text-gray-500">
+                        {b.date} · {b.time}
+                      </p>
+                    )}
+                    {b.meetLink && (
+                      <a
+                        href={b.meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary underline break-all"
+                      >
+                        Enlace de Google Meet
+                      </a>
+                    )}
+                  </div>
+                  <p className="font-bold text-secondary">${b.finalPrice}</p>
+                  <span className="flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">
+                    <Wallet size={12} />
+                    {PAYMENT_METHOD_LABEL[b.paymentMethod] || 'Sin especificar'}
+                  </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      b.status === 'paid' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
+                    }`}
+                  >
+                    {b.status === 'paid' ? 'Confirmada' : 'Impartida'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="bg-white rounded-3xl shadow-soft border border-gray-100 overflow-hidden">
         <h2 className="font-syne font-bold text-xl text-secondary p-6 pb-0">Compras de cursos</h2>
