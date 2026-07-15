@@ -1,6 +1,7 @@
 import { getDb } from './_shared/mongodb.js'
 import { requireAuth, jsonResponse } from './_shared/auth.js'
 import { getBusyEvents } from './_shared/google-calendar.js'
+import { getSettings } from './_shared/settings.js'
 import { classDateTimeMs, classPartsFromMs, nextDateKey } from './_shared/time.js'
 import { logError } from './_shared/errorLog.js'
 
@@ -52,17 +53,35 @@ export const handler = async (event) => {
 
   try {
     const db = await getDb()
-    const { connected, events } = await getBusyEvents(db, {
+    const { connected, events, reason, error, rawCount } = await getBusyEvents(db, {
       timeMin: new Date(classDateTimeMs(from, '00:00')).toISOString(),
       timeMax: new Date(classDateTimeMs(nextDateKey(to), '00:00')).toISOString(),
     })
 
     const busy = events.flatMap(toSegments).filter((s) => s.date >= from && s.date <= to)
-    return jsonResponse(200, { connected, busy })
+
+    let accountEmail = null
+    try {
+      const settings = await getSettings(db)
+      accountEmail = settings.googleTokens?.accountEmail || null
+    } catch {
+      // Ignorar: el email de la cuenta es solo informativo para el diagnóstico.
+    }
+
+    return jsonResponse(200, {
+      connected,
+      busy,
+      // Diagnóstico para el botón "Sincronizar":
+      reason: reason || (connected ? 'ok' : 'not_connected'),
+      error: error || null,
+      eventCount: events.length, // eventos que bloquean (ya sin los de la app)
+      rawCount: rawCount ?? null, // eventos leídos del calendario (con los de la app)
+      accountEmail,
+    })
   } catch (err) {
     console.error('calendar-busy error:', err)
     await logError('calendar-busy', err, { event, level: 'warning' })
     // No romper el calendario del admin si Google falla: se devuelve vacío.
-    return jsonResponse(200, { connected: false, busy: [], error: 'No se pudo leer el calendario de Google' })
+    return jsonResponse(200, { connected: false, busy: [], reason: 'error', error: err.message || 'Error al leer el calendario de Google' })
   }
 }

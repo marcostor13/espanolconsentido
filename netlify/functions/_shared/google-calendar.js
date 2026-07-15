@@ -171,23 +171,45 @@ export async function createCalendarEvent(db, { summary, description, start, end
  * cuenta no está conectada por OAuth, connected=false y events=[] (sin bloquear).
  */
 export async function getBusyEvents(db, { timeMin, timeMax }) {
-  const { auth, calendarId, canCreateMeet } = await getCalendarAuth(db)
+  // No lanzamos: devolvemos un diagnóstico claro para poder mostrarlo en el
+  // botón "Sincronizar" del calendario y saber exactamente qué está fallando.
+  let authInfo
+  try {
+    authInfo = await getCalendarAuth(db)
+  } catch {
+    return { connected: false, events: [], reason: 'not_configured' }
+  }
+
+  const { auth, calendarId, canCreateMeet } = authInfo
   // Solo la conexión OAuth da acceso a leer la agenda personal de la profesora;
   // la cuenta de servicio no puede, así que en ese caso no hay nada que bloquear.
-  if (!canCreateMeet) return { connected: false, events: [] }
+  if (!canCreateMeet) return { connected: false, events: [], reason: 'not_connected' }
 
   const calendar = google.calendar({ version: 'v3', auth })
-  const res = await calendar.events.list({
-    calendarId,
-    timeMin,
-    timeMax,
-    singleEvents: true,
-    orderBy: 'startTime',
-    maxResults: 2500,
-  })
+  let res
+  try {
+    res = await calendar.events.list({
+      calendarId,
+      timeMin,
+      timeMax,
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 2500,
+    })
+  } catch (err) {
+    const error =
+      err?.response?.data?.error_description ||
+      err?.response?.data?.error?.message ||
+      err?.errors?.[0]?.message ||
+      err?.message ||
+      'Error desconocido al leer Google Calendar'
+    console.error('getBusyEvents: events.list failed', error)
+    return { connected: false, events: [], reason: 'error', error }
+  }
 
+  const items = res.data?.items || []
   const events = []
-  for (const ev of res.data?.items || []) {
+  for (const ev of items) {
     if (ev.status === 'cancelled') continue
     if (ev.extendedProperties?.private?.app === APP_EVENT_TAG) continue
 
@@ -209,7 +231,10 @@ export async function getBusyEvents(db, { timeMin, timeMax }) {
     if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) continue
     events.push({ id: ev.id, title: ev.summary || 'Ocupado', startMs, endMs, allDay })
   }
-  return { connected: true, events }
+  // rawCount = eventos leídos del calendario (antes de filtrar los de la app),
+  // útil para el diagnóstico: distingue "no llegan eventos" de "todos eran de
+  // la app".
+  return { connected: true, events, reason: 'ok', rawCount: items.length }
 }
 
 /**

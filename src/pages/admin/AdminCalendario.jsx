@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2, Loader2, Clock, AlertCircle, Users, User, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { Plus, Trash2, Loader2, Clock, AlertCircle, Users, User, ChevronLeft, ChevronRight, CalendarDays, RefreshCw, CheckCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import Calendar from '../../components/Calendar'
 import TimeGrid, { reservedCategory } from '../../components/calendar/TimeGrid'
 import SlotDetailModal from '../../components/calendar/SlotDetailModal'
@@ -43,6 +44,9 @@ export default function AdminCalendario() {
   const [slots, setSlots] = useState([])
   const [bookings, setBookings] = useState([])
   const [busyByDate, setBusyByDate] = useState({})
+  const [calendarSync, setCalendarSync] = useState(null)
+  const [syncing, setSyncing] = useState(false)
+  const [showSync, setShowSync] = useState(false)
   const [groupCapacity, setGroupCapacity] = useState(4)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -76,7 +80,11 @@ export default function AdminCalendario() {
         apiFetch(`bookings?from=${rangeFrom}&to=${rangeTo}&all=true`, { token }),
         // Horas ocupadas en el Google Calendar de la profesora. Si el endpoint
         // aún no está desplegado o Google falla, se ignora sin romper la vista.
-        apiFetch(`calendar-busy?from=${rangeFrom}&to=${rangeTo}`, { token }).catch(() => ({ busy: [] })),
+        apiFetch(`calendar-busy?from=${rangeFrom}&to=${rangeTo}`, { token }).catch((err) => ({
+          busy: [],
+          reason: 'error',
+          error: err.message,
+        })),
       ])
       setSlots(availData.slots || [])
       setBookings(bookingsData.bookings || [])
@@ -86,12 +94,27 @@ export default function AdminCalendario() {
         busyMap[seg.date].push(seg)
       }
       setBusyByDate(busyMap)
+      setCalendarSync({
+        connected: busyData.connected ?? null,
+        reason: busyData.reason || null,
+        error: busyData.error || null,
+        eventCount: busyData.eventCount ?? (busyData.busy?.length || 0),
+        rawCount: busyData.rawCount ?? null,
+        accountEmail: busyData.accountEmail || null,
+      })
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
   }, [rangeFrom, rangeTo, token])
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true)
+    setShowSync(true)
+    await loadData()
+    setSyncing(false)
+  }, [loadData])
 
   useEffect(() => {
     loadData()
@@ -276,6 +299,15 @@ export default function AdminCalendario() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-1.5 text-sm font-bold px-3.5 py-2.5 rounded-xl border border-gray-200 text-secondary hover:border-primary hover:text-primary transition disabled:opacity-50"
+            title="Volver a leer los eventos de tu Google Calendar"
+          >
+            <RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />
+            Sincronizar
+          </button>
           <label className="relative">
             <span className="sr-only">Ir a una fecha específica</span>
             <input
@@ -308,6 +340,58 @@ export default function AdminCalendario() {
           <span>{error}</span>
         </div>
       )}
+
+      {(() => {
+        // Diagnóstico de la sincronización con Google Calendar. Los estados de
+        // éxito/vacío solo se muestran tras pulsar "Sincronizar"; los de error o
+        // sin conexión se muestran siempre, porque requieren acción del admin.
+        if (!calendarSync) return null
+        const { connected, reason, error: syncError, eventCount, rawCount, accountEmail } = calendarSync
+        const acct = accountEmail ? ` (${accountEmail})` : ''
+        let tone = null
+        let text = null
+        if (connected && eventCount > 0) {
+          if (!showSync) return null
+          tone = 'green'
+          text = `Sincronizado con Google Calendar${acct}: ${eventCount} evento(s) bloqueando horarios en esta vista.`
+        } else if (connected) {
+          if (!showSync) return null
+          tone = 'amber'
+          text =
+            rawCount > 0
+              ? `Conectado a Google Calendar${acct}. En el rango visible solo hay eventos creados por la app (ya aparecen como reservas).`
+              : `Conectado a Google Calendar${acct}, pero no se encontraron eventos en el rango visible. Verifica que el evento esté en tu calendario PRINCIPAL (no en uno secundario) y dentro de estas fechas.`
+        } else if (reason === 'error') {
+          tone = 'red'
+          text = `No se pudo leer tu Google Calendar: ${syncError || 'error desconocido'}. La conexión pudo haber caducado.`
+        } else {
+          tone = 'red'
+          text = 'Tu Google Calendar no está conectado, por eso no se bloquean horarios con tus eventos.'
+        }
+        const toneClass =
+          tone === 'green'
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : tone === 'amber'
+              ? 'bg-amber-50 border-amber-200 text-amber-800'
+              : 'bg-red-50 border-red-200 text-red-700'
+        const Icon = tone === 'green' ? CheckCircle : AlertCircle
+        return (
+          <div className={`mb-6 p-3 border rounded-xl text-sm flex items-start gap-2 ${toneClass}`}>
+            <Icon size={18} className="shrink-0 mt-0.5" />
+            <span>
+              {text}
+              {tone === 'red' && (
+                <>
+                  {' '}
+                  <Link to="/admin/configuraciones" className="font-bold underline">
+                    Volver a conectar Google
+                  </Link>
+                </>
+              )}
+            </span>
+          </div>
+        )
+      })()}
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
         {view === 'month' && (
