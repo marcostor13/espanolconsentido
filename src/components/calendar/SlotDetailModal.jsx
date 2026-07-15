@@ -28,10 +28,14 @@ export default function SlotDetailModal({ slot, token, onClose, onChanged, onDel
   // clases individuales; por eso solo se ofrece en franjas individuales con cupo.
   const canReserveForStudent = !isGroup && bookedCount < (slot.capacity || 1)
 
-  // Matrículas activas con clases disponibles, para reservarle la franja a un
-  // alumno registrado desde el calendario.
+  // Matrículas activas con clases disponibles del mismo tipo que la franja
+  // (esta opción se ofrece solo en franjas individuales), para reservarle la
+  // clase a un alumno registrado desde el calendario.
   const availableEnrollments = enrollments.filter(
-    (e) => e.status === 'active' && (e.totalClasses || 0) - (e.classesUsed || 0) > 0,
+    (e) =>
+      e.status === 'active' &&
+      (e.totalClasses || 0) - (e.classesUsed || 0) > 0 &&
+      (e.classType || 'individual') === 'individual',
   )
 
   useEffect(() => {

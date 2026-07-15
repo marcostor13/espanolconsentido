@@ -6,10 +6,16 @@ import { logError } from './errorLog.js'
 import { markTrialCreditApplied } from './trialCredit.js'
 import { getSettings, getAdminNotifyEmail } from './settings.js'
 
-// Debe reflejar src/lib/packages.js: ids de paquetes de varias clases que,
-// al confirmarse el pago, generan una matrícula real (enrollment) en vez de
-// reservar una franja puntual del calendario.
-const PACKAGE_SERVICE_IDS = ['inicio', 'progreso', 'pro']
+// Debe reflejar src/lib/packages.js: ids que, al confirmarse el pago, generan
+// una matrícula real (enrollment) con créditos para agendar después desde el
+// portal, en vez de reservar una franja puntual del calendario. Incluye los
+// paquetes individuales (inicio/progreso/pro) y la clase grupal comprada como
+// crédito ('grupal').
+const PACKAGE_SERVICE_IDS = ['inicio', 'progreso', 'pro', 'grupal']
+
+// Tipo de clase de la matrícula que se crea según el servicio comprado: los
+// créditos grupales solo agendan franjas grupales; el resto, individuales.
+const ENROLLMENT_CLASS_TYPE = { grupal: 'group' }
 
 export class BookingConfirmationError extends Error {
   constructor(message, code) {
@@ -44,6 +50,7 @@ async function createEnrollmentFromBooking(db, booking, studentUser, paymentMeth
     studentName: studentUser.name,
     serviceId: booking.serviceId,
     serviceTitle: booking.serviceTitle,
+    classType: ENROLLMENT_CLASS_TYPE[booking.serviceId] || 'individual',
     totalClasses: booking.totalClasses || 1,
     classesUsed: 0,
     price: booking.price,

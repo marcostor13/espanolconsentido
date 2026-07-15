@@ -80,6 +80,8 @@ async function createEnrollment(event, db) {
     studentName: student.name,
     serviceId,
     serviceTitle,
+    // Los créditos grupales ('grupal'/'group') solo agendan franjas grupales.
+    classType: ['grupal', 'group'].includes(serviceId) ? 'group' : 'individual',
     totalClasses: Number(totalClasses),
     classesUsed: 0,
     price: Number(price),

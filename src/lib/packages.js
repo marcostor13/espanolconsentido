@@ -8,6 +8,10 @@ export const PACKAGES = [
   { id: 'pro', title: 'Plan Fluidez', totalClasses: 12, price: 204 },
   { id: 'individual', title: 'Clase individual', totalClasses: 1, price: 20 },
   { id: 'group', title: 'Clase grupal', totalClasses: 1, price: 10 },
+  // Clase grupal comprable como crédito desde el portal del alumno (se agenda
+  // en una franja grupal después de comprarla), a diferencia de 'group' que se
+  // compra en la web pública eligiendo la franja en el momento.
+  { id: 'grupal', title: 'Clase grupal', totalClasses: 1, price: 10 },
 ]
 
 // Precio vigente de un servicio: el configurado en settings o, si aún no

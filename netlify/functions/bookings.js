@@ -136,18 +136,25 @@ async function createBooking(event, db) {
     }
   }
 
-  // Las matrículas por paquete (inicio/progreso/pro) son siempre de clases
-  // individuales; una franja grupal nunca debe poder consumirse con estos
-  // créditos, para que la disponibilidad de cada tipo sea independiente.
+  // Cada matrícula agenda solo su tipo de franja: los créditos individuales
+  // (paquetes inicio/progreso/pro) reservan franjas individuales y los créditos
+  // grupales ('grupal') reservan franjas grupales. Así la disponibilidad de
+  // cada tipo es independiente y no se pueden cruzar.
+  const enrollmentType = enrollmentLookup.classType === 'group' ? 'group' : 'individual'
   const slot = await availabilityCol.findOneAndUpdate(
-    { _id: new ObjectId(slotId), status: 'open', type: 'individual', $expr: { $lt: ['$bookedCount', '$capacity'] } },
+    { _id: new ObjectId(slotId), status: 'open', type: enrollmentType, $expr: { $lt: ['$bookedCount', '$capacity'] } },
     { $inc: { bookedCount: 1 } },
     { returnDocument: 'after' },
   )
   if (!slot) {
     const existing = await availabilityCol.findOne({ _id: new ObjectId(slotId) })
-    if (existing && existing.type !== 'individual') {
-      return jsonResponse(400, { error: 'Esa franja es de clase grupal; los cursos por paquete solo agendan clases individuales' })
+    if (existing && existing.type !== enrollmentType) {
+      return jsonResponse(400, {
+        error:
+          enrollmentType === 'group'
+            ? 'Esa franja es individual; tu clase grupal solo se puede agendar en una franja grupal.'
+            : 'Esa franja es grupal; este curso solo agenda clases individuales.',
+      })
     }
     return jsonResponse(409, { error: 'Esa franja ya no está disponible' })
   }
@@ -179,20 +186,37 @@ async function createBooking(event, db) {
   // guardar el link de Google Meet en el documento y mostrarlo al estudiante.
   let calendarEventId = null
   let meetLink = null
-  try {
-    const { startLocal, endLocal } = computeEventTimes(slot.date, slot.time, slot.durationMin)
-    const calEvent = await createCalendarEvent(db, {
-      summary: `${enrollment.serviceTitle} - ${targetUserName}`,
-      description: `Email: ${targetUserEmail}`,
-      start: startLocal,
-      end: endLocal,
-      attendeeEmail: targetUserEmail,
-    })
-    calendarEventId = calEvent.id
-    meetLink = calEvent.meetLink
-  } catch (err) {
-    console.error('bookings: failed to create calendar event', err)
-    await logError('bookings: create calendar event', err, { event, level: 'warning' })
+  if (enrollmentType === 'group' && slot.meetLink) {
+    // La clase grupal comparte UNA sola sala de Meet para todo el grupo: si la
+    // franja ya tiene una (creada por el primer alumno que reservó), se reutiliza.
+    calendarEventId = slot.calendarEventId || null
+    meetLink = slot.meetLink
+  } else {
+    try {
+      const { startLocal, endLocal } = computeEventTimes(slot.date, slot.time, slot.durationMin)
+      const isGroup = enrollmentType === 'group'
+      const calEvent = await createCalendarEvent(db, {
+        summary: isGroup ? `Clase grupal - ${slot.time}` : `${enrollment.serviceTitle} - ${targetUserName}`,
+        description: isGroup ? 'Clase grupal' : `Email: ${targetUserEmail}`,
+        start: startLocal,
+        end: endLocal,
+        // En grupal no se invita a un asistente concreto: es una sala común que
+        // se comparte por correo con cada alumno que reserva.
+        attendeeEmail: isGroup ? undefined : targetUserEmail,
+      })
+      calendarEventId = calEvent.id
+      meetLink = calEvent.meetLink
+      // Guardar la sala en la franja grupal para que el resto del grupo la reutilice.
+      if (isGroup && meetLink) {
+        await availabilityCol.updateOne(
+          { _id: slot._id },
+          { $set: { calendarEventId, meetLink } },
+        )
+      }
+    } catch (err) {
+      console.error('bookings: failed to create calendar event', err)
+      await logError('bookings: create calendar event', err, { event, level: 'warning' })
+    }
   }
 
   const bookingId = generateBookingId()

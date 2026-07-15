@@ -48,6 +48,14 @@ export default function ReservarPage() {
     [enrollments],
   )
 
+  // Tipo de clase de la matrícula elegida: determina qué franjas (individuales
+  // o grupales) puede reservar el alumno.
+  const selectedEnrollment = useMemo(
+    () => availableEnrollments.find((e) => e._id === selectedEnrollmentId) || null,
+    [availableEnrollments, selectedEnrollmentId],
+  )
+  const selectedType = selectedEnrollment?.classType === 'group' ? 'group' : 'individual'
+
   const month = useMemo(() => new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), [currentDate])
   const weekStart = useMemo(() => startOfWeek(currentDate), [currentDate])
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
@@ -106,18 +114,18 @@ export default function ReservarPage() {
     }
   }, [availableEnrollments, selectedEnrollmentId])
 
-  // Los créditos de paquete (inicio/progreso/pro) solo agendan clases
-  // individuales; las franjas grupales tienen su propio flujo de compra y no
-  // deben mostrarse aquí como si fueran intercambiables.
+  // Solo se muestran las franjas del MISMO tipo que la matrícula elegida: un
+  // crédito individual solo ve franjas individuales y uno grupal solo grupales,
+  // para que la disponibilidad de cada tipo sea independiente.
   const slotsByDate = useMemo(() => {
     const map = {}
     for (const s of slots) {
-      if (s.status !== 'open' || s.type !== 'individual') continue
+      if (s.status !== 'open' || s.type !== selectedType) continue
       if (!map[s.date]) map[s.date] = []
       map[s.date].push(s)
     }
     return map
-  }, [slots])
+  }, [slots, selectedType])
 
   const selectedKey = toDateKey(selectedDate)
   const daySlots = [...(slotsByDate[selectedKey] || [])].sort((a, b) => a.time.localeCompare(b.time))
@@ -252,15 +260,22 @@ export default function ReservarPage() {
         <label className="block text-sm font-bold text-secondary mb-2">Curso</label>
         <select
           value={selectedEnrollmentId}
-          onChange={(e) => setSelectedEnrollmentId(e.target.value)}
+          onChange={(e) => {
+            setSelectedEnrollmentId(e.target.value)
+            setSelectedSlotId(null)
+          }}
           className="w-full md:w-96 p-3.5 bg-white border border-gray-200 rounded-xl outline-none focus:border-primary text-secondary"
         >
           {availableEnrollments.map((e) => (
             <option key={e._id} value={e._id}>
-              {e.serviceTitle} — {e.totalClasses - e.classesUsed} clase(s) disponible(s)
+              {e.serviceTitle}
+              {e.classType === 'group' ? ' (grupal)' : ''} — {e.totalClasses - e.classesUsed} clase(s) disponible(s)
             </option>
           ))}
         </select>
+        {selectedType === 'group' && (
+          <p className="text-xs text-gray-400 mt-2">Estás agendando una clase grupal: elige una franja grupal disponible.</p>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">

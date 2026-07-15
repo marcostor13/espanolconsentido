@@ -41,17 +41,19 @@ export default function RescheduleModal({ booking, token, onClose, onRescheduled
     loadSlots()
   }, [loadSlots])
 
-  // Reprogramar usa el mismo crédito de la matrícula, que solo agenda clases
-  // individuales (ver bookings.js); las franjas grupales no aplican aquí.
+  // Reprogramar usa el mismo crédito de la matrícula, así que solo se muestran
+  // franjas del mismo tipo que la clase original (individual con individual,
+  // grupal con grupal).
+  const bookingType = booking.classType === 'group' ? 'group' : 'individual'
   const slotsByDate = useMemo(() => {
     const map = {}
     for (const s of slots) {
-      if (s.status !== 'open' || s._id === booking.slotId || s.type !== 'individual') continue
+      if (s.status !== 'open' || s._id === booking.slotId || s.type !== bookingType) continue
       if (!map[s.date]) map[s.date] = []
       map[s.date].push(s)
     }
     return map
-  }, [slots, booking.slotId])
+  }, [slots, booking.slotId, bookingType])
 
   const selectedKey = toDateKey(selectedDate)
   const daySlots = [...(slotsByDate[selectedKey] || [])].sort((a, b) => a.time.localeCompare(b.time))

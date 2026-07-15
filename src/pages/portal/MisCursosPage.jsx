@@ -5,10 +5,11 @@ import { apiFetch } from '../../lib/api'
 import { PACKAGES, withConfiguredPrices } from '../../lib/packages'
 import Global66BankDetails from '../../components/Global66BankDetails'
 
-// Paquetes que el estudiante puede comprar desde el portal (los servicios de
-// una sola clase con horario se compran desde la web pública, donde se elige
-// la franja).
-const PURCHASABLE_IDS = ['inicio', 'progreso', 'pro']
+// Productos que el estudiante puede comprar desde el portal: los paquetes de
+// clases individuales y la clase grupal como crédito (se agenda después en una
+// franja grupal). Los servicios de una sola clase con horario fijo se compran
+// desde la web pública, donde se elige la franja en el momento.
+const PURCHASABLE_IDS = ['inicio', 'progreso', 'pro', 'grupal']
 
 const TRANSFER_PROVIDER_LABEL = { wise: 'Wise', global66: 'Global66' }
 
@@ -338,7 +339,10 @@ function NewPurchaseSection({ user }) {
         {packages.map((p) => (
           <div key={p.id} className="bg-white rounded-3xl shadow-soft border border-gray-100 p-5 flex flex-col">
             <h3 className="font-syne font-bold text-lg text-secondary">{p.title}</h3>
-            <p className="text-sm text-gray-500 mb-3">{p.totalClasses} clases</p>
+            <p className="text-sm text-gray-500 mb-3">
+              {p.totalClasses} clase{p.totalClasses !== 1 ? 's' : ''}
+              {p.id === 'grupal' ? ' · grupal' : ''}
+            </p>
             <p className="font-grotesk font-bold text-3xl text-secondary mb-4">${p.price}</p>
             <button
               onClick={() => setBuyingPkg(p)}

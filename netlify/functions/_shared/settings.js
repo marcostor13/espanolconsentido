@@ -10,6 +10,8 @@ export const DEFAULT_PACKAGE_PRICES = {
   pro: 204,
   individual: 20,
   group: 10,
+  // Clase grupal comprada como crédito desde el portal del alumno.
+  grupal: 10,
 }
 
 const DEFAULTS = {
