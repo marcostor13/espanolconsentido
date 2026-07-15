@@ -26,6 +26,7 @@ import {
   Loader2,
   CreditCard,
   Landmark,
+  Upload,
 } from "lucide-react"
 
 import { Link } from "react-router-dom"
@@ -934,6 +935,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
   const [bookingId, setBookingId] = useState(null)
   const [paidVia, setPaidVia] = useState(null)
   const [wiseProof, setWiseProof] = useState("")
+  const [proofFile, setProofFile] = useState(null)
   const [wiseProofSending, setWiseProofSending] = useState(false)
   const [wiseProofSent, setWiseProofSent] = useState(false)
   const [finalPrice, setFinalPrice] = useState(null)
@@ -963,6 +965,7 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
       setAcceptedPolicies(false)
       setPaidVia(null)
       setWiseProof("")
+      setProofFile(null)
       setWiseProofSending(false)
       setWiseProofSent(false)
       // Si el estudiante ya inició sesión (compra desde su cuenta), no le
@@ -1084,6 +1087,49 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId, proof: wiseProof.trim(), paymentMethod: paidVia || "wise" }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al enviar el comprobante")
+      setWiseProofSent(true)
+    } catch (err) {
+      setBookingError(err.message)
+    } finally {
+      setWiseProofSending(false)
+    }
+  }
+
+  // Global66 (y cualquier transferencia sin link): el estudiante sube una foto
+  // o PDF de su comprobante. Se sube a S3 con una URL prefirmada y se registra
+  // la URL pública como comprobante, para que la profesora la vea y confirme.
+  const handleUploadProofFile = async () => {
+    if (!bookingId || !proofFile) return
+    const MAX_BYTES = 10 * 1024 * 1024
+    if (proofFile.size > MAX_BYTES) {
+      setBookingError("El archivo es demasiado grande (máximo 10 MB).")
+      return
+    }
+    setWiseProofSending(true)
+    setBookingError(null)
+    try {
+      const urlRes = await fetch("/api/payment-proof-upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, fileName: proofFile.name, contentType: proofFile.type }),
+      })
+      const urlData = await urlRes.json()
+      if (!urlRes.ok) throw new Error(urlData.error || "No se pudo preparar la subida")
+
+      const putRes = await fetch(urlData.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": proofFile.type },
+        body: proofFile,
+      })
+      if (!putRes.ok) throw new Error("No se pudo subir el comprobante. Intenta de nuevo.")
+
+      const res = await fetch("/api/submit-wise-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, proof: urlData.publicUrl, paymentMethod: paidVia || "global66" }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Error al enviar el comprobante")
@@ -1701,31 +1747,64 @@ const BookingModal = ({ isOpen, onClose, initialServiceId, appSettings }) => {
                         </div>
                       )}
                       <p className="text-sm text-gray-600 mb-3">
-                        {(modal.wise?.proofDesc || "").replace("{provider}", paidViaLabel)}
+                        {(
+                          (paidVia === "global66" ? modal.wise?.proofUploadDesc : modal.wise?.proofDesc) || ""
+                        ).replace("{provider}", paidViaLabel)}
                       </p>
                       {bookingError && (
                         <div className="p-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                           {bookingError}
                         </div>
                       )}
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          type="text"
-                          value={wiseProof}
-                          onChange={(e) => setWiseProof(e.target.value)}
-                          placeholder={modal.wise?.proofPlaceholder}
-                          className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-primary outline-none text-secondary text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleSubmitWiseProof}
-                          disabled={wiseProofSending || !wiseProof.trim()}
-                          className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
-                        >
-                          {wiseProofSending && <Loader2 size={14} className="animate-spin" />}
-                          {modal.wise?.proofSubmit}
-                        </button>
-                      </div>
+                      {paidVia === "global66" ? (
+                        // Global66 no emite links de pago: el estudiante sube
+                        // una imagen o PDF de su comprobante.
+                        <div className="flex flex-col gap-3">
+                          <label className="flex items-center gap-3 p-3 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary transition">
+                            <Upload size={18} className="text-primary shrink-0" />
+                            <span className="text-sm text-secondary truncate">
+                              {proofFile ? proofFile.name : modal.wise?.proofChoose}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp,image/heic,application/pdf"
+                              onChange={(e) => {
+                                setBookingError(null)
+                                setProofFile(e.target.files?.[0] || null)
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleUploadProofFile}
+                            disabled={wiseProofSending || !proofFile}
+                            className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                          >
+                            {wiseProofSending && <Loader2 size={14} className="animate-spin" />}
+                            {wiseProofSending ? modal.wise?.proofUploading : modal.wise?.proofSubmit}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            value={wiseProof}
+                            onChange={(e) => setWiseProof(e.target.value)}
+                            placeholder={modal.wise?.proofPlaceholder}
+                            className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-primary outline-none text-secondary text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSubmitWiseProof}
+                            disabled={wiseProofSending || !wiseProof.trim()}
+                            className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                          >
+                            {wiseProofSending && <Loader2 size={14} className="animate-spin" />}
+                            {modal.wise?.proofSubmit}
+                          </button>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

@@ -141,6 +141,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/payment-proof-upload-url"
+  to = "/.netlify/functions/payment-proof-upload-url"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/google-oauth"
   to = "/.netlify/functions/google-oauth"
   status = 200

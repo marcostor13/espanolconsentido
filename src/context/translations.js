@@ -430,7 +430,10 @@ export const translations = {
         proofDesc: "Pega aquí el enlace o la referencia de tu transferencia de {provider}. Avisaremos a tu profesora para que verifique el pago y confirme tu reserva.",
         proofPlaceholder: "Enlace o referencia de tu pago",
         proofSubmit: "Enviar comprobante",
-        proofSent: "¡Comprobante recibido! Confirmaremos tu reserva en cuanto verifiquemos el pago."
+        proofSent: "¡Comprobante recibido! Confirmaremos tu reserva en cuanto verifiquemos el pago.",
+        proofUploadDesc: "Sube una foto o PDF de tu comprobante de {provider}. Tu profesora lo revisará para verificar el pago y confirmar tu reserva.",
+        proofChoose: "Seleccionar comprobante (imagen o PDF)",
+        proofUploading: "Subiendo comprobante..."
       }
     }
   },
@@ -865,7 +868,10 @@ export const translations = {
         proofDesc: "Paste the link or reference of your {provider} transfer here. We'll notify your teacher so she can verify the payment and confirm your booking.",
         proofPlaceholder: "Payment link or reference",
         proofSubmit: "Send proof of payment",
-        proofSent: "Proof received! We'll confirm your booking as soon as we verify the payment."
+        proofSent: "Proof received! We'll confirm your booking as soon as we verify the payment.",
+        proofUploadDesc: "Upload a photo or PDF of your {provider} receipt. Your teacher will review it to verify the payment and confirm your booking.",
+        proofChoose: "Choose receipt (image or PDF)",
+        proofUploading: "Uploading receipt..."
       }
     }
   }

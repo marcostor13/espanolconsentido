@@ -88,23 +88,34 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
                   </p>
                 )}
                 {b.wisePaymentProof && (
-                  <p className="text-xs mt-1">
+                  <div className="text-xs mt-1">
                     <span className="font-bold text-green-700">
                       Comprobante {PAYMENT_METHOD_LABEL[b.paymentMethod] || 'Wise'}:{' '}
                     </span>
                     {/^https?:\/\//i.test(b.wisePaymentProof) ? (
-                      <a
-                        href={b.wisePaymentProof}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline break-all"
-                      >
-                        {b.wisePaymentProof}
-                      </a>
+                      <>
+                        <a
+                          href={b.wisePaymentProof}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline break-all"
+                        >
+                          {/\.(png|jpe?g|webp|heic|gif)(\?|$)/i.test(b.wisePaymentProof) ? 'Ver imagen' : 'Ver comprobante'}
+                        </a>
+                        {/\.(png|jpe?g|webp|heic|gif)(\?|$)/i.test(b.wisePaymentProof) && (
+                          <a href={b.wisePaymentProof} target="_blank" rel="noopener noreferrer" className="block mt-1.5">
+                            <img
+                              src={b.wisePaymentProof}
+                              alt="Comprobante de pago"
+                              className="max-h-40 rounded-lg border border-gray-200 object-contain"
+                            />
+                          </a>
+                        )}
+                      </>
                     ) : (
                       <span className="text-gray-600 break-all">{b.wisePaymentProof}</span>
                     )}
-                  </p>
+                  </div>
                 )}
                 {TRANSFER_PAYMENT_METHOD_IDS.includes(b.paymentMethod) && !b.wisePaymentProof && (
                   <p className="text-xs mt-1 text-amber-600 font-bold">
