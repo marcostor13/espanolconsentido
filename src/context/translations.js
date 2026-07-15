@@ -307,33 +307,20 @@ export const translations = {
           ]
         },
         {
-          title: "3. Paquetes de clases",
-          preamble: "Las clases se adquieren en paquetes y deben utilizarse dentro de un período determinado desde la fecha de compra:",
-          bullets: [
-            "4 clases → válidas por 1 mes",
-            "8 clases → válidas por 2 meses",
-            "12 clases → válidas por 3 meses"
-          ],
-          paragraphs: [
-            "Este plazo busca asegurar la continuidad del aprendizaje.",
-            "No se realizan reembolsos por clases no utilizadas."
-          ]
-        },
-        {
-          title: "4. Clase de prueba",
+          title: "3. Clase de prueba",
           paragraphs: [
             "La clase de prueba es solo una por estudiante."
           ]
         },
         {
-          title: "5. Compromiso del estudiante",
+          title: "4. Compromiso del estudiante",
           paragraphs: [
             "El progreso depende de la constancia y participación activa.",
             "Se recomienda asistir regularmente y aprovechar cada sesión al máximo."
           ]
         },
         {
-          title: "6. Comunicación",
+          title: "5. Comunicación",
           paragraphs: [
             "Para cualquier consulta, se recomienda comunicarse con anticipación a través de los canales establecidos."
           ]
@@ -745,33 +732,20 @@ export const translations = {
           ]
         },
         {
-          title: "3. Class packages",
-          preamble: "Classes are purchased in packages and must be used within a set period from the purchase date:",
-          bullets: [
-            "4 classes → valid for 1 month",
-            "8 classes → valid for 2 months",
-            "12 classes → valid for 3 months"
-          ],
-          paragraphs: [
-            "This timeframe supports steady progress in your learning.",
-            "No refunds are given for unused classes."
-          ]
-        },
-        {
-          title: "4. Trial class",
+          title: "3. Trial class",
           paragraphs: [
             "The trial class is available only once per student."
           ]
         },
         {
-          title: "5. Student commitment",
+          title: "4. Student commitment",
           paragraphs: [
             "Progress depends on consistency and active participation.",
             "We recommend attending regularly and making the most of each session."
           ]
         },
         {
-          title: "6. Communication",
+          title: "5. Communication",
           paragraphs: [
             "For any questions, please reach out in advance through the agreed channels."
           ]
