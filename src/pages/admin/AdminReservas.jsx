@@ -20,7 +20,10 @@ function PendingPaymentsPanel({ token, onConfirmed }) {
     setLoading(true)
     try {
       const data = await apiFetch('bookings?status=pending&all=true', { token })
-      setBookings(data.bookings || [])
+      // Las reservas de PayPal no se confirman a mano: se confirman solas tras
+      // el pago (captura/webhook). Si el pago se abandona, la reserva queda
+      // `pending` pero no hay nada que confirmar, así que no debe aparecer aquí.
+      setBookings((data.bookings || []).filter((b) => b.paymentMethod !== 'paypal'))
     } catch (err) {
       setError(err.message)
     } finally {
