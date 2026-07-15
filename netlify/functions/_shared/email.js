@@ -75,7 +75,7 @@ export async function sendBookingConfirmation({ toName, toEmail, adminEmail, boo
 
   const paidRowStudent =
     finalPrice !== undefined && finalPrice !== null
-      ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Total pagado</td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #f97316; font-weight: bold;">$${finalPrice}</td></tr>`
+      ? `<tr><td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Total pagado</td><td style="padding: 8px; border-bottom: 1px solid #eee; color: #f97316; font-weight: bold;">${finalPrice}</td></tr>`
       : ''
 
   const scheduleRowStudent = isPackage
